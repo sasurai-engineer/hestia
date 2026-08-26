@@ -15,6 +15,7 @@ export default function ImportPage() {
   const [accounts, setAccounts] = useState<BankAccountOut[]>([]);
   const [entities, setEntities] = useState<EntityOut[]>([]);
   const [accountId, setAccountId] = useState('');
+  const [entityId, setEntityId] = useState('');
   const [nickname, setNickname] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [summary, setSummary] = useState<ImportSummary | null>(null);
@@ -28,6 +29,7 @@ export default function ImportPage() {
         setAccounts(bankAccounts);
         setEntities(owners);
         setAccountId(bankAccounts[0]?.id ?? '');
+        setEntityId(owners[0]?.id ?? '');
       })
       .catch((caught: unknown) => {
         setError(caught instanceof Error ? caught.message : String(caught));
@@ -44,11 +46,12 @@ export default function ImportPage() {
     setError(null);
     try {
       let target = accountId;
-      if (target === '' && nickname.trim() !== '' && entities[0]) {
+      if (target === '' && nickname.trim() !== '' && entityId !== '') {
         const account = await api.createBankAccount({
-          entity_id: entities[0].id,
+          entity_id: entityId,
           nickname: nickname.trim(),
           kind: 'checking',
+          invert_amounts: false,
         });
         target = account.id;
         setAccounts([...accounts, account]);
@@ -111,17 +114,36 @@ export default function ImportPage() {
             </select>
           </div>
           {accountId === '' ? (
-            <div className="field">
-              <label htmlFor="imp-nickname">Account nickname</label>
-              <input
-                id="imp-nickname"
-                required
-                value={nickname}
-                onChange={(event) => {
-                  setNickname(event.target.value);
-                }}
-              />
-            </div>
+            <>
+              <div className="field">
+                <label htmlFor="imp-nickname">Account nickname</label>
+                <input
+                  id="imp-nickname"
+                  required
+                  value={nickname}
+                  onChange={(event) => {
+                    setNickname(event.target.value);
+                  }}
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="imp-entity">Owned by</label>
+                <select
+                  id="imp-entity"
+                  required
+                  value={entityId}
+                  onChange={(event) => {
+                    setEntityId(event.target.value);
+                  }}
+                >
+                  {entities.map((entity) => (
+                    <option key={entity.id} value={entity.id}>
+                      {entity.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </>
           ) : null}
           <div className="field">
             <label htmlFor="imp-file">Statement file (.csv / .ofx / .qfx)</label>

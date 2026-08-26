@@ -2,8 +2,18 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { formatMoney } from '../../components/TransactionsTable';
-import { api, type LeaseSummary, type PropertySummary } from '../../lib/api';
+import { ApiError, api, type LeaseSummary, type PropertySummary } from '../../lib/api';
 import { formatDate } from '../../lib/format';
+
+const createFailureMessage = (caught: unknown, unitLabel: string): string => {
+  if (caught instanceof ApiError && caught.status === 409) {
+    return (
+      `A unit labeled “${unitLabel}” already exists on that property — ` +
+      'pick the existing unit or change the label; nothing was created.'
+    );
+  }
+  return caught instanceof Error ? caught.message : String(caught);
+};
 
 export default function LeasesPage() {
   const [leases, setLeases] = useState<LeaseSummary[] | null>(null);
@@ -58,7 +68,7 @@ export default function LeasesPage() {
       await api.sweepRentCharges();
       await load();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : String(caught));
+      setError(createFailureMessage(caught, unitLabel));
     } finally {
       setBusy(false);
     }

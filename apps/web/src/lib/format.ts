@@ -7,6 +7,16 @@ export const titleCase = (snake: string): string =>
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 
+/**
+ * Today as YYYY-MM-DD in the OPERATOR'S timezone. `toISOString().slice(0, 10)`
+ * is UTC and dates a late-evening Kentucky action tomorrow.
+ */
+export const localIsoDate = (now: Date): string => {
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${now.getFullYear()}-${month}-${day}`;
+};
+
 export const formatDate = (iso: string): string => {
   const [year, month, day] = iso.split('-');
   const months = [

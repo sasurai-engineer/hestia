@@ -47,6 +47,16 @@ class UnknownPayment(Exception):
     pass
 
 
+class OpenPaymentExists(Exception):
+    """A created/processing request already exists for this lease — a retry
+    or double-click must not mint a second live PaymentIntent."""
+
+
+class TransportFailure(Exception):
+    """Stripe could not be reached; the local request is canceled, not left
+    dangling as a phantom charge-in-flight."""
+
+
 def live_transport(url: str, headers: dict[str, str], form: dict[str, str]) -> dict[str, Any]:
     """The one real HTTP door; everything else is pure."""
     request = urllib.request.Request(  # noqa: S310 - stripe.com only, built above
@@ -78,20 +88,32 @@ def verify_signature(
 ) -> dict[str, Any]:
     """Stripe's scheme: `t=<ts>,v1=<hex>` where v1 = HMAC-SHA256(secret,
     f"{t}.{payload}"). Stale timestamps are refused to kill replay."""
-    parts = dict(part.split("=", 1) for part in header.split(",") if "=" in part)
-    timestamp = parts.get("t")
-    signature = parts.get("v1")
-    if not timestamp or not signature or not timestamp.isdigit():
+    timestamp = None
+    signatures: list[str] = []
+    for part in header.split(","):
+        if "=" not in part:
+            continue
+        key, value = part.split("=", 1)
+        if key.strip() == "t":
+            timestamp = value.strip()
+        elif key.strip() == "v1":
+            # Secret rotation sends MULTIPLE v1 signatures; any match passes.
+            signatures.append(value.strip())
+    if not timestamp or not signatures or not timestamp.isdigit():
         raise BadSignature("malformed Stripe-Signature header")
+    # HMAC over the RAW bytes — never a decode a hostile body can crash.
     expected = hmac.new(
-        secret.encode(), f"{timestamp}.{payload.decode()}".encode(), hashlib.sha256
+        secret.encode(), timestamp.encode() + b"." + payload, hashlib.sha256
     ).hexdigest()
-    if not hmac.compare_digest(expected, signature):
+    if not any(hmac.compare_digest(expected, signature) for signature in signatures):
         raise BadSignature("signature mismatch")
     age = abs(int(now.timestamp()) - int(timestamp))
     if age > SIGNATURE_TOLERANCE_SECONDS:
         raise BadSignature(f"timestamp outside tolerance ({age}s)")
-    return json.loads(payload)  # type: ignore[no-any-return]
+    try:
+        return json.loads(payload)  # type: ignore[no-any-return]
+    except ValueError as error:
+        raise BadSignature("signed payload is not valid JSON") from error
 
 
 class CollectOut(BaseModel):
@@ -110,10 +132,21 @@ def collect(
     transport: Transport,
     secret_key: str,
 ) -> CollectOut:
-    """Create the payment request and its PaymentIntent. Defaults to the
-    lease's outstanding balance; refuses to collect nothing."""
+    """Create the payment request and its PaymentIntent. One open request
+    per lease at a time; the default amount is what is actually owed —
+    outstanding charges net of open credit."""
     detail = rent_module.lease_detail(conn, lease_id)
-    effective = amount if amount is not None else detail.balance_due
+    open_request = conn.execute(
+        """
+        SELECT provider_ref FROM payment_requests
+        WHERE lease_id = %s AND status IN ('created', 'processing')
+        FOR UPDATE
+        """,
+        (lease_id,),
+    ).fetchone()
+    if open_request is not None:
+        raise OpenPaymentExists(open_request["provider_ref"] or lease_id)
+    effective = amount if amount is not None else detail.balance_due - detail.open_credit
     if effective <= 0:
         raise rent_module.NothingOutstanding(lease_id)
     row = conn.execute(
@@ -124,12 +157,18 @@ def collect(
         (lease_id, effective),
     ).fetchone()
     request_id: str = row["id"]  # type: ignore[index]
-    intent = create_payment_intent(
-        transport,
-        secret_key,
-        amount_cents=int(effective * 100),
-        metadata={"payment_request_id": request_id, "lease_id": lease_id},
-    )
+    try:
+        intent = create_payment_intent(
+            transport,
+            secret_key,
+            amount_cents=int(effective * 100),
+            metadata={"payment_request_id": request_id, "lease_id": lease_id},
+        )
+    except Exception as error:  # transport is injected; any failure lands here
+        # The endpoint's transaction rolls back on this raise, wiping the
+        # request row itself — no phantom in-flight payment survives, and the
+        # lease is immediately free to retry.
+        raise TransportFailure(str(error)) from error
     conn.execute(
         "UPDATE payment_requests SET provider_ref = %s, status = 'processing' WHERE id = %s",
         (intent["id"], request_id),
@@ -156,6 +195,7 @@ def handle_event(conn: Conn, event: dict[str, Any]) -> str:
         """
         SELECT id::text, lease_id::text, amount, status::text
         FROM payment_requests WHERE provider_ref = %s
+        FOR UPDATE
         """,
         (intent["id"],),
     ).fetchone()

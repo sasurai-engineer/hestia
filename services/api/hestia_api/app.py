@@ -352,6 +352,10 @@ def create_bank_account(
         account = bank_import.create_account(conn, body)
     except psycopg.errors.ForeignKeyViolation as error:
         raise HTTPException(status_code=422, detail="entity or property does not exist") from error
+    except psycopg.errors.UniqueViolation as error:
+        raise HTTPException(
+            status_code=409, detail="an account with this nickname already exists"
+        ) from error
     db.record_audit(
         conn,
         actor=actor,
@@ -576,6 +580,10 @@ def create_unit(
         unit_id = rent.create_unit(conn, body)
     except psycopg.errors.ForeignKeyViolation as error:
         raise HTTPException(status_code=422, detail="property does not exist") from error
+    except psycopg.errors.UniqueViolation as error:
+        raise HTTPException(
+            status_code=409, detail="this property already has a unit with that label"
+        ) from error
     _audit(conn, request, actor, "unit.create", "units", unit_id, body.model_dump(mode="json"))
     return {"id": unit_id}
 
@@ -800,6 +808,15 @@ def collect_rent(
         raise HTTPException(status_code=404, detail="lease not found") from error
     except rent.NothingOutstanding as error:
         raise HTTPException(status_code=422, detail="nothing outstanding to collect") from error
+    except payments.OpenPaymentExists as error:
+        raise HTTPException(
+            status_code=409,
+            detail=f"a payment is already in flight for this lease ({error})",
+        ) from error
+    except payments.TransportFailure as error:
+        raise HTTPException(
+            status_code=502, detail=f"payment provider unreachable: {error}"
+        ) from error
     _audit(
         conn,
         request,
@@ -817,12 +834,11 @@ async def stripe_webhook(request: Request, conn: Conn) -> dict[str, str]:
     payload = await request.body()
     header = request.headers.get("stripe-signature", "")
     try:
-        event = payments.verify_signature(
-            payload,
-            header,
-            config.stripe_webhook_secret(),
-            now=dt.datetime.now(tz=dt.UTC),
-        )
+        secret = config.stripe_webhook_secret()  # config-audit: allow — env-sourced, not a literal
+    except config.ConfigurationError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+    try:
+        event = payments.verify_signature(payload, header, secret, now=dt.datetime.now(tz=dt.UTC))
     except payments.BadSignature as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
     outcome = payments.handle_event(conn, event)
@@ -920,12 +936,18 @@ def signoff_report(
     body: SignoffIn, conn: Conn, request: Request, actor: Actor = "system"
 ) -> dict[str, str]:
     _require_property(conn, body.property_id)
+    # Certify the NUMBERS as they stand right now: a later back-dated
+    # correction makes the sign-off visibly stale instead of silently
+    # borrowing the reviewer's name.
+    live = reports.schedule_e(conn, str(body.property_id), body.tax_year)
     try:
         row = conn.execute(
             """
             INSERT INTO report_signoffs
-              (property_id, tax_year, report_kind, confirmed_by, note)
-            VALUES (%s, %s, %s, %s, %s) RETURNING id::text
+              (property_id, tax_year, report_kind, confirmed_by, note,
+               certified_income, certified_expenses, certified_depreciation,
+               certified_net)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id::text
             """,
             (
                 str(body.property_id),
@@ -933,6 +955,10 @@ def signoff_report(
                 body.report_kind,
                 body.confirmed_by,
                 body.note,
+                live.total_income,
+                live.total_expenses,
+                live.depreciation_line_18,
+                live.net,
             ),
         ).fetchone()
     except psycopg.errors.UniqueViolation as error:

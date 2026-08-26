@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { TransactionsTable } from '../../components/TransactionsTable';
 import { api, type LedgerEntryIn, type LedgerRegister, type PropertySummary } from '../../lib/api';
 
@@ -49,16 +49,22 @@ export default function TransactionsPage() {
   const [rationale, setRationale] = useState('');
   const [busy, setBusy] = useState(false);
 
+  // Rapid filter flips can resolve out of order; only the LATEST request may
+  // paint, or a slow all-properties response overwrites a filtered view.
+  const fetchSeq = useRef(0);
   const load = useCallback(async () => {
+    const seq = ++fetchSeq.current;
     try {
       const [reg, props] = await Promise.all([
         api.ledgerRegister(propertyFilter ? { propertyId: propertyFilter } : undefined),
         api.listProperties(),
       ]);
+      if (seq !== fetchSeq.current) return;
       setRegister(reg);
       setProperties(props);
       setError(null);
     } catch (caught) {
+      if (seq !== fetchSeq.current) return;
       setError(caught instanceof Error ? caught.message : String(caught));
     }
   }, [propertyFilter]);

@@ -28,17 +28,27 @@ export function HoldSellCard({ financials }: { financials: Financials }) {
       <span className={view.verdict === 'hold' ? 'pill pill--ok' : 'pill pill--flag'}>
         {view.verdict}
       </span>
-      <p style={{ margin: '8px 0 2px' }}>
-        Forward ROE <strong>{view.returnOnEquity}%</strong>{' '}
-        <span className="muted">
-          vs {hurdle}% hurdle ({view.margin} pts)
-        </span>
-      </p>
-      <p className="muted">
-        Equity {formatMoney(view.equity)} · cash flow {formatMoney(view.cashFlow)} · paydown{' '}
-        {formatMoney(view.principalPaydown)} · appreciation {formatMoney(view.appreciation)}
-        {view.noteBalance ? ` · note balance ${formatMoney(view.noteBalance)}` : ''}
-      </p>
+      {view.verdict === 'underwater' ? (
+        <p className="muted" style={{ margin: '8px 0 2px' }}>
+          {/* Underwater is only reachable WITH a note, so the balance always exists. */}
+          Equity {formatMoney(view.equity)} · note balance {formatMoney(view.noteBalance as string)}{' '}
+          — no return to compute.
+        </p>
+      ) : (
+        <>
+          <p style={{ margin: '8px 0 2px' }}>
+            Forward ROE <strong>{view.returnOnEquity}%</strong>{' '}
+            <span className="muted">
+              vs {hurdle}% hurdle ({view.margin} pts)
+            </span>
+          </p>
+          <p className="muted">
+            Equity {formatMoney(view.equity)} · cash flow {formatMoney(view.cashFlow)} · paydown{' '}
+            {formatMoney(view.principalPaydown)} · appreciation {formatMoney(view.appreciation)}
+            {view.noteBalance ? ` · note balance ${formatMoney(view.noteBalance)}` : ''}
+          </p>
+        </>
+      )}
       <div className="form-row" style={{ marginTop: 10 }}>
         <div className="field">
           <label htmlFor="hs-appreciation">Appreciation {appreciation}%</label>

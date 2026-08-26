@@ -268,6 +268,50 @@ Ordered for execution; struck items are closed and kept for the record.
 > (36 issues across 6 milestones). The sections below remain as the
 > architectural record; the issues are the source of truth for status.
 
+## Review hardening (2026-08-26) — the adversarial pass over increments 2–4
+
+A four-lens adversarial review (money-path correctness, concurrency,
+sign/semantics, hostile input) of bank import, reporting, rent, and payments
+produced ~20 confirmed defects; every one is fixed and pinned by a named
+regression in `services/api/tests/test_review_hardening.py` (schema module
+`014_review_hardening.sql` carries the database-level guarantees):
+
+- **Balance fan-out** — lease balances were a JOIN that double-counted when a
+  charge had multiple partial allocations; now scalar subqueries, plus a
+  persistent `open_credit` (receipts nothing was open for) that
+  `apply_open_credit` drains oldest-first on every receipt and sweep — a
+  prepayment now auto-pays next month's charge instead of vanishing.
+- **Reversal integrity** — reversing a receipt releases its allocations and
+  re-opens the charges; a partial UNIQUE index (`one_reversal_per_event`)
+  makes the double-reversal race a 409 for the loser; register gross totals
+  exclude reversal pairs so churn can't inflate income.
+- **Over-allocation is now impossible at the database** — a trigger
+  (`refuse_over_allocation`) locks the charge and refuses allocations beyond
+  its amount, whatever the application layer does.
+- **Check-then-act paths take row locks** — webhook settlement, bank-import
+  accept (double-accept is a 409, one ledger event), and the open-charge scan.
+- **Schedule E is signed-honest** — a refund in an expense category reports
+  as a negative expense line, never `abs()`-forged into income; sign-offs
+  store certified totals and the API reports `stale` when the live ledger
+  has moved since certification.
+- **Payments** — one in-flight request per lease (409), default collect
+  amount nets off open credit, provider transport failure rolls back the
+  request row entirely (no phantom row; retry works, 502), webhook HMAC over
+  raw bytes with multi-`v1` rotation support, non-JSON-but-signed payloads
+  rejected as bad signatures, unconfigured secret is a 503 before any parse.
+- **Bank import** — BOM-tolerant decode, per-account `invert_amounts` for
+  credit-card exports that print charges positive, dispositions guarded by
+  `AND disposition = 'pending'`, duplicate nickname/unit label surface as 409.
+- **Web** — hold/sell aggregates EVERY lien (blended rate, balance-weighted)
+  and names an underwater position instead of crashing; the insurance pill
+  floors an inadequate position below 100%; collect double-click guard +
+  409/503 as status not error; register filter races resolve latest-wins;
+  bank-account quick-create asks which entity owns it; renewal offers date
+  by the operator clock, not UTC.
+
+The API suite is 137 tests at 100% line+branch; the web suite 112 at 100%.
+Remaining work items surfaced by the same pass were filed as issues #37–#50.
+
 ## Carried findings from the web slice (2026-08-26, still open)
 
 - ~~Playwright e2e~~ — **closed with increment 3**: `apps/web/e2e/smoke.spec.ts`

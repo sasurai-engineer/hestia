@@ -72,6 +72,9 @@ class LeaseSummary(BaseModel):
     rent: Decimal
     residents: list[str]
     balance_due: Decimal
+    # Receipts not yet applied to any charge (a prepayment); the next sweep
+    # consumes it before anything is billed as due.
+    open_credit: Decimal
 
 
 class ChargeOut(BaseModel):
@@ -104,6 +107,7 @@ class LeaseDetail(BaseModel):
     residents: list[str]
     charges: list[ChargeOut]
     balance_due: Decimal
+    open_credit: Decimal
 
 
 @dataclass(frozen=True)
@@ -175,11 +179,33 @@ SELECT l.id::text, u.property_id::text, p.label AS property_label,
        l.escalation::text, l.escalation_value,
        coalesce(array_agg(r.full_name ORDER BY r.full_name)
                 FILTER (WHERE r.full_name IS NOT NULL), '{}') AS residents,
-       coalesce((SELECT sum(c.amount) FILTER (WHERE c.status NOT IN ('waived', 'written_off'))
-                   - coalesce(sum(a.amount), 0)
-                 FROM rent_charges c
-                 LEFT JOIN rent_receipt_allocations a ON a.charge_id = c.id
-                 WHERE c.lease_id = l.id), 0) AS balance_due
+       -- Independent scalar subqueries — never a JOIN that fans a charge out
+       -- once per allocation (the review's critical finding: a charge paid in
+       -- two installments double-counted itself and /collect billed a
+       -- paid-up tenant). Waived/written_off drop out of BOTH sides.
+       coalesce((SELECT sum(c.amount) FROM rent_charges c
+                 WHERE c.lease_id = l.id
+                   AND c.status NOT IN ('waived', 'written_off')), 0)
+       - coalesce((SELECT sum(a.amount)
+                   FROM rent_receipt_allocations a
+                   JOIN rent_charges c ON c.id = a.charge_id
+                   WHERE c.lease_id = l.id
+                     AND c.status NOT IN ('waived', 'written_off')), 0)
+         AS balance_due,
+       -- Money received but not yet applied to any charge: a prepayment,
+       -- persistent and visible, consumed by the next sweep.
+       coalesce((SELECT sum(e.amount) FROM ledger_events e
+                 WHERE e.lease_id = l.id
+                   AND e.category IN ('rent', 'late_fee')
+                   AND e.amount > 0
+                   AND e.reverses_event_id IS NULL
+                   AND NOT EXISTS (SELECT 1 FROM ledger_events r
+                                   WHERE r.reverses_event_id = e.id)), 0)
+       - coalesce((SELECT sum(a.amount)
+                   FROM rent_receipt_allocations a
+                   JOIN rent_charges c ON c.id = a.charge_id
+                   WHERE c.lease_id = l.id), 0)
+         AS open_credit
 FROM leases l
 JOIN units u ON u.id = l.unit_id
 JOIN properties p ON p.id = u.property_id
@@ -207,6 +233,7 @@ def list_leases(conn: Conn) -> list[LeaseSummary]:
             rent=row["rent"],
             residents=row["residents"],
             balance_due=row["balance_due"],
+            open_credit=row["open_credit"],
         )
         for row in rows
     ]
@@ -233,8 +260,9 @@ def lease_detail(conn: Conn, lease_id: str) -> LeaseDetail:
         (lease_id,),
     ).fetchall()
     return LeaseDetail(
-        **{k: row[k] for k in row if k not in ("balance_due",)},
+        **{k: row[k] for k in row if k not in ("balance_due", "open_credit")},
         balance_due=row["balance_due"],
+        open_credit=row["open_credit"],
         charges=[
             ChargeOut(
                 **{k: charge[k] for k in charge if k != "allocated"},
@@ -310,6 +338,10 @@ def sweep_rent_charges(conn: Conn, as_of: dt.date) -> RentSweepResult:
             (lease["id"], period_start, period_start, due_on, amount),
         )
         created += result.rowcount
+        if result.rowcount:
+            # A prepaid tenant's open credit pays the new charge immediately —
+            # before anything can call it overdue.
+            apply_open_credit(conn, lease["id"])
     return RentSweepResult(charges_created=created, gaps=[vars(gap) for gap in gaps])
 
 
@@ -417,6 +449,10 @@ def sweep_late_fees(conn: Conn, as_of: dt.date) -> RentSweepResult:
             ),
         )
         created += result.rowcount
+        # Unconditional: the overdue query already excludes periods with an
+        # existing fee, so the only rowcount-0 case is a concurrent sweep —
+        # and applying credit is idempotent either way.
+        apply_open_credit(conn, charge["lease_id"])
     return RentSweepResult(charges_created=created, gaps=[vars(gap) for gap in gaps])
 
 
@@ -433,20 +469,73 @@ class ReceiptOut(BaseModel):
     unallocated: Decimal
 
 
-def _refresh_charge_status(conn: Conn, charge_id: str) -> None:
-    conn.execute(
+def apply_open_credit(conn: Conn, lease_id: str) -> list[dict[str, str]]:
+    """Apply every unapplied receipt to every open charge, oldest first on
+    both sides — the single allocation engine behind receipts, sweeps, and
+    webhook settlements. A prepayment therefore pays the next charge the
+    moment the sweep creates it, instead of vanishing while a late fee
+    accrues (the adversarial review's scenario). Charge rows are locked so
+    concurrent applications serialize; the schema's allocation-cap trigger
+    backs the arithmetic at the database.
+    """
+    credits = conn.execute(
         """
-        UPDATE rent_charges c SET status = CASE
-          WHEN c.status IN ('waived', 'written_off') THEN c.status
-          WHEN coalesce((SELECT sum(a.amount) FROM rent_receipt_allocations a
-                         WHERE a.charge_id = c.id), 0) >= c.amount THEN 'paid'
-          WHEN coalesce((SELECT sum(a.amount) FROM rent_receipt_allocations a
-                         WHERE a.charge_id = c.id), 0) > 0 THEN 'partially_paid'
-          ELSE c.status END
-        WHERE c.id = %s
+        SELECT e.id, e.event_uuid::text,
+               e.amount - coalesce((SELECT sum(a.amount)
+                                    FROM rent_receipt_allocations a
+                                    WHERE a.ledger_event_id = e.id), 0) AS remaining
+        FROM ledger_events e
+        WHERE e.lease_id = %s
+          AND e.category IN ('rent', 'late_fee')
+          AND e.amount > 0
+          AND e.reverses_event_id IS NULL
+          AND NOT EXISTS (SELECT 1 FROM ledger_events r
+                          WHERE r.reverses_event_id = e.id)
+        ORDER BY e.occurred_on, e.id
         """,
-        (charge_id,),
-    )
+        (lease_id,),
+    ).fetchall()
+    open_charges = conn.execute(
+        """
+        SELECT c.id::text,
+               c.amount - coalesce((SELECT sum(a.amount)
+                                    FROM rent_receipt_allocations a
+                                    WHERE a.charge_id = c.id), 0) AS outstanding
+        FROM rent_charges c
+        WHERE c.lease_id = %s AND c.status IN ('due', 'partially_paid')
+        ORDER BY c.due_on, c.created_at
+        FOR UPDATE OF c
+        """,
+        (lease_id,),
+    ).fetchall()
+    allocations: list[dict[str, str]] = []
+    charge_queue = [dict(charge) for charge in open_charges if charge["outstanding"] > 0]
+    for credit in credits:
+        remaining = credit["remaining"]
+        for charge in charge_queue:
+            if remaining <= 0:
+                break
+            if charge["outstanding"] <= 0:
+                continue
+            portion = min(remaining, charge["outstanding"])
+            conn.execute(
+                """
+                INSERT INTO rent_receipt_allocations (charge_id, ledger_event_id, amount)
+                VALUES (%s, %s, %s)
+                """,
+                (charge["id"], credit["id"], portion),
+            )
+            ledger_module.refresh_charge_status(conn, charge["id"])
+            charge["outstanding"] -= portion
+            remaining -= portion
+            allocations.append(
+                {
+                    "charge_id": charge["id"],
+                    "event_uuid": credit["event_uuid"],
+                    "amount": str(portion),
+                }
+            )
+    return allocations
 
 
 def record_receipt(conn: Conn, lease_id: str, body: ReceiptIn) -> ReceiptOut:
@@ -473,39 +562,23 @@ def record_receipt(conn: Conn, lease_id: str, body: ReceiptIn) -> ReceiptOut:
             lease_id=lease["id"],
         ),
     )
-    event_id = conn.execute(
-        "SELECT id FROM ledger_events WHERE event_uuid = %s", (event.event_uuid,)
-    ).fetchone()["id"]  # type: ignore[index]
-    remaining = body.amount
     allocations: list[dict[str, str]] = []
     if body.category != "deposit_received":
-        open_charges = conn.execute(
-            """
-            SELECT c.id::text, c.amount - coalesce(sum(a.amount), 0) AS outstanding
-            FROM rent_charges c
-            LEFT JOIN rent_receipt_allocations a ON a.charge_id = c.id
-            WHERE c.lease_id = %s AND c.status IN ('due', 'partially_paid')
-            GROUP BY c.id
-            HAVING c.amount - coalesce(sum(a.amount), 0) > 0
-            ORDER BY min(c.due_on), min(c.created_at)
-            """,
-            (lease_id,),
-        ).fetchall()
-        for charge in open_charges:
-            if remaining <= 0:
-                break
-            portion = min(remaining, charge["outstanding"])
-            conn.execute(
-                """
-                INSERT INTO rent_receipt_allocations (charge_id, ledger_event_id, amount)
-                VALUES (%s, %s, %s)
-                """,
-                (charge["id"], event_id, portion),
-            )
-            _refresh_charge_status(conn, charge["id"])
-            allocations.append({"charge_id": charge["id"], "amount": str(portion)})
-            remaining -= portion
-    return ReceiptOut(event_uuid=event.event_uuid, allocations=allocations, unallocated=remaining)
+        # The shared engine applies THIS receipt and any older open credit.
+        applied = apply_open_credit(conn, lease_id)
+        allocations = [
+            {"charge_id": entry["charge_id"], "amount": entry["amount"]}
+            for entry in applied
+            if entry["event_uuid"] == event.event_uuid
+        ]
+    allocated_here = sum((Decimal(entry["amount"]) for entry in allocations), Decimal(0))
+    return ReceiptOut(
+        event_uuid=event.event_uuid,
+        allocations=allocations,
+        # Anything left is OPEN CREDIT — persistent, visible on the lease,
+        # and consumed by the next sweep. Never absorbed, never forgotten.
+        unallocated=body.amount - allocated_here,
+    )
 
 
 class RenewalContextOut(BaseModel):

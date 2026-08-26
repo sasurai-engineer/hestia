@@ -4,7 +4,7 @@ import { use, useCallback, useEffect, useState } from 'react';
 import { RenewalCard } from '../../../components/RenewalCard';
 import { formatMoney } from '../../../components/TransactionsTable';
 import { ApiError, api, type LeaseDetail, type RenewalContextOut } from '../../../lib/api';
-import { formatDate } from '../../../lib/format';
+import { formatDate, localIsoDate } from '../../../lib/format';
 
 export default function LeasePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -14,6 +14,7 @@ export default function LeasePage({ params }: { params: Promise<{ id: string }> 
   const [notice, setNotice] = useState<string | null>(null);
   const [amount, setAmount] = useState('');
   const [occurredOn, setOccurredOn] = useState('');
+  const [collecting, setCollecting] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -56,6 +57,8 @@ export default function LeasePage({ params }: { params: Promise<{ id: string }> 
   };
 
   const collect = async () => {
+    if (collecting) return;
+    setCollecting(true);
     setError(null);
     setNotice(null);
     try {
@@ -65,11 +68,14 @@ export default function LeasePage({ params }: { params: Promise<{ id: string }> 
           'processing — the receipt posts itself when the bank settles.',
       );
     } catch (caught) {
-      if (caught instanceof ApiError && caught.status === 503) {
+      if (caught instanceof ApiError && (caught.status === 503 || caught.status === 409)) {
+        // 409: a request is already in flight — status, not failure.
         setNotice(caught.message);
       } else {
         setError(caught instanceof Error ? caught.message : String(caught));
       }
+    } finally {
+      setCollecting(false);
     }
   };
 
@@ -77,7 +83,7 @@ export default function LeasePage({ params }: { params: Promise<{ id: string }> 
     setError(null);
     try {
       await api.recordRenewalOffer(id, {
-        offered_on: new Date().toISOString().slice(0, 10),
+        offered_on: localIsoDate(new Date()),
         offered_rent: newRent,
       });
       setNotice(
@@ -108,8 +114,16 @@ export default function LeasePage({ params }: { params: Promise<{ id: string }> 
         >
           Balance due {formatMoney(detail.balance_due)}
         </strong>{' '}
-        <button className="button" type="button" onClick={() => void collect()}>
-          Collect by ACH
+        {Number(detail.open_credit) > 0 ? (
+          <span className="pill pill--ok">credit on account {formatMoney(detail.open_credit)}</span>
+        ) : null}{' '}
+        <button
+          className="button"
+          type="button"
+          disabled={collecting}
+          onClick={() => void collect()}
+        >
+          {collecting ? 'Requesting…' : 'Collect by ACH'}
         </button>
       </p>
 

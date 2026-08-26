@@ -27,6 +27,26 @@ const financials: Financials = {
 };
 
 describe('HoldSellCard', () => {
+  it('shows the underwater body without a fake ROE line', () => {
+    const drowned: Financials = {
+      ...financials,
+      valuation: { value: '100000.00', source: 'owner_estimate', as_of: '2026-08-01' },
+      debts: [
+        {
+          lender: 'Heavy Lender',
+          original_principal: '190000.00',
+          annual_rate: '0.0625',
+          term_months: 360,
+          months_elapsed: 6,
+        },
+      ],
+    };
+    render(<HoldSellCard financials={drowned} />);
+    expect(screen.getByText('underwater')).toBeDefined();
+    expect(screen.getByText(/no\s+return to compute/)).toBeDefined();
+    expect(screen.queryByText(/Forward ROE/)).toBeNull();
+  });
+
   it('renders the verdict and recomputes when an assumption is dragged', () => {
     // Free and clear at 3% appreciation: ROE ≈ 7.2%, shy of the 8% default
     // hurdle — the honest verdict is redeploy until the hurdle drops.
@@ -178,7 +198,7 @@ describe('ScheduleEView', () => {
       <ScheduleEView
         report={{
           ...report,
-          needs_classification: [{ ...report.needs_classification[0]!, memo: null }],
+          needs_classification: report.needs_classification.map((row) => ({ ...row, memo: null })),
         }}
       />,
     );

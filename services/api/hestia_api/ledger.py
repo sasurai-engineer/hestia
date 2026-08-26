@@ -116,6 +116,24 @@ class AlreadyReversed(Exception):
     pass
 
 
+def refresh_charge_status(conn: Conn, charge_id: str) -> None:
+    """Recompute a charge's status from its allocations — in BOTH directions
+    (a reversal can un-pay a charge), never touching waived/written_off."""
+    conn.execute(
+        """
+        UPDATE rent_charges c SET status = CASE
+          WHEN c.status IN ('waived', 'written_off') THEN c.status
+          WHEN coalesce((SELECT sum(a.amount) FROM rent_receipt_allocations a
+                         WHERE a.charge_id = c.id), 0) >= c.amount THEN 'paid'
+          WHEN coalesce((SELECT sum(a.amount) FROM rent_receipt_allocations a
+                         WHERE a.charge_id = c.id), 0) > 0 THEN 'partially_paid'
+          ELSE 'due' END
+        WHERE c.id = %s
+        """,
+        (charge_id,),
+    )
+
+
 class UnknownEvent(Exception):
     pass
 
@@ -187,6 +205,26 @@ def reverse_event(conn: Conn, event_uuid: str, body: ReversalIn) -> ReversalOut:
     ).fetchone()
     if existing is not None:
         raise AlreadyReversed(event_uuid)
+    # Money the reversed event had applied to rent charges is released, and
+    # every touched charge's status is recomputed — a reversed receipt must
+    # not leave rent looking paid.
+    released = conn.execute(
+        "DELETE FROM rent_receipt_allocations WHERE ledger_event_id = %s RETURNING charge_id::text",
+        (original["id"],),
+    ).fetchall()
+    for row_released in released:
+        refresh_charge_status(conn, row_released["charge_id"])
+    try:
+        return _insert_reversal(conn, original, body, event_uuid)
+    except psycopg.errors.UniqueViolation as error:
+        # The race loser: another reversal committed between our check and
+        # insert; one_reversal_per_event turned corruption into a conflict.
+        raise AlreadyReversed(event_uuid) from error
+
+
+def _insert_reversal(
+    conn: Conn, original: dict[str, Any], body: ReversalIn, event_uuid: str
+) -> ReversalOut:
     rationale = original["capitalisation_rationale"]
     if original["is_capital"] is True:
         rationale = f"reversal: {rationale}"
@@ -215,7 +253,7 @@ def reverse_event(conn: Conn, event_uuid: str, body: ReversalIn) -> ReversalOut:
             original["document_id"],
             original["provenance_id"],
         ),
-    ).fetchone()
+    ).fetchone()  # one_reversal_per_event backs the check above at the schema
     reversal = read_event_by_id(conn, row["id"])  # type: ignore[index]
     corrected = append_event(conn, body.corrected) if body.corrected else None
     return ReversalOut(reversal=reversal, corrected=corrected)
@@ -251,12 +289,20 @@ def register(
         },
     ).fetchall()
     # Totals over the SAME filter without the limit: the register page may be
-    # truncated, the arithmetic never is. Reversal pairs cancel naturally.
+    # truncated, the arithmetic never is. Reversal PAIRS are excluded from the
+    # gross in/out figures (a mistake and its correction are not cash flow);
+    # net is computed over everything, and the pairs cancel there.
     totals = conn.execute(
         """
         SELECT
-          coalesce(sum(amount) FILTER (WHERE amount > 0), 0) AS total_in,
-          coalesce(sum(amount) FILTER (WHERE amount < 0), 0) AS total_out,
+          coalesce(sum(amount) FILTER (WHERE amount > 0
+            AND reverses_event_id IS NULL
+            AND NOT EXISTS (SELECT 1 FROM ledger_events r
+                            WHERE r.reverses_event_id = e.id)), 0) AS total_in,
+          coalesce(sum(amount) FILTER (WHERE amount < 0
+            AND reverses_event_id IS NULL
+            AND NOT EXISTS (SELECT 1 FROM ledger_events r
+                            WHERE r.reverses_event_id = e.id)), 0) AS total_out,
           coalesce(sum(amount), 0) AS net
         FROM ledger_events e
         WHERE (%(property_id)s::uuid IS NULL OR e.property_id = %(property_id)s)

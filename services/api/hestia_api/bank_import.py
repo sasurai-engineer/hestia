@@ -12,6 +12,7 @@ from __future__ import annotations
 import datetime as dt
 import hashlib
 import re
+import uuid
 from decimal import Decimal
 from typing import Any, Literal
 
@@ -49,12 +50,16 @@ class MatchMismatch(Exception):
 
 
 class BankAccountIn(BaseModel):
-    entity_id: str
-    property_id: str | None = None
+    # UUID-typed so a malformed id is a 422 at the edge, not a 500 in SQL.
+    entity_id: uuid.UUID
+    property_id: uuid.UUID | None = None
     nickname: str = Field(min_length=1, max_length=120)
     institution: str | None = None
     account_last4: str | None = Field(default=None, pattern=r"^\d{4}$")
     kind: Literal["checking", "savings", "credit_card", "escrow"]
+    # TRUE when this account's exports sign money backwards (typical for
+    # credit cards printing charges positive). Declared, never inferred.
+    invert_amounts: bool = False
 
 
 class BankAccountOut(BankAccountIn):
@@ -106,17 +111,19 @@ def create_account(conn: Conn, body: BankAccountIn) -> BankAccountOut:
     row = conn.execute(
         """
         INSERT INTO bank_accounts
-          (entity_id, property_id, nickname, institution, account_last4, kind)
-        VALUES (%s, %s, %s, %s, %s, %s)
+          (entity_id, property_id, nickname, institution, account_last4, kind,
+           invert_amounts)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
         RETURNING id::text, is_active
         """,
         (
-            body.entity_id,
-            body.property_id,
+            str(body.entity_id),
+            str(body.property_id) if body.property_id else None,
             body.nickname,
             body.institution,
             body.account_last4,
             body.kind,
+            body.invert_amounts,
         ),
     ).fetchone()
     return BankAccountOut(id=row["id"], is_active=row["is_active"], **body.model_dump())  # type: ignore[index]
@@ -126,7 +133,7 @@ def list_accounts(conn: Conn) -> list[BankAccountOut]:
     rows = conn.execute(
         """
         SELECT id::text, entity_id::text, property_id::text, nickname, institution,
-               account_last4, kind::text, is_active
+               account_last4, kind::text, is_active, invert_amounts
         FROM bank_accounts ORDER BY created_at
         """
     ).fetchall()
@@ -219,7 +226,10 @@ def import_statement(
     conn: Conn, account_id: str, *, filename: str, content: bytes, imported_by: str
 ) -> ImportSummary:
     account = conn.execute(
-        "SELECT id::text, entity_id::text, property_id::text FROM bank_accounts WHERE id = %s",
+        """
+        SELECT id::text, entity_id::text, property_id::text, invert_amounts
+        FROM bank_accounts WHERE id = %s
+        """,
         (account_id,),
     ).fetchone()
     if account is None:
@@ -232,8 +242,20 @@ def import_statement(
     if existing is not None:
         raise DuplicateStatement(filename)
 
-    text = content.decode("utf-8", errors="replace")
+    text = content.decode("utf-8-sig", errors="replace")  # BOM-tolerant: Excel exports
     fmt, rows = statement_parse.parse_statement(filename, text)
+    if account["invert_amounts"]:
+        # The owner declared this account's exports sign money backwards
+        # (typical credit-card convention). Applied once, at staging.
+        rows = [
+            statement_parse.ParsedTransaction(
+                posted_on=txn.posted_on,
+                amount=-txn.amount,
+                description=txn.description,
+                fitid=txn.fitid,
+            )
+            for txn in rows
+        ]
 
     document = conn.execute(
         """
@@ -324,6 +346,7 @@ def _load_pending(conn: Conn, txn_id: str) -> dict[str, Any]:
         JOIN bank_import_batches b ON b.id = t.batch_id
         JOIN bank_accounts a ON a.id = t.bank_account_id
         WHERE t.id = %s
+        FOR UPDATE OF t, b
         """,
         (txn_id,),
     ).fetchone()
@@ -394,7 +417,7 @@ def accept(conn: Conn, txn_id: str, body: AcceptIn) -> list[ledger_module.Ledger
         """
         UPDATE bank_transactions
         SET disposition = 'accepted', needs_review = FALSE, ledger_event_id = %s
-        WHERE id = %s
+        WHERE id = %s AND disposition = 'pending'
         """,
         (first_event["id"], txn_id),  # type: ignore[index]
     )
@@ -407,7 +430,8 @@ def exclude(conn: Conn, txn_id: str) -> None:
     conn.execute(
         """
         UPDATE bank_transactions
-        SET disposition = 'excluded', needs_review = FALSE WHERE id = %s
+        SET disposition = 'excluded', needs_review = FALSE
+        WHERE id = %s AND disposition = 'pending'
         """,
         (txn_id,),
     )
@@ -429,7 +453,7 @@ def match_existing(conn: Conn, txn_id: str, event_uuid: str) -> None:
         """
         UPDATE bank_transactions
         SET disposition = 'matched_existing', needs_review = FALSE, ledger_event_id = %s
-        WHERE id = %s
+        WHERE id = %s AND disposition = 'pending'
         """,
         (event["id"], txn_id),
     )

@@ -28,3 +28,12 @@ acknowledge within three business days.
 
 Supported: the `main` branch. This software is pre-release; no version has yet
 been designated for production use.
+
+## Current authentication posture
+
+The API trusts the `x-actor` header and carries **no authentication** — a
+deliberate, temporary posture for a single-owner stack bound to localhost by
+`scripts/dev.sh`. Do not expose the API or web app beyond localhost until
+[issue #40](https://github.com/sasurai-engineer/hestia/issues/40)
+(authentication & identity) lands. Webhooks are the exception: the Stripe
+endpoint authenticates every request by HMAC signature.

@@ -360,6 +360,20 @@ BEGIN
   RAISE NOTICE '  ok      updated_at advances on write';
 END $$;
 
+-- Self-contained reversal fixture: an original, its reversal, then the
+-- forbidden second reversal.
+INSERT INTO ledger_events (occurred_on, category, amount, entity_id)
+  VALUES ('2026-08-01', 'rent', 1450.00, '11111111-1111-1111-1111-111111111111');
+INSERT INTO ledger_events (occurred_on, category, amount, entity_id, reverses_event_id)
+  SELECT '2026-08-01', 'rent', -1450.00, '11111111-1111-1111-1111-111111111111', max(id)
+  FROM ledger_events WHERE reverses_event_id IS NULL;
+SELECT assert_rejected(
+  $$INSERT INTO ledger_events (occurred_on, category, amount, entity_id, reverses_event_id)
+    SELECT occurred_on, category, amount, entity_id, reverses_event_id
+    FROM ledger_events WHERE reverses_event_id IS NOT NULL
+    ORDER BY id DESC LIMIT 1$$,
+  'one_reversal_per_event', 'a second reversal of an already-reversed event');
+
 \echo ''
 \echo 'append-only survives TRUNCATE'
 -- CASCADE on purpose: bank_transactions (011) now references the ledger, so
@@ -645,6 +659,12 @@ SELECT assert_rejected(
   $$INSERT INTO payment_requests (lease_id, amount, provider, status)
     VALUES ('bbbbbbbb-2222-2222-2222-222222222222', 1450.00, 'stripe', 'succeeded')$$,
   'success_posts_its_receipt', 'a succeeded payment with no receipt linked');
+SELECT assert_rejected(
+  $$INSERT INTO rent_receipt_allocations (charge_id, ledger_event_id, amount)
+    SELECT c.id, (SELECT min(id) FROM ledger_events), 2000.00
+    FROM rent_charges c
+    WHERE c.lease_id = 'bbbbbbbb-2222-2222-2222-222222222222' AND c.kind = 'rent'$$,
+  '<trigger>', 'an allocation exceeding its charge');
 DELETE FROM rent_charges WHERE lease_id = 'bbbbbbbb-2222-2222-2222-222222222222';
 DELETE FROM leases WHERE id = 'bbbbbbbb-2222-2222-2222-222222222222';
 DELETE FROM units WHERE id = 'bbbbbbbb-1111-1111-1111-111111111111';

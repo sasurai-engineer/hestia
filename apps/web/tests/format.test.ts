@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { ComponentOut } from '../src/lib/api';
-import { defectConsequences, formatDate, lifeSummary, titleCase } from '../src/lib/format';
+import {
+  defectConsequences,
+  formatDate,
+  lifeSummary,
+  localIsoDate,
+  titleCase,
+} from '../src/lib/format';
 
 const component = (overrides: Partial<ComponentOut>): ComponentOut => ({
   code: 'water_heater.tank',
@@ -21,6 +27,17 @@ describe('titleCase', () => {
   it('turns snake_case into words', () => {
     expect(titleCase('assessment_appeal_window')).toBe('Assessment Appeal Window');
     expect(titleCase('flood')).toBe('Flood');
+  });
+});
+
+describe('localIsoDate', () => {
+  it('dates by the operator clock, not UTC', () => {
+    // 23:30 Eastern on the 15th is 03:30 UTC on the 16th; the offer must say
+    // the 15th. Construct via local-time constructor so the test is
+    // timezone-independent for the formatting itself.
+    const evening = new Date(2026, 7, 15, 23, 30, 0);
+    expect(localIsoDate(evening)).toBe('2026-08-15');
+    expect(localIsoDate(new Date(2026, 0, 5, 0, 5, 0))).toBe('2026-01-05');
   });
 });
 

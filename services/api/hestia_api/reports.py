@@ -61,6 +61,9 @@ class Signoff(BaseModel):
     confirmed_by: str
     confirmed_at: dt.datetime
     note: str | None
+    # A sign-off certifies NUMBERS. When the live report no longer matches
+    # what was certified (a back-dated correction), it is STALE and says so.
+    stale: bool
 
 
 class ScheduleEReport(BaseModel):
@@ -150,17 +153,24 @@ def schedule_e(conn: Conn, property_id: str, tax_year: int) -> ScheduleEReport:
                 )
             )
             continue
-        bucket = income_lines if entry["line_no"] <= 4 else expense_lines
+        # SIGNED honesty: income lines carry the net as-is (a clawback year
+        # shows negative rent, never fake income); expense lines negate the
+        # net so money spent reads positive — and a net REFUND in an expense
+        # category reads negative, a recovery, instead of abs() forging it
+        # into an expense (the adversarial review's insurance-refund case).
+        is_income = entry["line_no"] <= 4
+        signed = total if is_income else -total
+        bucket = income_lines if is_income else expense_lines
         line = bucket.get(entry["line_no"])
         if line is None:
             bucket[entry["line_no"]] = ScheduleELine(
                 line_no=entry["line_no"],
                 label=entry["line_label"],
                 citation=entry["citation"],
-                amount=abs(total),
+                amount=signed,
             )
         else:
-            line.amount += abs(total)
+            line.amount += signed
     depreciation = conn.execute(
         """
         SELECT coalesce(sum(de.amount), 0) AS total
@@ -186,13 +196,33 @@ def schedule_e(conn: Conn, property_id: str, tax_year: int) -> ScheduleEReport:
     ).fetchall()
     signoff_row = conn.execute(
         """
-        SELECT confirmed_by, confirmed_at, note FROM report_signoffs
+        SELECT confirmed_by, confirmed_at, note,
+               certified_income, certified_expenses,
+               certified_depreciation, certified_net
+        FROM report_signoffs
         WHERE property_id = %s AND tax_year = %s AND report_kind = 'schedule_e'
         """,
         (property_id, tax_year),
     ).fetchone()
     total_income = sum((line.amount for line in income_lines.values()), Decimal(0))
     total_expenses = sum((line.amount for line in expense_lines.values()), Decimal(0))
+    net = total_income - total_expenses - depreciation
+    signoff = None
+    if signoff_row is not None:
+        signoff = Signoff(
+            confirmed_by=signoff_row["confirmed_by"],
+            confirmed_at=signoff_row["confirmed_at"],
+            note=signoff_row["note"],
+            stale=(
+                signoff_row["certified_net"] is not None
+                and (
+                    signoff_row["certified_income"] != total_income
+                    or signoff_row["certified_expenses"] != total_expenses
+                    or signoff_row["certified_depreciation"] != depreciation
+                    or signoff_row["certified_net"] != net
+                )
+            ),
+        )
     return ScheduleEReport(
         property_id=property_id,
         tax_year=tax_year,
@@ -205,7 +235,7 @@ def schedule_e(conn: Conn, property_id: str, tax_year: int) -> ScheduleEReport:
         ),
         total_income=total_income,
         total_expenses=total_expenses,
-        net=total_income - total_expenses - depreciation,
+        net=net,
         excluded=excluded,
         needs_classification=[
             NeedsClassification(
@@ -221,7 +251,7 @@ def schedule_e(conn: Conn, property_id: str, tax_year: int) -> ScheduleEReport:
             )
             for flag in flags
         ],
-        signoff=Signoff(**signoff_row) if signoff_row else None,
+        signoff=signoff,
         caveat=(
             "Engineering scaffolding for a tax professional's review, not tax "
             "advice; the sign-off gate exists for exactly that reason."
@@ -421,7 +451,7 @@ def financials(conn: Conn, property_id: str, as_of: dt.date) -> Financials:
     return Financials(
         property_id=property_id,
         income_12mo=rollup["income"],  # type: ignore[index]
-        operating_expenses_12mo=abs(rollup["operating"]),  # type: ignore[index]
+        operating_expenses_12mo=-rollup["operating"],  # type: ignore[index] - signed: a net-refund year reads negative
         noi_12mo=rollup["income"] + rollup["operating"],  # type: ignore[index]
         valuation=ValuationOut(**valuation) if valuation else None,
         debts=[DebtTerms(**debt) for debt in debts],
