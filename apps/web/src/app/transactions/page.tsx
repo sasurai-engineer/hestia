@@ -106,6 +106,11 @@ export default function TransactionsPage() {
   return (
     <>
       <h1 className="page-title">Transactions</h1>
+      <p>
+        <a className="button button--quiet" href="/transactions/import">
+          Import a bank statement
+        </a>
+      </p>
       <p className="page-subtitle">
         The ledger is append-only: a mistake is corrected by a reversal that stays on the page, so
         the tax position is reconstructible exactly as it was taken.

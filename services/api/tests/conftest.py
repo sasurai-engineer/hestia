@@ -162,8 +162,22 @@ def clean(conn: psycopg.Connection[Any]) -> None:
         "tax_elections",
         "tax_profiles",
         "disclosures",
+        # Bank staging is mutable by design; only the LEDGER rows it produced
+        # survive (and pin their anchors, handled below).
+        "bank_transactions",
+        "bank_import_batches",
+        "bank_accounts",
     ):
         conn.execute(f"DELETE FROM {table}")  # noqa: S608 - fixed identifiers above
+    conn.execute("DELETE FROM categorization_rules WHERE origin = 'user'")
+    # A statement document referenced by an accepted ledger row is pinned
+    # (ledger_events_document_fk) — like every anchor the ledger touches.
+    conn.execute(
+        """
+        DELETE FROM source_documents s
+        WHERE NOT EXISTS (SELECT 1 FROM ledger_events e WHERE e.document_id = s.id)
+        """
+    )
     conn.execute(
         """
         DELETE FROM leases l

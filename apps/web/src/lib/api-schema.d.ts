@@ -4,6 +4,109 @@
  */
 
 export interface paths {
+  '/bank/accounts': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Bank Accounts */
+    get: operations['list_bank_accounts_bank_accounts_get'];
+    put?: never;
+    /** Create Bank Account */
+    post: operations['create_bank_account_bank_accounts_post'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/bank/accounts/{account_id}/imports': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Import Bank Statement */
+    post: operations['import_bank_statement_bank_accounts__account_id__imports_post'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/bank/imports/{batch_id}/transactions': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Bank Review Queue */
+    get: operations['bank_review_queue_bank_imports__batch_id__transactions_get'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/bank/transactions/{txn_id}/accept': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Accept Bank Transaction */
+    post: operations['accept_bank_transaction_bank_transactions__txn_id__accept_post'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/bank/transactions/{txn_id}/exclude': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Exclude Bank Transaction */
+    post: operations['exclude_bank_transaction_bank_transactions__txn_id__exclude_post'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/bank/transactions/{txn_id}/match': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Match Bank Transaction */
+    post: operations['match_bank_transaction_bank_transactions__txn_id__match_post'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/coverage/jurisdictions': {
     parameters: {
       query?: never;
@@ -199,6 +302,91 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    /** AcceptIn */
+    AcceptIn: {
+      /** Capitalisation Rationale */
+      capitalisation_rationale?: string | null;
+      /** Category */
+      category?:
+        | (
+            | 'rent'
+            | 'other_income'
+            | 'late_fee'
+            | 'deposit_received'
+            | 'deposit_returned'
+            | 'mortgage_interest'
+            | 'mortgage_principal'
+            | 'property_tax'
+            | 'insurance'
+            | 'repairs'
+            | 'capital_improvement'
+            | 'utilities'
+            | 'management_fee'
+            | 'hoa'
+            | 'legal_professional'
+            | 'advertising'
+            | 'supplies'
+            | 'travel'
+            | 'acquisition_cost'
+            | 'disposition_cost'
+            | 'owner_contribution'
+            | 'owner_distribution'
+          )
+        | null;
+      /** Is Capital */
+      is_capital?: boolean | null;
+      /** Memo */
+      memo?: string | null;
+      /** Property Id */
+      property_id?: string | null;
+      /** Splits */
+      splits?: components['schemas']['SplitIn'][] | null;
+    };
+    /** BankAccountIn */
+    BankAccountIn: {
+      /** Account Last4 */
+      account_last4?: string | null;
+      /** Entity Id */
+      entity_id: string;
+      /** Institution */
+      institution?: string | null;
+      /**
+       * Kind
+       * @enum {string}
+       */
+      kind: 'checking' | 'savings' | 'credit_card' | 'escrow';
+      /** Nickname */
+      nickname: string;
+      /** Property Id */
+      property_id?: string | null;
+    };
+    /** BankAccountOut */
+    BankAccountOut: {
+      /** Account Last4 */
+      account_last4?: string | null;
+      /** Entity Id */
+      entity_id: string;
+      /** Id */
+      id: string;
+      /** Institution */
+      institution?: string | null;
+      /** Is Active */
+      is_active: boolean;
+      /**
+       * Kind
+       * @enum {string}
+       */
+      kind: 'checking' | 'savings' | 'credit_card' | 'escrow';
+      /** Nickname */
+      nickname: string;
+      /** Property Id */
+      property_id?: string | null;
+    };
+    /** Body_import_bank_statement_bank_accounts__account_id__imports_post */
+    Body_import_bank_statement_bank_accounts__account_id__imports_post: {
+      /** File */
+      file: string;
+    };
     /** ChainLink */
     ChainLink: {
       /** Level */
@@ -462,6 +650,19 @@ export interface components {
        */
       status: 'alive';
     };
+    /** ImportSummary */
+    ImportSummary: {
+      /** Batch Id */
+      batch_id: string;
+      /** Duplicates */
+      duplicates: number;
+      /** Format */
+      format: string;
+      /** Staged */
+      staged: number;
+      /** Suggested */
+      suggested: number;
+    };
     /** LedgerEntryIn */
     LedgerEntryIn: {
       /** Amount */
@@ -497,6 +698,8 @@ export interface components {
         | 'owner_distribution';
       /** Counterparty */
       counterparty?: string | null;
+      /** Document Id */
+      document_id?: string | null;
       /** Entity Id */
       entity_id?: string | null;
       /** Is Capital */
@@ -564,6 +767,14 @@ export interface components {
       total_in: string;
       /** Total Out */
       total_out: string;
+    };
+    /** MatchIn */
+    MatchIn: {
+      /**
+       * Event Uuid
+       * Format: uuid
+       */
+      event_uuid: string;
     };
     /** PropertyCoverage */
     PropertyCoverage: {
@@ -715,6 +926,70 @@ export interface components {
       corrected: components['schemas']['LedgerEventOut'] | null;
       reversal: components['schemas']['LedgerEventOut'];
     };
+    /** SplitIn */
+    SplitIn: {
+      /** Amount */
+      amount: number | string;
+      /** Capitalisation Rationale */
+      capitalisation_rationale?: string | null;
+      /**
+       * Category
+       * @enum {string}
+       */
+      category:
+        | 'rent'
+        | 'other_income'
+        | 'late_fee'
+        | 'deposit_received'
+        | 'deposit_returned'
+        | 'mortgage_interest'
+        | 'mortgage_principal'
+        | 'property_tax'
+        | 'insurance'
+        | 'repairs'
+        | 'capital_improvement'
+        | 'utilities'
+        | 'management_fee'
+        | 'hoa'
+        | 'legal_professional'
+        | 'advertising'
+        | 'supplies'
+        | 'travel'
+        | 'acquisition_cost'
+        | 'disposition_cost'
+        | 'owner_contribution'
+        | 'owner_distribution';
+      /** Is Capital */
+      is_capital?: boolean | null;
+      /** Memo */
+      memo?: string | null;
+    };
+    /** StagedTransaction */
+    StagedTransaction: {
+      /** Amount */
+      amount: string;
+      /** Description */
+      description: string;
+      /** Disposition */
+      disposition: string;
+      /** Id */
+      id: string;
+      /** Needs Review */
+      needs_review: boolean;
+      /**
+       * Posted On
+       * Format: date
+       */
+      posted_on: string;
+      /** Suggested Category */
+      suggested_category: string | null;
+      /** Suggested Is Capital */
+      suggested_is_capital: boolean | null;
+      /** Suggested Property Id */
+      suggested_property_id: string | null;
+      /** Suggestion Confidence */
+      suggestion_confidence: number | null;
+    };
     /** SweepGapOut */
     SweepGapOut: {
       /** Detail */
@@ -772,6 +1047,236 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+  list_bank_accounts_bank_accounts_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BankAccountOut'][];
+        };
+      };
+    };
+  };
+  create_bank_account_bank_accounts_post: {
+    parameters: {
+      query?: never;
+      header?: {
+        'x-actor'?: string;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['BankAccountIn'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BankAccountOut'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  import_bank_statement_bank_accounts__account_id__imports_post: {
+    parameters: {
+      query?: never;
+      header?: {
+        'x-actor'?: string;
+      };
+      path: {
+        account_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'multipart/form-data': components['schemas']['Body_import_bank_statement_bank_accounts__account_id__imports_post'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ImportSummary'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  bank_review_queue_bank_imports__batch_id__transactions_get: {
+    parameters: {
+      query?: {
+        disposition?:
+          | ('pending' | 'accepted' | 'excluded' | 'duplicate' | 'matched_existing')
+          | null;
+      };
+      header?: never;
+      path: {
+        batch_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['StagedTransaction'][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  accept_bank_transaction_bank_transactions__txn_id__accept_post: {
+    parameters: {
+      query?: never;
+      header?: {
+        'x-actor'?: string;
+      };
+      path: {
+        txn_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AcceptIn'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LedgerEventOut'][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  exclude_bank_transaction_bank_transactions__txn_id__exclude_post: {
+    parameters: {
+      query?: never;
+      header?: {
+        'x-actor'?: string;
+      };
+      path: {
+        txn_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  match_bank_transaction_bank_transactions__txn_id__match_post: {
+    parameters: {
+      query?: never;
+      header?: {
+        'x-actor'?: string;
+      };
+      path: {
+        txn_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['MatchIn'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
   coverage_jurisdictions_coverage_jurisdictions_get: {
     parameters: {
       query?: {

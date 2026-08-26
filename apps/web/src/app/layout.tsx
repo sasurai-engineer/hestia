@@ -27,10 +27,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html
-      lang="en"
-      className={`${bitter.variable} ${plexSans.variable} ${plexMono.variable}`}
-    >
+    <html lang="en" className={`${bitter.variable} ${plexSans.variable} ${plexMono.variable}`}>
       <body>
         <div className="shell">
           <header className="masthead">

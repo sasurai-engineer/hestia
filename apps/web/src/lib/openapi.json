@@ -1,6 +1,237 @@
 {
   "components": {
     "schemas": {
+      "AcceptIn": {
+        "properties": {
+          "capitalisation_rationale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capitalisation Rationale"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "enum": [
+                  "rent",
+                  "other_income",
+                  "late_fee",
+                  "deposit_received",
+                  "deposit_returned",
+                  "mortgage_interest",
+                  "mortgage_principal",
+                  "property_tax",
+                  "insurance",
+                  "repairs",
+                  "capital_improvement",
+                  "utilities",
+                  "management_fee",
+                  "hoa",
+                  "legal_professional",
+                  "advertising",
+                  "supplies",
+                  "travel",
+                  "acquisition_cost",
+                  "disposition_cost",
+                  "owner_contribution",
+                  "owner_distribution"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "is_capital": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Capital"
+          },
+          "memo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Memo"
+          },
+          "property_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Property Id"
+          },
+          "splits": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/SplitIn"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Splits"
+          }
+        },
+        "title": "AcceptIn",
+        "type": "object"
+      },
+      "BankAccountIn": {
+        "properties": {
+          "account_last4": {
+            "anyOf": [
+              {
+                "pattern": "^\\d{4}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Last4"
+          },
+          "entity_id": {
+            "title": "Entity Id",
+            "type": "string"
+          },
+          "institution": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Institution"
+          },
+          "kind": {
+            "enum": ["checking", "savings", "credit_card", "escrow"],
+            "title": "Kind",
+            "type": "string"
+          },
+          "nickname": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Nickname",
+            "type": "string"
+          },
+          "property_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Property Id"
+          }
+        },
+        "required": ["entity_id", "nickname", "kind"],
+        "title": "BankAccountIn",
+        "type": "object"
+      },
+      "BankAccountOut": {
+        "properties": {
+          "account_last4": {
+            "anyOf": [
+              {
+                "pattern": "^\\d{4}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Last4"
+          },
+          "entity_id": {
+            "title": "Entity Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "institution": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Institution"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "kind": {
+            "enum": ["checking", "savings", "credit_card", "escrow"],
+            "title": "Kind",
+            "type": "string"
+          },
+          "nickname": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Nickname",
+            "type": "string"
+          },
+          "property_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Property Id"
+          }
+        },
+        "required": ["entity_id", "nickname", "kind", "id", "is_active"],
+        "title": "BankAccountOut",
+        "type": "object"
+      },
+      "Body_import_bank_statement_bank_accounts__account_id__imports_post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": ["file"],
+        "title": "Body_import_bank_statement_bank_accounts__account_id__imports_post",
+        "type": "object"
+      },
       "ChainLink": {
         "properties": {
           "level": {
@@ -709,6 +940,33 @@
         "title": "Health",
         "type": "object"
       },
+      "ImportSummary": {
+        "properties": {
+          "batch_id": {
+            "title": "Batch Id",
+            "type": "string"
+          },
+          "duplicates": {
+            "title": "Duplicates",
+            "type": "integer"
+          },
+          "format": {
+            "title": "Format",
+            "type": "string"
+          },
+          "staged": {
+            "title": "Staged",
+            "type": "integer"
+          },
+          "suggested": {
+            "title": "Suggested",
+            "type": "integer"
+          }
+        },
+        "required": ["batch_id", "format", "staged", "duplicates", "suggested"],
+        "title": "ImportSummary",
+        "type": "object"
+      },
       "LedgerEntryIn": {
         "properties": {
           "amount": {
@@ -772,6 +1030,17 @@
               }
             ],
             "title": "Counterparty"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
           },
           "entity_id": {
             "anyOf": [
@@ -1025,6 +1294,18 @@
         },
         "required": ["events", "total_in", "total_out", "net"],
         "title": "LedgerRegister",
+        "type": "object"
+      },
+      "MatchIn": {
+        "properties": {
+          "event_uuid": {
+            "format": "uuid",
+            "title": "Event Uuid",
+            "type": "string"
+          }
+        },
+        "required": ["event_uuid"],
+        "title": "MatchIn",
         "type": "object"
       },
       "PropertyCoverage": {
@@ -1414,6 +1695,174 @@
         "title": "ReversalOut",
         "type": "object"
       },
+      "SplitIn": {
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,16}|(?=[\\d.]{1,19}0*$)\\d{0,16}\\.\\d{0,2}0*$)",
+                "type": "string"
+              }
+            ],
+            "title": "Amount"
+          },
+          "capitalisation_rationale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capitalisation Rationale"
+          },
+          "category": {
+            "enum": [
+              "rent",
+              "other_income",
+              "late_fee",
+              "deposit_received",
+              "deposit_returned",
+              "mortgage_interest",
+              "mortgage_principal",
+              "property_tax",
+              "insurance",
+              "repairs",
+              "capital_improvement",
+              "utilities",
+              "management_fee",
+              "hoa",
+              "legal_professional",
+              "advertising",
+              "supplies",
+              "travel",
+              "acquisition_cost",
+              "disposition_cost",
+              "owner_contribution",
+              "owner_distribution"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "is_capital": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Capital"
+          },
+          "memo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Memo"
+          }
+        },
+        "required": ["category", "amount"],
+        "title": "SplitIn",
+        "type": "object"
+      },
+      "StagedTransaction": {
+        "properties": {
+          "amount": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Amount",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "disposition": {
+            "title": "Disposition",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "needs_review": {
+            "title": "Needs Review",
+            "type": "boolean"
+          },
+          "posted_on": {
+            "format": "date",
+            "title": "Posted On",
+            "type": "string"
+          },
+          "suggested_category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suggested Category"
+          },
+          "suggested_is_capital": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suggested Is Capital"
+          },
+          "suggested_property_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suggested Property Id"
+          },
+          "suggestion_confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suggestion Confidence"
+          }
+        },
+        "required": [
+          "id",
+          "posted_on",
+          "amount",
+          "description",
+          "suggested_category",
+          "suggested_property_id",
+          "suggested_is_capital",
+          "suggestion_confidence",
+          "needs_review",
+          "disposition"
+        ],
+        "title": "StagedTransaction",
+        "type": "object"
+      },
       "SweepGapOut": {
         "properties": {
           "detail": {
@@ -1518,6 +1967,357 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/bank/accounts": {
+      "get": {
+        "operationId": "list_bank_accounts_bank_accounts_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/BankAccountOut"
+                  },
+                  "title": "Response List Bank Accounts Bank Accounts Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Bank Accounts"
+      },
+      "post": {
+        "operationId": "create_bank_account_bank_accounts_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BankAccountIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankAccountOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Bank Account"
+      }
+    },
+    "/bank/accounts/{account_id}/imports": {
+      "post": {
+        "operationId": "import_bank_statement_bank_accounts__account_id__imports_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "account_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Account Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_import_bank_statement_bank_accounts__account_id__imports_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportSummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Import Bank Statement"
+      }
+    },
+    "/bank/imports/{batch_id}/transactions": {
+      "get": {
+        "operationId": "bank_review_queue_bank_imports__batch_id__transactions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "batch_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Batch Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "disposition",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": ["pending", "accepted", "excluded", "duplicate", "matched_existing"],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Disposition"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StagedTransaction"
+                  },
+                  "title": "Response Bank Review Queue Bank Imports  Batch Id  Transactions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Bank Review Queue"
+      }
+    },
+    "/bank/transactions/{txn_id}/accept": {
+      "post": {
+        "operationId": "accept_bank_transaction_bank_transactions__txn_id__accept_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "txn_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Txn Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/LedgerEventOut"
+                  },
+                  "title": "Response Accept Bank Transaction Bank Transactions  Txn Id  Accept Post",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Accept Bank Transaction"
+      }
+    },
+    "/bank/transactions/{txn_id}/exclude": {
+      "post": {
+        "operationId": "exclude_bank_transaction_bank_transactions__txn_id__exclude_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "txn_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Txn Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Exclude Bank Transaction"
+      }
+    },
+    "/bank/transactions/{txn_id}/match": {
+      "post": {
+        "operationId": "match_bank_transaction_bank_transactions__txn_id__match_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "txn_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Txn Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MatchIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Match Bank Transaction"
+      }
+    },
     "/coverage/jurisdictions": {
       "get": {
         "operationId": "coverage_jurisdictions_coverage_jurisdictions_get",

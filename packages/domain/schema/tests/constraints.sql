@@ -362,8 +362,11 @@ END $$;
 
 \echo ''
 \echo 'append-only survives TRUNCATE'
+-- CASCADE on purpose: bank_transactions (011) now references the ledger, so
+-- a bare TRUNCATE is refused by the FK before the trigger can speak. CASCADE
+-- pushes past the FK and proves the append-only trigger itself still bites.
 SELECT assert_rejected(
-  $$TRUNCATE ledger_events$$,
+  $$TRUNCATE ledger_events CASCADE$$,
   '<trigger>', 'truncating the ledger');
 SELECT assert_rejected(
   $$TRUNCATE audit_log$$,
@@ -541,6 +544,55 @@ BEGIN
   END IF;
   RAISE NOTICE '  ok      no open rule twins: resolution is deterministic';
 END $$;
+
+\echo ''
+\echo 'bank import staging'
+INSERT INTO bank_accounts (id, entity_id, nickname, kind)
+  VALUES ('88888888-8888-8888-8888-888888888888',
+          '11111111-1111-1111-1111-111111111111', 'Test Operating', 'checking');
+INSERT INTO source_documents (id, kind, filename, content_hash)
+  VALUES ('99999999-9999-9999-9999-999999999999', 'bank_statement', 'test.csv',
+          repeat('a', 64));
+INSERT INTO bank_import_batches (id, bank_account_id, source_document_id, format)
+  VALUES ('aaaaaaaa-9999-9999-9999-999999999999',
+          '88888888-8888-8888-8888-888888888888',
+          '99999999-9999-9999-9999-999999999999', 'csv');
+SELECT assert_accepted(
+  $$INSERT INTO bank_transactions
+      (batch_id, bank_account_id, posted_on, amount, description,
+       normalised_description, dedupe_key)
+    VALUES ('aaaaaaaa-9999-9999-9999-999999999999',
+            '88888888-8888-8888-8888-888888888888',
+            '2026-08-01', -92.40, 'DUKE ENERGY', 'duke energy', repeat('b', 64))$$,
+  'a staged bank row');
+SELECT assert_rejected(
+  $$INSERT INTO bank_transactions
+      (batch_id, bank_account_id, posted_on, amount, description,
+       normalised_description, dedupe_key)
+    VALUES ('aaaaaaaa-9999-9999-9999-999999999999',
+            '88888888-8888-8888-8888-888888888888',
+            '2026-08-01', -92.40, 'DUKE ENERGY', 'duke energy', repeat('b', 64))$$,
+  'statement_rows_dedupe', 're-importing the same statement row');
+SELECT assert_rejected(
+  $$UPDATE bank_transactions SET disposition = 'accepted'
+    WHERE dedupe_key = repeat('b', 64)$$,
+  'posted_rows_link_their_event', 'an accepted row with no ledger event linked');
+SELECT assert_rejected(
+  $$INSERT INTO bank_transactions
+      (batch_id, bank_account_id, posted_on, amount, description,
+       normalised_description, dedupe_key)
+    VALUES ('aaaaaaaa-9999-9999-9999-999999999999',
+            '88888888-8888-8888-8888-888888888888',
+            '2026-08-01', 0, 'VOID', 'void', repeat('c', 64))$$,
+  'bank_rows_move_money', 'a zero-dollar bank row');
+SELECT assert_rejected(
+  $$INSERT INTO categorization_rules (pattern, category, min_amount, max_amount)
+    VALUES ('x', 'repairs', 100, 50)$$,
+  'rule_amount_window_ordered', 'an inverted rule amount window');
+DELETE FROM bank_transactions WHERE bank_account_id = '88888888-8888-8888-8888-888888888888';
+DELETE FROM bank_import_batches WHERE id = 'aaaaaaaa-9999-9999-9999-999999999999';
+DELETE FROM source_documents WHERE id = '99999999-9999-9999-9999-999999999999';
+DELETE FROM bank_accounts WHERE id = '88888888-8888-8888-8888-888888888888';
 
 \echo ''
 \echo 'deadlines'

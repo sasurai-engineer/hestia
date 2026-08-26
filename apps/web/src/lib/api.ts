@@ -23,6 +23,11 @@ export type ChainLink = components['schemas']['ChainLink'];
 export type LedgerEventOut = components['schemas']['LedgerEventOut'];
 export type LedgerRegister = components['schemas']['LedgerRegister'];
 export type LedgerEntryIn = components['schemas']['LedgerEntryIn'];
+export type BankAccountOut = components['schemas']['BankAccountOut'];
+export type BankAccountIn = components['schemas']['BankAccountIn'];
+export type ImportSummary = components['schemas']['ImportSummary'];
+export type StagedTransaction = components['schemas']['StagedTransaction'];
+export type AcceptIn = components['schemas']['AcceptIn'];
 
 export class ApiError extends Error {
   readonly status: number;
@@ -51,6 +56,9 @@ const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
       // a non-JSON error body keeps the status-line message
     }
     throw new ApiError(response.status, detail);
+  }
+  if (response.status === 204) {
+    return undefined as T; // a 204 has no body to parse
   }
   return (await response.json()) as T;
 };
@@ -81,6 +89,42 @@ export const api = {
     request<LedgerEventOut>('/ledger', { method: 'POST', body: JSON.stringify(body) }),
   reverseLedger: (eventUuid: string) =>
     request<{ reversal: LedgerEventOut }>(`/ledger/${eventUuid}/reverse`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    }),
+  listBankAccounts: () => request<BankAccountOut[]>('/bank/accounts'),
+  createBankAccount: (body: BankAccountIn) =>
+    request<BankAccountOut>('/bank/accounts', { method: 'POST', body: JSON.stringify(body) }),
+  importStatement: async (accountId: string, file: File): Promise<ImportSummary> => {
+    const form = new FormData();
+    form.append('file', file);
+    const response = await fetch(`${apiBase()}/bank/accounts/${accountId}/imports`, {
+      method: 'POST',
+      body: form, // multipart: the browser sets the boundary header itself
+    });
+    if (!response.ok) {
+      let detail = `HTTP ${String(response.status)}`;
+      try {
+        const body = (await response.json()) as { detail?: unknown };
+        if (typeof body.detail === 'string') detail = body.detail;
+      } catch {
+        // keep the status line
+      }
+      throw new ApiError(response.status, detail);
+    }
+    return (await response.json()) as ImportSummary;
+  },
+  reviewQueue: (batchId: string, disposition?: string) => {
+    const query = disposition ? `?disposition=${disposition}` : '';
+    return request<StagedTransaction[]>(`/bank/imports/${batchId}/transactions${query}`);
+  },
+  acceptBankTransaction: (txnId: string, body: AcceptIn) =>
+    request<LedgerEventOut[]>(`/bank/transactions/${txnId}/accept`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  excludeBankTransaction: (txnId: string) =>
+    request<void>(`/bank/transactions/${txnId}/exclude`, {
       method: 'POST',
       body: JSON.stringify({}),
     }),

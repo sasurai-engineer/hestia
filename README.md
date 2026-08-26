@@ -53,10 +53,13 @@ packages/
   api-client/   generated from OpenAPI, typed end to end
 services/
   api/          FastAPI — the typed contract (OpenAPI), correlated requests,
-                same-transaction audit writes, the deadline sweep, and the
+                same-transaction audit writes, the deadline sweep, the
                 dossier orchestrator (address -> geocode -> jurisdiction ->
-                hazard -> inference -> sweep, one transaction). Tested
-                against a real migrated PostgreSQL only — never a mock.
+                hazard -> inference -> sweep), the append-only transaction
+                ledger with reversal corrections, and the CSV/OFX bank-import
+                pipeline (stage -> suggest -> review -> ledger; no bank data
+                ever leaves the machine). Tested against a real migrated
+                PostgreSQL only — never a mock.
   ingest/       provider adapters (Census, FEMA — mappers proven against
                 live-recorded responses) + the onboarding inference engine
   sim/          Weibull Monte Carlo capital forecast + the Python reference

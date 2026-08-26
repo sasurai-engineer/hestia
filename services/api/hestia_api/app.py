@@ -15,11 +15,31 @@ from collections.abc import Iterator
 from typing import Annotated, Any, Literal
 
 import psycopg
-from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Response
+from fastapi import (
+    Depends,
+    FastAPI,
+    File,
+    Header,
+    HTTPException,
+    Query,
+    Request,
+    Response,
+    UploadFile,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from hestia_api import config, coverage, db, dossier, jurisdiction, ledger, sweep, views
+from hestia_api import (
+    bank_import,
+    config,
+    coverage,
+    db,
+    dossier,
+    jurisdiction,
+    ledger,
+    sweep,
+    views,
+)
 
 app = FastAPI(
     title="Hestia API",
@@ -312,6 +332,183 @@ def ledger_register(
         occurred_from=occurred_from,
         occurred_to=occurred_to,
         limit=limit,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Bank import — file -> staging -> review -> ledger, append-only preserved
+# ---------------------------------------------------------------------------
+
+
+@app.post("/bank/accounts", response_model=bank_import.BankAccountOut, status_code=201)
+def create_bank_account(
+    body: bank_import.BankAccountIn, conn: Conn, request: Request, actor: Actor = "system"
+) -> bank_import.BankAccountOut:
+    try:
+        account = bank_import.create_account(conn, body)
+    except psycopg.errors.ForeignKeyViolation as error:
+        raise HTTPException(status_code=422, detail="entity or property does not exist") from error
+    db.record_audit(
+        conn,
+        actor=actor,
+        action="bank.account.create",
+        request_id=request.state.request_id,
+        table_name="bank_accounts",
+        record_id=account.id,
+        after_value=account.model_dump(mode="json"),
+    )
+    return account
+
+
+@app.get("/bank/accounts", response_model=list[bank_import.BankAccountOut])
+def list_bank_accounts(conn: Conn) -> list[bank_import.BankAccountOut]:
+    return bank_import.list_accounts(conn)
+
+
+@app.post(
+    "/bank/accounts/{account_id}/imports",
+    response_model=bank_import.ImportSummary,
+    status_code=201,
+)
+async def import_bank_statement(
+    account_id: uuid.UUID,
+    conn: Conn,
+    request: Request,
+    file: Annotated[UploadFile, File()],
+    actor: Actor = "system",
+) -> bank_import.ImportSummary:
+    content = await file.read()
+    try:
+        summary = bank_import.import_statement(
+            conn,
+            str(account_id),
+            filename=file.filename or "statement",
+            content=content,
+            imported_by=actor,
+        )
+    except bank_import.UnknownAccount as error:
+        raise HTTPException(status_code=404, detail="bank account not found") from error
+    except bank_import.DuplicateStatement as error:
+        raise HTTPException(
+            status_code=409, detail="this exact file was already imported"
+        ) from error
+    except bank_import.statement_parse.StatementParseError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    db.record_audit(
+        conn,
+        actor=actor,
+        action="bank.import",
+        request_id=request.state.request_id,
+        table_name="bank_import_batches",
+        record_id=summary.batch_id,
+        after_value=summary.model_dump(mode="json"),
+    )
+    return summary
+
+
+@app.get(
+    "/bank/imports/{batch_id}/transactions",
+    response_model=list[bank_import.StagedTransaction],
+)
+def bank_review_queue(
+    batch_id: uuid.UUID,
+    conn: Conn,
+    disposition: Annotated[
+        Literal["pending", "accepted", "excluded", "duplicate", "matched_existing"] | None,
+        Query(),
+    ] = None,
+) -> list[bank_import.StagedTransaction]:
+    return bank_import.review_queue(conn, str(batch_id), disposition)
+
+
+def _bank_txn_errors(error: Exception) -> HTTPException:
+    if isinstance(error, bank_import.UnknownTransaction):
+        return HTTPException(status_code=404, detail="not found")
+    if isinstance(error, bank_import.NotPending):
+        return HTTPException(
+            status_code=409, detail="row already has a disposition; review is not re-made"
+        )
+    return HTTPException(status_code=422, detail=str(error))
+
+
+@app.post(
+    "/bank/transactions/{txn_id}/accept",
+    response_model=list[ledger.LedgerEventOut],
+    status_code=201,
+)
+def accept_bank_transaction(
+    txn_id: uuid.UUID,
+    body: bank_import.AcceptIn,
+    conn: Conn,
+    request: Request,
+    actor: Actor = "system",
+) -> list[ledger.LedgerEventOut]:
+    try:
+        events = bank_import.accept(conn, str(txn_id), body)
+    except (
+        bank_import.UnknownTransaction,
+        bank_import.NotPending,
+        bank_import.SplitMismatch,
+    ) as error:
+        raise _bank_txn_errors(error) from error
+    db.record_audit(
+        conn,
+        actor=actor,
+        action="bank.accept",
+        request_id=request.state.request_id,
+        table_name="bank_transactions",
+        record_id=str(txn_id),
+        after_value={"events": [event.event_uuid for event in events]},
+    )
+    return events
+
+
+@app.post("/bank/transactions/{txn_id}/exclude", status_code=204)
+def exclude_bank_transaction(
+    txn_id: uuid.UUID, conn: Conn, request: Request, actor: Actor = "system"
+) -> None:
+    try:
+        bank_import.exclude(conn, str(txn_id))
+    except (bank_import.UnknownTransaction, bank_import.NotPending) as error:
+        raise _bank_txn_errors(error) from error
+    db.record_audit(
+        conn,
+        actor=actor,
+        action="bank.exclude",
+        request_id=request.state.request_id,
+        table_name="bank_transactions",
+        record_id=str(txn_id),
+    )
+
+
+class MatchIn(BaseModel):
+    event_uuid: uuid.UUID
+
+
+@app.post("/bank/transactions/{txn_id}/match", status_code=204)
+def match_bank_transaction(
+    txn_id: uuid.UUID,
+    body: MatchIn,
+    conn: Conn,
+    request: Request,
+    actor: Actor = "system",
+) -> None:
+    try:
+        bank_import.match_existing(conn, str(txn_id), str(body.event_uuid))
+    except (
+        bank_import.UnknownTransaction,
+        bank_import.NotPending,
+        bank_import.MatchMismatch,
+    ) as error:
+        raise _bank_txn_errors(error) from error
+    db.record_audit(
+        conn,
+        actor=actor,
+        action="bank.match",
+        request_id=request.state.request_id,
+        table_name="bank_transactions",
+        record_id=str(txn_id),
+        after_value={"event_uuid": str(body.event_uuid)},
     )
 
 

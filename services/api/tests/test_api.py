@@ -64,7 +64,10 @@ class TestContract:
         components = spec["components"]["schemas"]
         assert "SweepGapOut" in components
         assert "CoverageGapOut" in components
-        assert not any("__" in name for name in components)
+        # FastAPI derives multipart body schema names from the route path
+        # (Body_..._post) — those are fine; module-mangled model names
+        # (hestia_api__x__Model) are not.
+        assert not any("__" in name for name in components if not name.startswith("Body_"))
 
     def test_every_response_carries_a_request_id(self, client: TestClient) -> None:
         minted = client.get("/healthz")

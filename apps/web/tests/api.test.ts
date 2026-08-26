@@ -67,6 +67,19 @@ describe('the API client', () => {
       'http://localhost:8000/ledger/e1/reverse',
       expect.objectContaining({ method: 'POST', body: '{}' }),
     );
+    await api.listBankAccounts();
+    await api.createBankAccount({ entity_id: 'e', nickname: 'Op', kind: 'checking' });
+    await api.reviewQueue('b1');
+    await api.reviewQueue('b1', 'pending');
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/bank/imports/b1/transactions?disposition=pending',
+      expect.anything(),
+    );
+    await api.acceptBankTransaction('t1', { category: 'utilities' });
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/bank/transactions/t1/accept',
+      expect.objectContaining({ method: 'POST' }),
+    );
     await api.createEntity({ name: 'X', kind: 'llc' });
     await api.createProperty({
       entity_id: 'e',
@@ -94,6 +107,55 @@ describe('the API client', () => {
       status: 404,
       message: 'property not found',
     });
+  });
+
+  it('imports a statement as multipart and surfaces its errors', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(
+        jsonResponse(201, {
+          batch_id: 'b1',
+          format: 'csv',
+          staged: 3,
+          duplicates: 0,
+          suggested: 2,
+        }),
+      );
+    vi.stubGlobal('fetch', fetchMock);
+    const file = new File(['Date,Description,Amount\n'], 'aug.csv', { type: 'text/csv' });
+    const summary = await api.importStatement('a1', file);
+    expect(summary.staged).toBe(3);
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('http://localhost:8000/bank/accounts/a1/imports');
+    expect(init.body).toBeInstanceOf(FormData);
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockImplementation(jsonResponse(409, { detail: 'this exact file was already imported' })),
+    );
+    await expect(api.importStatement('a1', file)).rejects.toMatchObject({
+      status: 409,
+      message: 'this exact file was already imported',
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation(() => Promise.resolve(new Response('boom', { status: 502 }))),
+    );
+    await expect(api.importStatement('a1', file)).rejects.toMatchObject({ message: 'HTTP 502' });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation(jsonResponse(500, { detail: { odd: true } })),
+    );
+    await expect(api.importStatement('a1', file)).rejects.toMatchObject({ message: 'HTTP 500' });
+  });
+
+  it('treats a 204 as a bodiless success', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation(() => Promise.resolve(new Response(null, { status: 204 }))),
+    );
+    await expect(api.excludeBankTransaction('t1')).resolves.toBeUndefined();
   });
 
   it('falls back to the status line when the error body is not JSON', async () => {

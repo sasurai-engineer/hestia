@@ -58,6 +58,9 @@ class LedgerEntryIn(BaseModel):
     unit_id: str | None = None
     lease_id: str | None = None
     entity_id: str | None = None
+    # The source document behind the entry (a bank statement, a receipt) —
+    # attached at insert because the ledger refuses UPDATE forever after.
+    document_id: str | None = None
 
     @model_validator(mode="after")
     def _rules(self) -> LedgerEntryIn:
@@ -136,8 +139,9 @@ def append_event(conn: Conn, entry: LedgerEntryIn) -> LedgerEventOut:
         """
         INSERT INTO ledger_events
           (occurred_on, category, amount, memo, counterparty, is_capital,
-           capitalisation_rationale, property_id, unit_id, lease_id, entity_id)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+           capitalisation_rationale, property_id, unit_id, lease_id, entity_id,
+           document_id)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         RETURNING id
         """,
         (
@@ -152,6 +156,7 @@ def append_event(conn: Conn, entry: LedgerEntryIn) -> LedgerEventOut:
             entry.unit_id,
             entry.lease_id,
             entry.entity_id,
+            entry.document_id,
         ),
     ).fetchone()
     return read_event_by_id(conn, row["id"])  # type: ignore[index]
