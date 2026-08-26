@@ -10,12 +10,15 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "gen:api": "openapi-typescript src/lib/openapi.json -o src/lib/api-schema.d.ts"
+    "gen:api": "openapi-typescript src/lib/openapi.json -o src/lib/api-schema.d.ts",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "next": "^15.4.0",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "@hestia/domain": "workspace:*",
+    "@hestia/engines": "workspace:*"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.0",
@@ -24,6 +27,7 @@
     "@types/react-dom": "^19.1.0",
     "@vitejs/plugin-react": "^4.5.0",
     "jsdom": "^26.0.0",
-    "openapi-typescript": "^7.6.0"
+    "openapi-typescript": "^7.6.0",
+    "@playwright/test": "^1.53.0"
   }
 }

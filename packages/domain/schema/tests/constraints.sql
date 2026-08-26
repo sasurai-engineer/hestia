@@ -595,6 +595,26 @@ DELETE FROM source_documents WHERE id = '99999999-9999-9999-9999-999999999999';
 DELETE FROM bank_accounts WHERE id = '88888888-8888-8888-8888-888888888888';
 
 \echo ''
+\echo 'reporting'
+DO $$
+DECLARE
+  mapped INT;
+  every_category INT;
+BEGIN
+  SELECT count(DISTINCT category) INTO mapped FROM schedule_e_map;
+  SELECT count(*) INTO every_category
+  FROM unnest(enum_range(NULL::ledger_category));
+  IF mapped <> every_category THEN
+    RAISE EXCEPTION 'schedule_e_map covers % of % ledger categories — an unmapped category silently vanishes from the report', mapped, every_category;
+  END IF;
+  RAISE NOTICE '  ok      every ledger category has a Schedule E answer (line or exclusion)';
+END $$;
+SELECT assert_rejected(
+  $$INSERT INTO schedule_e_map (category, tax_year_from, line_no, line_label, citation)
+    VALUES ('rent', 2030, 99, 'x', 'x')$$,
+  'plausible_line', 'a Schedule E line number that does not exist');
+
+\echo ''
 \echo 'deadlines'
 SELECT assert_rejected(
   $$INSERT INTO deadlines (kind, due_on, citation)

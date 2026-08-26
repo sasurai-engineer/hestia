@@ -28,6 +28,11 @@ export type BankAccountIn = components['schemas']['BankAccountIn'];
 export type ImportSummary = components['schemas']['ImportSummary'];
 export type StagedTransaction = components['schemas']['StagedTransaction'];
 export type AcceptIn = components['schemas']['AcceptIn'];
+export type ScheduleEReport = components['schemas']['ScheduleEReport'];
+export type CashFlowReport = components['schemas']['CashFlowReport'];
+export type RentRollRow = components['schemas']['RentRollRow'];
+export type Financials = components['schemas']['Financials'];
+export type CapexForecastOut = components['schemas']['CapexForecastOut'];
 
 export class ApiError extends Error {
   readonly status: number;
@@ -128,4 +133,14 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({}),
     }),
+  scheduleE: (propertyId: string, taxYear: number) =>
+    request<ScheduleEReport>(
+      `/properties/${propertyId}/reports/schedule-e?tax_year=${String(taxYear)}`,
+    ),
+  cashFlow: (propertyId: string, year: number) =>
+    request<CashFlowReport>(`/properties/${propertyId}/reports/cash-flow?year=${String(year)}`),
+  rentRoll: () => request<RentRollRow[]>('/reports/rent-roll'),
+  financials: (propertyId: string) => request<Financials>(`/properties/${propertyId}/financials`),
+  capexForecast: (propertyId: string) =>
+    request<CapexForecastOut>(`/properties/${propertyId}/capex-forecast`),
 };

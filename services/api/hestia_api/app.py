@@ -12,6 +12,7 @@ from __future__ import annotations
 import datetime as dt
 import uuid
 from collections.abc import Iterator
+from decimal import Decimal
 from typing import Annotated, Any, Literal
 
 import psycopg
@@ -37,6 +38,7 @@ from hestia_api import (
     dossier,
     jurisdiction,
     ledger,
+    reports,
     sweep,
     views,
 )
@@ -537,6 +539,253 @@ def list_deadlines(
     limit: Annotated[int, Query(ge=1, le=500)] = 100,
 ) -> list[views.DeadlineOut]:
     return views.upcoming_deadlines(conn, due_before=due_before, limit=limit)
+
+
+# ---------------------------------------------------------------------------
+# Reports — the ledger rolled up, with authorities attached
+# ---------------------------------------------------------------------------
+
+
+def _require_property(conn: Conn, property_id: uuid.UUID) -> None:
+    row = conn.execute(
+        "SELECT 1 AS x FROM properties WHERE id = %s", (str(property_id),)
+    ).fetchone()
+    if row is None:
+        raise HTTPException(status_code=404, detail="property not found")
+
+
+@app.get(
+    "/properties/{property_id}/reports/schedule-e",
+    response_model=reports.ScheduleEReport,
+)
+def schedule_e_report(
+    property_id: uuid.UUID, conn: Conn, tax_year: Annotated[int, Query(ge=1990, le=2200)]
+) -> reports.ScheduleEReport:
+    _require_property(conn, property_id)
+    return reports.schedule_e(conn, str(property_id), tax_year)
+
+
+@app.get(
+    "/properties/{property_id}/reports/cash-flow",
+    response_model=reports.CashFlowReport,
+)
+def cash_flow_report(
+    property_id: uuid.UUID, conn: Conn, year: Annotated[int, Query(ge=1990, le=2200)]
+) -> reports.CashFlowReport:
+    _require_property(conn, property_id)
+    return reports.cash_flow(conn, str(property_id), year)
+
+
+@app.get("/reports/rent-roll", response_model=list[reports.RentRollRow])
+def rent_roll_report(conn: Conn) -> list[reports.RentRollRow]:
+    return reports.rent_roll(conn)
+
+
+@app.get("/properties/{property_id}/financials", response_model=reports.Financials)
+def property_financials(
+    property_id: uuid.UUID,
+    conn: Conn,
+    as_of: Annotated[dt.date | None, Query()] = None,
+) -> reports.Financials:
+    _require_property(conn, property_id)
+    return reports.financials(
+        conn, str(property_id), as_of if as_of is not None else dt.date.today()
+    )
+
+
+@app.get(
+    "/properties/{property_id}/capex-forecast",
+    response_model=reports.CapexForecastOut,
+)
+def property_capex_forecast(
+    property_id: uuid.UUID,
+    conn: Conn,
+    horizon_years: Annotated[int, Query(ge=1, le=30)] = 10,
+    as_of: Annotated[dt.date | None, Query()] = None,
+) -> reports.CapexForecastOut:
+    _require_property(conn, property_id)
+    return reports.capex_forecast(
+        conn,
+        str(property_id),
+        horizon_years=horizon_years,
+        as_of=as_of if as_of is not None else dt.date.today(),
+    )
+
+
+class SignoffIn(BaseModel):
+    property_id: uuid.UUID
+    tax_year: int
+    report_kind: Literal["schedule_e", "p_and_l", "cash_flow"]
+    confirmed_by: str
+    note: str | None = None
+
+
+@app.post("/reports/signoff", status_code=201)
+def signoff_report(
+    body: SignoffIn, conn: Conn, request: Request, actor: Actor = "system"
+) -> dict[str, str]:
+    _require_property(conn, body.property_id)
+    try:
+        row = conn.execute(
+            """
+            INSERT INTO report_signoffs
+              (property_id, tax_year, report_kind, confirmed_by, note)
+            VALUES (%s, %s, %s, %s, %s) RETURNING id::text
+            """,
+            (
+                str(body.property_id),
+                body.tax_year,
+                body.report_kind,
+                body.confirmed_by,
+                body.note,
+            ),
+        ).fetchone()
+    except psycopg.errors.UniqueViolation as error:
+        raise HTTPException(
+            status_code=409, detail="this report year is already signed off"
+        ) from error
+    db.record_audit(
+        conn,
+        actor=actor,
+        action="report.signoff",
+        request_id=request.state.request_id,
+        table_name="report_signoffs",
+        record_id=row["id"],  # type: ignore[index]
+        after_value=body.model_dump(mode="json"),
+    )
+    return {"id": row["id"]}  # type: ignore[index]
+
+
+class ValuationIn(BaseModel):
+    property_id: uuid.UUID
+    value: Decimal = Field(gt=0, decimal_places=2, max_digits=18)
+    source: Literal[
+        "avm",
+        "appraisal",
+        "broker_opinion",
+        "assessor",
+        "purchase_price",
+        "comparable_sales",
+        "owner_estimate",
+        "replacement_cost_estimate",
+    ]
+    as_of: dt.date
+
+
+@app.post("/valuations", status_code=201)
+def create_valuation(
+    body: ValuationIn, conn: Conn, request: Request, actor: Actor = "system"
+) -> dict[str, str]:
+    _require_property(conn, body.property_id)
+    provenance = conn.execute(
+        """
+        INSERT INTO provenance (kind, confidence, source_label)
+        VALUES ('owner_stated', 1.0, %s) RETURNING id
+        """,
+        (f"valuation entered by {actor}",),
+    ).fetchone()
+    row = conn.execute(
+        """
+        INSERT INTO valuations (property_id, as_of, source, value, provenance_id)
+        VALUES (%s, %s, %s, %s, %s) RETURNING id::text
+        """,
+        (
+            str(body.property_id),
+            body.as_of,
+            body.source,
+            body.value,
+            provenance["id"],  # type: ignore[index]
+        ),
+    ).fetchone()
+    db.record_audit(
+        conn,
+        actor=actor,
+        action="valuation.create",
+        request_id=request.state.request_id,
+        table_name="valuations",
+        record_id=row["id"],  # type: ignore[index]
+        after_value=body.model_dump(mode="json"),
+    )
+    return {"id": row["id"]}  # type: ignore[index]
+
+
+class CoverageIn(BaseModel):
+    description: str
+    limit_amount: Decimal | None = None
+    peril: str = "all_other"
+    months_covered: int | None = None
+
+
+class PolicyIn(BaseModel):
+    property_id: uuid.UUID
+    kind: Literal[
+        "dwelling_fire",
+        "landlord_package",
+        "homeowners",
+        "commercial_property",
+        "general_liability",
+        "umbrella",
+        "flood_nfip",
+        "flood_private",
+        "earthquake",
+        "builders_risk",
+        "rent_guarantee",
+    ]
+    carrier: str | None = None
+    effective_from: dt.date
+    effective_to: dt.date
+    annual_premium: Decimal | None = None
+    coinsurance_percent: Decimal | None = Field(default=None, ge=0, le=1)
+    coverages: list[CoverageIn] = []
+
+
+@app.post("/policies", status_code=201)
+def create_policy(
+    body: PolicyIn, conn: Conn, request: Request, actor: Actor = "system"
+) -> dict[str, str]:
+    _require_property(conn, body.property_id)
+    row = conn.execute(
+        """
+        INSERT INTO policies
+          (property_id, kind, carrier, effective_from, effective_to,
+           annual_premium, coinsurance_percent)
+        VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id::text
+        """,
+        (
+            str(body.property_id),
+            body.kind,
+            body.carrier,
+            body.effective_from,
+            body.effective_to,
+            body.annual_premium,
+            body.coinsurance_percent,
+        ),
+    ).fetchone()
+    for coverage_in in body.coverages:
+        conn.execute(
+            """
+            INSERT INTO coverages
+              (policy_id, description, limit_amount, peril, months_covered)
+            VALUES (%s, %s, %s, %s, %s)
+            """,
+            (
+                row["id"],  # type: ignore[index]
+                coverage_in.description,
+                coverage_in.limit_amount,
+                coverage_in.peril,
+                coverage_in.months_covered,
+            ),
+        )
+    db.record_audit(
+        conn,
+        actor=actor,
+        action="policy.create",
+        request_id=request.state.request_id,
+        table_name="policies",
+        record_id=row["id"],  # type: ignore[index]
+        after_value=body.model_dump(mode="json"),
+    )
+    return {"id": row["id"]}  # type: ignore[index]
 
 
 # ---------------------------------------------------------------------------

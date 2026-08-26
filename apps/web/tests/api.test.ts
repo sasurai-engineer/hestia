@@ -80,6 +80,19 @@ describe('the API client', () => {
       'http://localhost:8000/bank/transactions/t1/accept',
       expect.objectContaining({ method: 'POST' }),
     );
+    await api.rentRoll();
+    await api.scheduleE('p1', 2026);
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/properties/p1/reports/schedule-e?tax_year=2026',
+      expect.anything(),
+    );
+    await api.cashFlow('p1', 2026);
+    await api.financials('p1');
+    await api.capexForecast('p1');
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/properties/p1/capex-forecast',
+      expect.anything(),
+    );
     await api.createEntity({ name: 'X', kind: 'llc' });
     await api.createProperty({
       entity_id: 'e',
@@ -110,17 +123,15 @@ describe('the API client', () => {
   });
 
   it('imports a statement as multipart and surfaces its errors', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockImplementation(
-        jsonResponse(201, {
-          batch_id: 'b1',
-          format: 'csv',
-          staged: 3,
-          duplicates: 0,
-          suggested: 2,
-        }),
-      );
+    const fetchMock = vi.fn().mockImplementation(
+      jsonResponse(201, {
+        batch_id: 'b1',
+        format: 'csv',
+        staged: 3,
+        duplicates: 0,
+        suggested: 2,
+      }),
+    );
     vi.stubGlobal('fetch', fetchMock);
     const file = new File(['Date,Description,Amount\n'], 'aug.csv', { type: 'text/csv' });
     const summary = await api.importStatement('a1', file);

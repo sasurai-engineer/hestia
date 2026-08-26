@@ -130,7 +130,12 @@
             "title": "Institution"
           },
           "kind": {
-            "enum": ["checking", "savings", "credit_card", "escrow"],
+            "enum": [
+              "checking",
+              "savings",
+              "credit_card",
+              "escrow"
+            ],
             "title": "Kind",
             "type": "string"
           },
@@ -152,7 +157,11 @@
             "title": "Property Id"
           }
         },
-        "required": ["entity_id", "nickname", "kind"],
+        "required": [
+          "entity_id",
+          "nickname",
+          "kind"
+        ],
         "title": "BankAccountIn",
         "type": "object"
       },
@@ -194,7 +203,12 @@
             "type": "boolean"
           },
           "kind": {
-            "enum": ["checking", "savings", "credit_card", "escrow"],
+            "enum": [
+              "checking",
+              "savings",
+              "credit_card",
+              "escrow"
+            ],
             "title": "Kind",
             "type": "string"
           },
@@ -216,7 +230,13 @@
             "title": "Property Id"
           }
         },
-        "required": ["entity_id", "nickname", "kind", "id", "is_active"],
+        "required": [
+          "entity_id",
+          "nickname",
+          "kind",
+          "id",
+          "is_active"
+        ],
         "title": "BankAccountOut",
         "type": "object"
       },
@@ -228,8 +248,124 @@
             "type": "string"
           }
         },
-        "required": ["file"],
+        "required": [
+          "file"
+        ],
         "title": "Body_import_bank_statement_bank_accounts__account_id__imports_post",
+        "type": "object"
+      },
+      "CapexBand": {
+        "properties": {
+          "expected": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Expected",
+            "type": "string"
+          },
+          "p10": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "P10",
+            "type": "string"
+          },
+          "p50": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "P50",
+            "type": "string"
+          },
+          "p90": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "P90",
+            "type": "string"
+          },
+          "year": {
+            "title": "Year",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "year",
+          "expected",
+          "p10",
+          "p50",
+          "p90"
+        ],
+        "title": "CapexBand",
+        "type": "object"
+      },
+      "CapexForecastOut": {
+        "properties": {
+          "bands": {
+            "items": {
+              "$ref": "#/components/schemas/CapexBand"
+            },
+            "title": "Bands",
+            "type": "array"
+          },
+          "components_simulated": {
+            "title": "Components Simulated",
+            "type": "integer"
+          },
+          "components_without_cost": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Components Without Cost",
+            "type": "array"
+          },
+          "horizon_years": {
+            "title": "Horizon Years",
+            "type": "integer"
+          },
+          "property_id": {
+            "title": "Property Id",
+            "type": "string"
+          },
+          "total_expected": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Expected",
+            "type": "string"
+          }
+        },
+        "required": [
+          "property_id",
+          "horizon_years",
+          "components_simulated",
+          "components_without_cost",
+          "bands",
+          "total_expected"
+        ],
+        "title": "CapexForecastOut",
+        "type": "object"
+      },
+      "CashFlowReport": {
+        "properties": {
+          "months": {
+            "items": {
+              "$ref": "#/components/schemas/MonthlyFlow"
+            },
+            "title": "Months",
+            "type": "array"
+          },
+          "property_id": {
+            "title": "Property Id",
+            "type": "string"
+          },
+          "total_net": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Net",
+            "type": "string"
+          },
+          "year": {
+            "title": "Year",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "property_id",
+          "year",
+          "months",
+          "total_net"
+        ],
+        "title": "CashFlowReport",
         "type": "object"
       },
       "ChainLink": {
@@ -243,7 +379,10 @@
             "type": "string"
           }
         },
-        "required": ["name", "level"],
+        "required": [
+          "name",
+          "level"
+        ],
         "title": "ChainLink",
         "type": "object"
       },
@@ -369,8 +508,58 @@
             "type": "string"
           }
         },
-        "required": ["property_id", "state", "domain", "reason", "message"],
+        "required": [
+          "property_id",
+          "state",
+          "domain",
+          "reason",
+          "message"
+        ],
         "title": "CoverageGapOut",
+        "type": "object"
+      },
+      "CoverageIn": {
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "limit_amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limit Amount"
+          },
+          "months_covered": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Months Covered"
+          },
+          "peril": {
+            "default": "all_other",
+            "title": "Peril",
+            "type": "string"
+          }
+        },
+        "required": [
+          "description"
+        ],
+        "title": "CoverageIn",
         "type": "object"
       },
       "CoverageReport": {
@@ -395,7 +584,11 @@
             "type": "array"
           }
         },
-        "required": ["as_of", "properties", "gaps"],
+        "required": [
+          "as_of",
+          "properties",
+          "gaps"
+        ],
         "title": "CoverageReport",
         "type": "object"
       },
@@ -468,6 +661,48 @@
           "property_label"
         ],
         "title": "DeadlineOut",
+        "type": "object"
+      },
+      "DebtTerms": {
+        "properties": {
+          "annual_rate": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Annual Rate",
+            "type": "string"
+          },
+          "lender": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lender"
+          },
+          "months_elapsed": {
+            "title": "Months Elapsed",
+            "type": "integer"
+          },
+          "original_principal": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Original Principal",
+            "type": "string"
+          },
+          "term_months": {
+            "title": "Term Months",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "lender",
+          "original_principal",
+          "annual_rate",
+          "term_months",
+          "months_elapsed"
+        ],
+        "title": "DebtTerms",
         "type": "object"
       },
       "DefectOut": {
@@ -579,12 +814,17 @@
             "title": "Source"
           },
           "status": {
-            "enum": ["covered", "no_rules_loaded"],
+            "enum": [
+              "covered",
+              "no_rules_loaded"
+            ],
             "title": "Status",
             "type": "string"
           }
         },
-        "required": ["status"],
+        "required": [
+          "status"
+        ],
         "title": "DomainCoverage",
         "type": "object"
       },
@@ -613,7 +853,12 @@
             "type": "object"
           }
         },
-        "required": ["property_id", "as_of", "steps", "sweep"],
+        "required": [
+          "property_id",
+          "as_of",
+          "steps",
+          "sweep"
+        ],
         "title": "DossierOut",
         "type": "object"
       },
@@ -628,12 +873,20 @@
             "type": "string"
           },
           "status": {
-            "enum": ["ok", "skipped", "failed"],
+            "enum": [
+              "ok",
+              "skipped",
+              "failed"
+            ],
             "title": "Status",
             "type": "string"
           }
         },
-        "required": ["name", "status", "detail"],
+        "required": [
+          "name",
+          "status",
+          "detail"
+        ],
         "title": "DossierStepOut",
         "type": "object"
       },
@@ -810,7 +1063,10 @@
             "type": "string"
           }
         },
-        "required": ["name", "kind"],
+        "required": [
+          "name",
+          "kind"
+        ],
         "title": "EntityIn",
         "type": "object"
       },
@@ -856,8 +1112,94 @@
             "type": "string"
           }
         },
-        "required": ["name", "kind", "id"],
+        "required": [
+          "name",
+          "kind",
+          "id"
+        ],
         "title": "EntityOut",
+        "type": "object"
+      },
+      "ExcludedAmount": {
+        "properties": {
+          "amount": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Amount",
+            "type": "string"
+          },
+          "citation": {
+            "title": "Citation",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "citation",
+          "amount"
+        ],
+        "title": "ExcludedAmount",
+        "type": "object"
+      },
+      "Financials": {
+        "properties": {
+          "debts": {
+            "items": {
+              "$ref": "#/components/schemas/DebtTerms"
+            },
+            "title": "Debts",
+            "type": "array"
+          },
+          "income_12mo": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Income 12Mo",
+            "type": "string"
+          },
+          "noi_12mo": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Noi 12Mo",
+            "type": "string"
+          },
+          "operating_expenses_12mo": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Operating Expenses 12Mo",
+            "type": "string"
+          },
+          "policies": {
+            "items": {
+              "$ref": "#/components/schemas/PolicyOut"
+            },
+            "title": "Policies",
+            "type": "array"
+          },
+          "property_id": {
+            "title": "Property Id",
+            "type": "string"
+          },
+          "valuation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ValuationOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "property_id",
+          "income_12mo",
+          "operating_expenses_12mo",
+          "noi_12mo",
+          "valuation",
+          "debts",
+          "policies"
+        ],
+        "title": "Financials",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -936,7 +1278,9 @@
             "type": "string"
           }
         },
-        "required": ["status"],
+        "required": [
+          "status"
+        ],
         "title": "Health",
         "type": "object"
       },
@@ -963,7 +1307,13 @@
             "type": "integer"
           }
         },
-        "required": ["batch_id", "format", "staged", "duplicates", "suggested"],
+        "required": [
+          "batch_id",
+          "format",
+          "staged",
+          "duplicates",
+          "suggested"
+        ],
         "title": "ImportSummary",
         "type": "object"
       },
@@ -1114,7 +1464,11 @@
             "title": "Unit Id"
           }
         },
-        "required": ["occurred_on", "category", "amount"],
+        "required": [
+          "occurred_on",
+          "category",
+          "amount"
+        ],
         "title": "LedgerEntryIn",
         "type": "object"
       },
@@ -1292,7 +1646,12 @@
             "type": "string"
           }
         },
-        "required": ["events", "total_in", "total_out", "net"],
+        "required": [
+          "events",
+          "total_in",
+          "total_out",
+          "net"
+        ],
         "title": "LedgerRegister",
         "type": "object"
       },
@@ -1304,8 +1663,270 @@
             "type": "string"
           }
         },
-        "required": ["event_uuid"],
+        "required": [
+          "event_uuid"
+        ],
         "title": "MatchIn",
+        "type": "object"
+      },
+      "MonthlyFlow": {
+        "properties": {
+          "capital": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Capital",
+            "type": "string"
+          },
+          "debt_service": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Debt Service",
+            "type": "string"
+          },
+          "month": {
+            "title": "Month",
+            "type": "integer"
+          },
+          "net": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Net",
+            "type": "string"
+          },
+          "operating_in": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Operating In",
+            "type": "string"
+          },
+          "operating_out": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Operating Out",
+            "type": "string"
+          },
+          "owner_flows": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Owner Flows",
+            "type": "string"
+          }
+        },
+        "required": [
+          "month",
+          "operating_in",
+          "operating_out",
+          "debt_service",
+          "capital",
+          "owner_flows",
+          "net"
+        ],
+        "title": "MonthlyFlow",
+        "type": "object"
+      },
+      "NeedsClassification": {
+        "properties": {
+          "amount": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Amount",
+            "type": "string"
+          },
+          "event_uuid": {
+            "title": "Event Uuid",
+            "type": "string"
+          },
+          "memo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Memo"
+          },
+          "occurred_on": {
+            "format": "date",
+            "title": "Occurred On",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event_uuid",
+          "occurred_on",
+          "memo",
+          "amount",
+          "reason"
+        ],
+        "title": "NeedsClassification",
+        "type": "object"
+      },
+      "PolicyIn": {
+        "properties": {
+          "annual_premium": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Annual Premium"
+          },
+          "carrier": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Carrier"
+          },
+          "coinsurance_percent": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coinsurance Percent"
+          },
+          "coverages": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/CoverageIn"
+            },
+            "title": "Coverages",
+            "type": "array"
+          },
+          "effective_from": {
+            "format": "date",
+            "title": "Effective From",
+            "type": "string"
+          },
+          "effective_to": {
+            "format": "date",
+            "title": "Effective To",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "dwelling_fire",
+              "landlord_package",
+              "homeowners",
+              "commercial_property",
+              "general_liability",
+              "umbrella",
+              "flood_nfip",
+              "flood_private",
+              "earthquake",
+              "builders_risk",
+              "rent_guarantee"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "property_id": {
+            "format": "uuid",
+            "title": "Property Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "property_id",
+          "kind",
+          "effective_from",
+          "effective_to"
+        ],
+        "title": "PolicyIn",
+        "type": "object"
+      },
+      "PolicyOut": {
+        "properties": {
+          "carrier": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Carrier"
+          },
+          "coinsurance_percent": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coinsurance Percent"
+          },
+          "dwelling_limit": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dwelling Limit"
+          },
+          "effective_to": {
+            "format": "date",
+            "title": "Effective To",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "loss_of_rents_months": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Loss Of Rents Months"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "carrier",
+          "effective_to",
+          "coinsurance_percent",
+          "dwelling_limit",
+          "loss_of_rents_months"
+        ],
+        "title": "PolicyOut",
         "type": "object"
       },
       "PropertyCoverage": {
@@ -1333,7 +1954,13 @@
             "type": "string"
           }
         },
-        "required": ["property_id", "label", "state", "resolution", "domains"],
+        "required": [
+          "property_id",
+          "label",
+          "state",
+          "resolution",
+          "domains"
+        ],
         "title": "PropertyCoverage",
         "type": "object"
       },
@@ -1413,7 +2040,15 @@
             "title": "Year Built"
           }
         },
-        "required": ["entity_id", "label", "street_1", "city", "state", "postal_code", "kind"],
+        "required": [
+          "entity_id",
+          "label",
+          "street_1",
+          "city",
+          "state",
+          "postal_code",
+          "kind"
+        ],
         "title": "PropertyIn",
         "type": "object"
       },
@@ -1626,8 +2261,67 @@
             "type": "string"
           }
         },
-        "required": ["status", "migrations"],
+        "required": [
+          "status",
+          "migrations"
+        ],
         "title": "Readiness",
+        "type": "object"
+      },
+      "RentRollRow": {
+        "properties": {
+          "ends_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends On"
+          },
+          "property_label": {
+            "title": "Property Label",
+            "type": "string"
+          },
+          "rent": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Rent",
+            "type": "string"
+          },
+          "residents": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Residents",
+            "type": "array"
+          },
+          "starts_on": {
+            "format": "date",
+            "title": "Starts On",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "unit_label": {
+            "title": "Unit Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "property_label",
+          "unit_label",
+          "residents",
+          "rent",
+          "status",
+          "starts_on",
+          "ends_on"
+        ],
+        "title": "RentRollRow",
         "type": "object"
       },
       "Resolution": {
@@ -1644,7 +2338,10 @@
             "type": "string"
           }
         },
-        "required": ["level", "chain"],
+        "required": [
+          "level",
+          "chain"
+        ],
         "title": "Resolution",
         "type": "object"
       },
@@ -1691,8 +2388,211 @@
             "$ref": "#/components/schemas/LedgerEventOut"
           }
         },
-        "required": ["reversal", "corrected"],
+        "required": [
+          "reversal",
+          "corrected"
+        ],
         "title": "ReversalOut",
+        "type": "object"
+      },
+      "ScheduleELine": {
+        "properties": {
+          "amount": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Amount",
+            "type": "string"
+          },
+          "citation": {
+            "title": "Citation",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "line_no": {
+            "title": "Line No",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "line_no",
+          "label",
+          "citation",
+          "amount"
+        ],
+        "title": "ScheduleELine",
+        "type": "object"
+      },
+      "ScheduleEReport": {
+        "properties": {
+          "caveat": {
+            "title": "Caveat",
+            "type": "string"
+          },
+          "depreciation_citation": {
+            "title": "Depreciation Citation",
+            "type": "string"
+          },
+          "depreciation_line_18": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Depreciation Line 18",
+            "type": "string"
+          },
+          "excluded": {
+            "items": {
+              "$ref": "#/components/schemas/ExcludedAmount"
+            },
+            "title": "Excluded",
+            "type": "array"
+          },
+          "expense_lines": {
+            "items": {
+              "$ref": "#/components/schemas/ScheduleELine"
+            },
+            "title": "Expense Lines",
+            "type": "array"
+          },
+          "income_lines": {
+            "items": {
+              "$ref": "#/components/schemas/ScheduleELine"
+            },
+            "title": "Income Lines",
+            "type": "array"
+          },
+          "needs_classification": {
+            "items": {
+              "$ref": "#/components/schemas/NeedsClassification"
+            },
+            "title": "Needs Classification",
+            "type": "array"
+          },
+          "net": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Net",
+            "type": "string"
+          },
+          "property_id": {
+            "title": "Property Id",
+            "type": "string"
+          },
+          "signoff": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Signoff"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "tax_year": {
+            "title": "Tax Year",
+            "type": "integer"
+          },
+          "total_expenses": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Expenses",
+            "type": "string"
+          },
+          "total_income": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Income",
+            "type": "string"
+          }
+        },
+        "required": [
+          "property_id",
+          "tax_year",
+          "income_lines",
+          "expense_lines",
+          "depreciation_line_18",
+          "depreciation_citation",
+          "total_income",
+          "total_expenses",
+          "net",
+          "excluded",
+          "needs_classification",
+          "signoff",
+          "caveat"
+        ],
+        "title": "ScheduleEReport",
+        "type": "object"
+      },
+      "Signoff": {
+        "properties": {
+          "confirmed_at": {
+            "format": "date-time",
+            "title": "Confirmed At",
+            "type": "string"
+          },
+          "confirmed_by": {
+            "title": "Confirmed By",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "required": [
+          "confirmed_by",
+          "confirmed_at",
+          "note"
+        ],
+        "title": "Signoff",
+        "type": "object"
+      },
+      "SignoffIn": {
+        "properties": {
+          "confirmed_by": {
+            "title": "Confirmed By",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "property_id": {
+            "format": "uuid",
+            "title": "Property Id",
+            "type": "string"
+          },
+          "report_kind": {
+            "enum": [
+              "schedule_e",
+              "p_and_l",
+              "cash_flow"
+            ],
+            "title": "Report Kind",
+            "type": "string"
+          },
+          "tax_year": {
+            "title": "Tax Year",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "property_id",
+          "tax_year",
+          "report_kind",
+          "confirmed_by"
+        ],
+        "title": "SignoffIn",
         "type": "object"
       },
       "SplitIn": {
@@ -1771,7 +2671,10 @@
             "title": "Memo"
           }
         },
-        "required": ["category", "amount"],
+        "required": [
+          "category",
+          "amount"
+        ],
         "title": "SplitIn",
         "type": "object"
       },
@@ -1879,7 +2782,11 @@
             "type": "string"
           },
           "reason": {
-            "enum": ["no_state_jurisdiction", "no_rule_for_domain", "calendar_key_unregistered"],
+            "enum": [
+              "no_state_jurisdiction",
+              "no_rule_for_domain",
+              "calendar_key_unregistered"
+            ],
             "title": "Reason",
             "type": "string"
           },
@@ -1888,7 +2795,13 @@
             "type": "string"
           }
         },
-        "required": ["property_id", "state", "domain", "reason", "detail"],
+        "required": [
+          "property_id",
+          "state",
+          "domain",
+          "reason",
+          "detail"
+        ],
         "title": "SweepGapOut",
         "type": "object"
       },
@@ -1918,7 +2831,12 @@
             "type": "integer"
           }
         },
-        "required": ["as_of", "inserted", "total", "coverage_gaps"],
+        "required": [
+          "as_of",
+          "inserted",
+          "total",
+          "coverage_gaps"
+        ],
         "title": "SweepOut",
         "type": "object"
       },
@@ -1954,8 +2872,86 @@
             "type": "string"
           }
         },
-        "required": ["loc", "msg", "type"],
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "ValuationIn": {
+        "properties": {
+          "as_of": {
+            "format": "date",
+            "title": "As Of",
+            "type": "string"
+          },
+          "property_id": {
+            "format": "uuid",
+            "title": "Property Id",
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "avm",
+              "appraisal",
+              "broker_opinion",
+              "assessor",
+              "purchase_price",
+              "comparable_sales",
+              "owner_estimate",
+              "replacement_cost_estimate"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,16}|(?=[\\d.]{1,19}0*$)\\d{0,16}\\.\\d{0,2}0*$)",
+                "type": "string"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "property_id",
+          "value",
+          "source",
+          "as_of"
+        ],
+        "title": "ValuationIn",
+        "type": "object"
+      },
+      "ValuationOut": {
+        "properties": {
+          "as_of": {
+            "format": "date",
+            "title": "As Of",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "value": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "value",
+          "source",
+          "as_of"
+        ],
+        "title": "ValuationOut",
         "type": "object"
       }
     }
@@ -2118,7 +3114,13 @@
             "schema": {
               "anyOf": [
                 {
-                  "enum": ["pending", "accepted", "excluded", "duplicate", "matched_existing"],
+                  "enum": [
+                    "pending",
+                    "accepted",
+                    "excluded",
+                    "duplicate",
+                    "matched_existing"
+                  ],
                   "type": "string"
                 },
                 {
@@ -2757,6 +3759,60 @@
         "summary": "Reverse Ledger Event"
       }
     },
+    "/policies": {
+      "post": {
+        "operationId": "create_policy_policies_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PolicyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Create Policy Policies Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Policy"
+      }
+    },
     "/properties": {
       "get": {
         "operationId": "list_properties_properties_get",
@@ -2867,6 +3923,75 @@
         "summary": "Get Property"
       }
     },
+    "/properties/{property_id}/capex-forecast": {
+      "get": {
+        "operationId": "property_capex_forecast_properties__property_id__capex_forecast_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "property_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Property Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "horizon_years",
+            "required": false,
+            "schema": {
+              "default": 10,
+              "maximum": 30,
+              "minimum": 1,
+              "title": "Horizon Years",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "as_of",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "As Of"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapexForecastOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Property Capex Forecast"
+      }
+    },
     "/properties/{property_id}/dossier": {
       "get": {
         "operationId": "read_dossier_properties__property_id__dossier_get",
@@ -2972,6 +4097,165 @@
         "summary": "Assemble Dossier"
       }
     },
+    "/properties/{property_id}/financials": {
+      "get": {
+        "operationId": "property_financials_properties__property_id__financials_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "property_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Property Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "as_of",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "As Of"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Financials"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Property Financials"
+      }
+    },
+    "/properties/{property_id}/reports/cash-flow": {
+      "get": {
+        "operationId": "cash_flow_report_properties__property_id__reports_cash_flow_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "property_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Property Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "year",
+            "required": true,
+            "schema": {
+              "maximum": 2200,
+              "minimum": 1990,
+              "title": "Year",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashFlowReport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cash Flow Report"
+      }
+    },
+    "/properties/{property_id}/reports/schedule-e": {
+      "get": {
+        "operationId": "schedule_e_report_properties__property_id__reports_schedule_e_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "property_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Property Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tax_year",
+            "required": true,
+            "schema": {
+              "maximum": 2200,
+              "minimum": 1990,
+              "title": "Tax Year",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleEReport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Schedule E Report"
+      }
+    },
     "/readyz": {
       "get": {
         "operationId": "readyz_readyz_get",
@@ -2988,6 +4272,82 @@
           }
         },
         "summary": "Readyz"
+      }
+    },
+    "/reports/rent-roll": {
+      "get": {
+        "operationId": "rent_roll_report_reports_rent_roll_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RentRollRow"
+                  },
+                  "title": "Response Rent Roll Report Reports Rent Roll Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Rent Roll Report"
+      }
+    },
+    "/reports/signoff": {
+      "post": {
+        "operationId": "signoff_report_reports_signoff_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignoffIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Signoff Report Reports Signoff Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Signoff Report"
       }
     },
     "/sweep/deadlines": {
@@ -3045,6 +4405,60 @@
           }
         },
         "summary": "Sweep Deadlines"
+      }
+    },
+    "/valuations": {
+      "post": {
+        "operationId": "create_valuation_valuations_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValuationIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Create Valuation Valuations Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Valuation"
       }
     }
   }

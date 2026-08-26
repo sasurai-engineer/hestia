@@ -264,11 +264,20 @@ Ordered for execution; struck items are closed and kept for the record.
 
 ## Carried findings from the web slice (2026-08-26, still open)
 
-- **Playwright/axe/Lighthouse are not yet wired.** The web unit bar covers
-  the client, display arithmetic, and components (100%); pages and the
-  PropertyForm are excluded pending an e2e job that boots postgres + API +
-  web in CI (the pieces all exist — the schema job's service container and
-  `scripts/dev.sh` are the recipe).
+- ~~Playwright e2e~~ — **closed with increment 3**: `apps/web/e2e/smoke.spec.ts`
+  walks create-property → record-transaction → reverse → Schedule E →
+  calendar/coverage in a real chromium against the real stack; CI's `e2e`
+  job boots postgres + migrations + uvicorn + the built web app. Still open
+  from the original list: axe accessibility assertions and Lighthouse
+  budgets (add to the e2e job next).
+- **Reporting parity landed (increment 3):** Schedule E per property with
+  the mapping as cited effectivity-dated data (an unmapped ledger category
+  FAILS the schema build), line 18 from the depreciation engine's persisted
+  entries, exclusions shown, de-minimis BAR flags, CPA sign-off gate;
+  monthly cash flow; portfolio rent roll. The first advantage cards run the
+  ENGINES IN THE BROWSER: hold/sell forward ROE with draggable assumptions,
+  coinsurance adequacy against the latest valuation, and the Weibull capex
+  fan over the live inventory (API-side simulation, seeded by property id).
 - **The web slice is the reference surface, not the design vision.** The
   plan's timeline spine, decision cards, and direct manipulation (drag the
   exit date) start from here; nothing in this slice constrains them.

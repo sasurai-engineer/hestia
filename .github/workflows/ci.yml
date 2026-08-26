@@ -92,6 +92,64 @@ jobs:
           retention-days: 14
           if-no-files-found: ignore
 
+  e2e:
+    name: e2e · browser against the real stack
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: postgres  # config-audit: allow
+          POSTGRES_DB: hestia
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      HESTIA_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/hestia
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Enable corepack
+        run: corepack enable
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Apply schema and seeds
+        run: |
+          python3 scripts/migrate.py --include-seeds \
+            --psql "psql $HESTIA_DATABASE_URL"
+      - name: Build the web app and its engine dependencies
+        run: pnpm run build
+      - name: Start the API
+        run: |
+          (cd services/api && uv run uvicorn hestia_api.app:app --port 8000 &)
+          for _ in $(seq 1 30); do
+            curl -sf http://localhost:8000/healthz && break
+            sleep 1
+          done
+      - name: Install chromium
+        run: pnpm --filter @hestia/web exec playwright install --with-deps chromium
+      - name: Smoke the whole stack in a real browser
+        run: pnpm --filter @hestia/web e2e
+        env:
+          CI: 'true'
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-traces
+          path: apps/web/test-results/
+          retention-days: 7
+
   build:
     name: build
     runs-on: ubuntu-latest

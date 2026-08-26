@@ -1,25 +1,41 @@
 'use client';
 
 import { use, useCallback, useEffect, useState } from 'react';
+import { CapexFanChart, HoldSellCard, InsuranceCard } from '../../../components/AdvantageCards';
 import { ComponentsTable } from '../../../components/ComponentsTable';
 import { DeadlineList } from '../../../components/DeadlineList';
 import { DefectRegister } from '../../../components/DefectRegister';
 import { HazardCard } from '../../../components/HazardCard';
 import { JurisdictionChain } from '../../../components/JurisdictionChain';
 import { StatusPill } from '../../../components/StatusPill';
-import { api, type DossierStep, type DossierView } from '../../../lib/api';
+import {
+  api,
+  type CapexForecastOut,
+  type DossierStep,
+  type DossierView,
+  type Financials,
+} from '../../../lib/api';
 import { titleCase } from '../../../lib/format';
 
 export default function PropertyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [view, setView] = useState<DossierView | null>(null);
+  const [financials, setFinancials] = useState<Financials | null>(null);
+  const [capex, setCapex] = useState<CapexForecastOut | null>(null);
   const [steps, setSteps] = useState<DossierStep[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
-      setView(await api.readDossier(id));
+      const [dossierView, money, forecast] = await Promise.all([
+        api.readDossier(id),
+        api.financials(id),
+        api.capexForecast(id),
+      ]);
+      setView(dossierView);
+      setFinancials(money);
+      setCapex(forecast);
       setError(null);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught));
@@ -84,6 +100,15 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
           </div>
         </section>
       ) : null}
+
+      <section className="section">
+        <h2 className="section__title">Analysis</h2>
+        <div className="grid" style={{ gap: 14 }}>
+          {financials ? <HoldSellCard financials={financials} /> : null}
+          {financials ? <InsuranceCard financials={financials} /> : null}
+          {capex ? <CapexFanChart forecast={capex} /> : null}
+        </div>
+      </section>
 
       <section className="section">
         <h2 className="section__title">Governing bodies</h2>
