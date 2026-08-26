@@ -93,6 +93,20 @@ describe('the API client', () => {
       'http://localhost:8000/properties/p1/capex-forecast',
       expect.anything(),
     );
+    await api.listLeases();
+    await api.leaseDetail('l1');
+    await api.createUnit({ property_id: 'p1', label: 'A' });
+    await api.createResident({ full_name: 'R' });
+    await api.createLease({ unit_id: 'u1', starts_on: '2026-01-01', rent: '1450.00' });
+    await api.sweepRentCharges();
+    await api.recordLeaseReceipt('l1', { occurred_on: '2026-08-01', amount: '1450.00' });
+    await api.renewalContext('l1');
+    await api.recordRenewalOffer('l1', { offered_on: '2026-09-01', offered_rent: '1500.00' });
+    await api.collectRent('l1');
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/leases/l1/collect',
+      expect.objectContaining({ method: 'POST' }),
+    );
     await api.createEntity({ name: 'X', kind: 'llc' });
     await api.createProperty({
       entity_id: 'e',

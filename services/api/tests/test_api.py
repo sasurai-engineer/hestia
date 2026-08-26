@@ -38,6 +38,15 @@ class TestConfig:
         with pytest.raises(config.ConfigurationError, match="HESTIA_DATABASE_URL"):
             config.database_url()
 
+    def test_stripe_webhook_secret_is_required_when_read(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.delenv("HESTIA_STRIPE_WEBHOOK_SECRET", raising=False)
+        with pytest.raises(config.ConfigurationError, match="HESTIA_STRIPE_WEBHOOK_SECRET"):
+            config.stripe_webhook_secret()
+        monkeypatch.setenv("HESTIA_STRIPE_WEBHOOK_SECRET", "whsec_x")
+        assert config.stripe_webhook_secret() == "whsec_x"
+
     def test_non_postgres_url_is_refused(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("HESTIA_DATABASE_URL", "mysql://nope")
         with pytest.raises(config.ConfigurationError, match="postgresql://"):

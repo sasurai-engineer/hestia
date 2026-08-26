@@ -11,3 +11,4 @@
 \ir 010_nationwide_foundations.sql
 \ir 011_bank_import.sql
 \ir 012_reporting.sql
+\ir 013_rent_charges.sql

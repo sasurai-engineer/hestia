@@ -36,6 +36,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             </a>
             <nav className="masthead__nav" aria-label="Primary">
               <a href="/">Portfolio</a>
+              <a href="/leases">Leases</a>
               <a href="/transactions">Transactions</a>
               <a href="/reports">Reports</a>
               <a href="/calendar">Calendar</a>

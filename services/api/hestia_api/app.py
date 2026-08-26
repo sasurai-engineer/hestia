@@ -38,6 +38,8 @@ from hestia_api import (
     dossier,
     jurisdiction,
     ledger,
+    payments,
+    rent,
     reports,
     sweep,
     views,
@@ -539,6 +541,299 @@ def list_deadlines(
     limit: Annotated[int, Query(ge=1, le=500)] = 100,
 ) -> list[views.DeadlineOut]:
     return views.upcoming_deadlines(conn, due_before=due_before, limit=limit)
+
+
+# ---------------------------------------------------------------------------
+# Leases & rent — charges outside the ledger, receipts through it
+# ---------------------------------------------------------------------------
+
+
+def _audit(
+    conn: Conn,
+    request: Request,
+    actor: str,
+    action: str,
+    table: str,
+    record_id: str,
+    after: dict[str, Any] | None = None,
+) -> None:
+    db.record_audit(
+        conn,
+        actor=actor,
+        action=action,
+        request_id=request.state.request_id,
+        table_name=table,
+        record_id=record_id,
+        after_value=after,
+    )
+
+
+@app.post("/units", status_code=201)
+def create_unit(
+    body: rent.UnitIn, conn: Conn, request: Request, actor: Actor = "system"
+) -> dict[str, str]:
+    try:
+        unit_id = rent.create_unit(conn, body)
+    except psycopg.errors.ForeignKeyViolation as error:
+        raise HTTPException(status_code=422, detail="property does not exist") from error
+    _audit(conn, request, actor, "unit.create", "units", unit_id, body.model_dump(mode="json"))
+    return {"id": unit_id}
+
+
+@app.post("/residents", status_code=201)
+def create_resident(
+    body: rent.ResidentIn, conn: Conn, request: Request, actor: Actor = "system"
+) -> dict[str, str]:
+    resident_id = rent.create_resident(conn, body)
+    _audit(
+        conn,
+        request,
+        actor,
+        "resident.create",
+        "residents",
+        resident_id,
+        body.model_dump(mode="json"),
+    )
+    return {"id": resident_id}
+
+
+@app.post("/leases", status_code=201)
+def create_lease(
+    body: rent.LeaseIn, conn: Conn, request: Request, actor: Actor = "system"
+) -> dict[str, str]:
+    try:
+        lease_id = rent.create_lease(conn, body)
+    except psycopg.errors.ForeignKeyViolation as error:
+        raise HTTPException(status_code=422, detail="unit or resident does not exist") from error
+    except psycopg.errors.ExclusionViolation as error:
+        raise HTTPException(
+            status_code=409, detail="the unit already has a live lease for that period"
+        ) from error
+    _audit(
+        conn,
+        request,
+        actor,
+        "lease.create",
+        "leases",
+        lease_id,
+        body.model_dump(mode="json"),
+    )
+    return {"id": lease_id}
+
+
+@app.get("/leases", response_model=list[rent.LeaseSummary])
+def list_leases(conn: Conn) -> list[rent.LeaseSummary]:
+    return rent.list_leases(conn)
+
+
+@app.get("/leases/{lease_id}", response_model=rent.LeaseDetail)
+def lease_detail(lease_id: uuid.UUID, conn: Conn) -> rent.LeaseDetail:
+    try:
+        return rent.lease_detail(conn, str(lease_id))
+    except rent.UnknownLease as error:
+        raise HTTPException(status_code=404, detail="lease not found") from error
+
+
+@app.post("/sweep/rent-charges", response_model=rent.RentSweepResult)
+def sweep_rent_charges(
+    conn: Conn,
+    request: Request,
+    as_of: Annotated[dt.date | None, Query()] = None,
+    actor: Actor = "system",
+) -> rent.RentSweepResult:
+    effective = as_of if as_of is not None else dt.date.today()
+    result = rent.sweep_rent_charges(conn, effective)
+    db.record_audit(
+        conn,
+        actor=actor,
+        action="rent.sweep",
+        request_id=request.state.request_id,
+        table_name="rent_charges",
+        after_value={"as_of": str(effective), **result.model_dump(mode="json")},
+    )
+    return result
+
+
+@app.post("/sweep/late-fees", response_model=rent.RentSweepResult)
+def sweep_late_fees(
+    conn: Conn,
+    request: Request,
+    as_of: Annotated[dt.date | None, Query()] = None,
+    actor: Actor = "system",
+) -> rent.RentSweepResult:
+    effective = as_of if as_of is not None else dt.date.today()
+    result = rent.sweep_late_fees(conn, effective)
+    db.record_audit(
+        conn,
+        actor=actor,
+        action="latefee.sweep",
+        request_id=request.state.request_id,
+        table_name="rent_charges",
+        after_value={"as_of": str(effective), **result.model_dump(mode="json")},
+    )
+    return result
+
+
+@app.post("/leases/{lease_id}/receipts", response_model=rent.ReceiptOut, status_code=201)
+def record_receipt(
+    lease_id: uuid.UUID,
+    body: rent.ReceiptIn,
+    conn: Conn,
+    request: Request,
+    actor: Actor = "system",
+) -> rent.ReceiptOut:
+    try:
+        receipt = rent.record_receipt(conn, str(lease_id), body)
+    except rent.UnknownLease as error:
+        raise HTTPException(status_code=404, detail="lease not found") from error
+    _audit(
+        conn,
+        request,
+        actor,
+        "rent.receipt",
+        "ledger_events",
+        receipt.event_uuid,
+        receipt.model_dump(mode="json"),
+    )
+    return receipt
+
+
+class WaiveIn(BaseModel):
+    reason: str = Field(min_length=3)
+
+
+@app.post("/rent-charges/{charge_id}/waive", status_code=204)
+def waive_charge(
+    charge_id: uuid.UUID,
+    body: WaiveIn,
+    conn: Conn,
+    request: Request,
+    actor: Actor = "system",
+) -> None:
+    updated = conn.execute(
+        """
+        UPDATE rent_charges SET status = 'waived', waived_reason = %s
+        WHERE id = %s AND status IN ('scheduled', 'due', 'partially_paid')
+        """,
+        (body.reason, str(charge_id)),
+    )
+    if updated.rowcount == 0:
+        raise HTTPException(status_code=404, detail="no waivable charge found")
+    _audit(
+        conn,
+        request,
+        actor,
+        "rent.waive",
+        "rent_charges",
+        str(charge_id),
+        {"reason": body.reason},
+    )
+
+
+@app.get("/leases/{lease_id}/renewal-context", response_model=rent.RenewalContextOut)
+def renewal_context(lease_id: uuid.UUID, conn: Conn) -> rent.RenewalContextOut:
+    try:
+        return rent.renewal_context(conn, str(lease_id))
+    except rent.UnknownLease as error:
+        raise HTTPException(status_code=404, detail="lease not found") from error
+
+
+@app.post("/leases/{lease_id}/renewals", status_code=201)
+def record_renewal(
+    lease_id: uuid.UUID,
+    body: rent.RenewalOfferIn,
+    conn: Conn,
+    request: Request,
+    actor: Actor = "system",
+) -> dict[str, str]:
+    try:
+        renewal_id = rent.record_renewal_offer(conn, str(lease_id), body)
+    except rent.UnknownLease as error:
+        raise HTTPException(status_code=404, detail="lease not found") from error
+    _audit(
+        conn,
+        request,
+        actor,
+        "renewal.offer",
+        "lease_renewals",
+        renewal_id,
+        body.model_dump(mode="json"),
+    )
+    return {"id": renewal_id}
+
+
+# ---------------------------------------------------------------------------
+# Payments — the processor seam (test keys today, live keys when the bank is)
+# ---------------------------------------------------------------------------
+
+
+class CollectIn(BaseModel):
+    amount: Decimal | None = Field(default=None, gt=0, decimal_places=2, max_digits=18)
+
+
+@app.post("/leases/{lease_id}/collect", response_model=payments.CollectOut, status_code=201)
+def collect_rent(
+    lease_id: uuid.UUID,
+    body: CollectIn,
+    conn: Conn,
+    request: Request,
+    actor: Actor = "system",
+) -> payments.CollectOut:
+    secret_key = config.stripe_secret_key()
+    if secret_key is None:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "payments are not configured: set HESTIA_STRIPE_SECRET_KEY "
+                "(test-mode keys work before the business bank exists)"
+            ),
+        )
+    try:
+        result = payments.collect(
+            conn,
+            str(lease_id),
+            amount=body.amount,
+            transport=payments.live_transport,
+            secret_key=secret_key,
+        )
+    except rent.UnknownLease as error:
+        raise HTTPException(status_code=404, detail="lease not found") from error
+    except rent.NothingOutstanding as error:
+        raise HTTPException(status_code=422, detail="nothing outstanding to collect") from error
+    _audit(
+        conn,
+        request,
+        actor,
+        "payment.collect",
+        "payment_requests",
+        result.payment_request_id,
+        result.model_dump(mode="json"),
+    )
+    return result
+
+
+@app.post("/payments/stripe/webhook")
+async def stripe_webhook(request: Request, conn: Conn) -> dict[str, str]:
+    payload = await request.body()
+    header = request.headers.get("stripe-signature", "")
+    try:
+        event = payments.verify_signature(
+            payload,
+            header,
+            config.stripe_webhook_secret(),
+            now=dt.datetime.now(tz=dt.UTC),
+        )
+    except payments.BadSignature as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    outcome = payments.handle_event(conn, event)
+    db.record_audit(
+        conn,
+        actor="stripe",
+        action="payment.webhook",
+        request_id=request.state.request_id,
+        after_value={"type": event.get("type"), "outcome": outcome},
+    )
+    return {"outcome": outcome}
 
 
 # ---------------------------------------------------------------------------

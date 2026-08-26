@@ -162,6 +162,12 @@ def clean(conn: psycopg.Connection[Any]) -> None:
         "tax_elections",
         "tax_profiles",
         "disclosures",
+        # Rent-side state: charges/allocations/requests are mutable by
+        # design; the ledger rows they produced survive and pin anchors.
+        "rent_receipt_allocations",
+        "rent_charges",
+        "payment_requests",
+        "lease_renewals",
         # Bank staging is mutable by design; only the LEDGER rows it produced
         # survive (and pin their anchors, handled below).
         "bank_transactions",

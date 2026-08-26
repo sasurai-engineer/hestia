@@ -56,10 +56,14 @@ services/
                 same-transaction audit writes, the deadline sweep, the
                 dossier orchestrator (address -> geocode -> jurisdiction ->
                 hazard -> inference -> sweep), the append-only transaction
-                ledger with reversal corrections, and the CSV/OFX bank-import
+                ledger with reversal corrections, the CSV/OFX bank-import
                 pipeline (stage -> suggest -> review -> ledger; no bank data
-                ever leaves the machine). Tested against a real migrated
-                PostgreSQL only — never a mock.
+                ever leaves the machine), reports with authorities attached
+                (Schedule E, cash flow, rent roll), leases with idempotent
+                rent/late-fee sweeps (fees only where a cited rule exists),
+                and the Stripe ACH seam (test keys now, live keys when the
+                bank is). Tested against a real migrated PostgreSQL only —
+                never a mock.
   ingest/       provider adapters (Census, FEMA — mappers proven against
                 live-recorded responses) + the onboarding inference engine
   sim/          Weibull Monte Carlo capital forecast + the Python reference

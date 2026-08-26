@@ -130,12 +130,7 @@
             "title": "Institution"
           },
           "kind": {
-            "enum": [
-              "checking",
-              "savings",
-              "credit_card",
-              "escrow"
-            ],
+            "enum": ["checking", "savings", "credit_card", "escrow"],
             "title": "Kind",
             "type": "string"
           },
@@ -157,11 +152,7 @@
             "title": "Property Id"
           }
         },
-        "required": [
-          "entity_id",
-          "nickname",
-          "kind"
-        ],
+        "required": ["entity_id", "nickname", "kind"],
         "title": "BankAccountIn",
         "type": "object"
       },
@@ -203,12 +194,7 @@
             "type": "boolean"
           },
           "kind": {
-            "enum": [
-              "checking",
-              "savings",
-              "credit_card",
-              "escrow"
-            ],
+            "enum": ["checking", "savings", "credit_card", "escrow"],
             "title": "Kind",
             "type": "string"
           },
@@ -230,13 +216,7 @@
             "title": "Property Id"
           }
         },
-        "required": [
-          "entity_id",
-          "nickname",
-          "kind",
-          "id",
-          "is_active"
-        ],
+        "required": ["entity_id", "nickname", "kind", "id", "is_active"],
         "title": "BankAccountOut",
         "type": "object"
       },
@@ -248,9 +228,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "file"
-        ],
+        "required": ["file"],
         "title": "Body_import_bank_statement_bank_accounts__account_id__imports_post",
         "type": "object"
       },
@@ -281,13 +259,7 @@
             "type": "integer"
           }
         },
-        "required": [
-          "year",
-          "expected",
-          "p10",
-          "p50",
-          "p90"
-        ],
+        "required": ["year", "expected", "p10", "p50", "p90"],
         "title": "CapexBand",
         "type": "object"
       },
@@ -359,12 +331,7 @@
             "type": "integer"
           }
         },
-        "required": [
-          "property_id",
-          "year",
-          "months",
-          "total_net"
-        ],
+        "required": ["property_id", "year", "months", "total_net"],
         "title": "CashFlowReport",
         "type": "object"
       },
@@ -379,11 +346,142 @@
             "type": "string"
           }
         },
-        "required": [
-          "name",
-          "level"
-        ],
+        "required": ["name", "level"],
         "title": "ChainLink",
+        "type": "object"
+      },
+      "ChargeOut": {
+        "properties": {
+          "allocated": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Allocated",
+            "type": "string"
+          },
+          "amount": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Amount",
+            "type": "string"
+          },
+          "due_on": {
+            "format": "date",
+            "title": "Due On",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "outstanding": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Outstanding",
+            "type": "string"
+          },
+          "period_start": {
+            "format": "date",
+            "title": "Period Start",
+            "type": "string"
+          },
+          "rule_citation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Citation"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "waived_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Waived Reason"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "period_start",
+          "due_on",
+          "amount",
+          "status",
+          "allocated",
+          "outstanding",
+          "rule_citation",
+          "waived_reason"
+        ],
+        "title": "ChargeOut",
+        "type": "object"
+      },
+      "CollectIn": {
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,16}|(?=[\\d.]{1,19}0*$)\\d{0,16}\\.\\d{0,2}0*$)",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          }
+        },
+        "title": "CollectIn",
+        "type": "object"
+      },
+      "CollectOut": {
+        "properties": {
+          "amount": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Amount",
+            "type": "string"
+          },
+          "client_secret": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Secret"
+          },
+          "payment_request_id": {
+            "title": "Payment Request Id",
+            "type": "string"
+          },
+          "provider_ref": {
+            "title": "Provider Ref",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": ["payment_request_id", "provider_ref", "client_secret", "amount", "status"],
+        "title": "CollectOut",
         "type": "object"
       },
       "ComponentOut": {
@@ -508,13 +606,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "property_id",
-          "state",
-          "domain",
-          "reason",
-          "message"
-        ],
+        "required": ["property_id", "state", "domain", "reason", "message"],
         "title": "CoverageGapOut",
         "type": "object"
       },
@@ -556,9 +648,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "description"
-        ],
+        "required": ["description"],
         "title": "CoverageIn",
         "type": "object"
       },
@@ -584,11 +674,7 @@
             "type": "array"
           }
         },
-        "required": [
-          "as_of",
-          "properties",
-          "gaps"
-        ],
+        "required": ["as_of", "properties", "gaps"],
         "title": "CoverageReport",
         "type": "object"
       },
@@ -814,17 +900,12 @@
             "title": "Source"
           },
           "status": {
-            "enum": [
-              "covered",
-              "no_rules_loaded"
-            ],
+            "enum": ["covered", "no_rules_loaded"],
             "title": "Status",
             "type": "string"
           }
         },
-        "required": [
-          "status"
-        ],
+        "required": ["status"],
         "title": "DomainCoverage",
         "type": "object"
       },
@@ -853,12 +934,7 @@
             "type": "object"
           }
         },
-        "required": [
-          "property_id",
-          "as_of",
-          "steps",
-          "sweep"
-        ],
+        "required": ["property_id", "as_of", "steps", "sweep"],
         "title": "DossierOut",
         "type": "object"
       },
@@ -873,20 +949,12 @@
             "type": "string"
           },
           "status": {
-            "enum": [
-              "ok",
-              "skipped",
-              "failed"
-            ],
+            "enum": ["ok", "skipped", "failed"],
             "title": "Status",
             "type": "string"
           }
         },
-        "required": [
-          "name",
-          "status",
-          "detail"
-        ],
+        "required": ["name", "status", "detail"],
         "title": "DossierStepOut",
         "type": "object"
       },
@@ -1063,10 +1131,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name",
-          "kind"
-        ],
+        "required": ["name", "kind"],
         "title": "EntityIn",
         "type": "object"
       },
@@ -1112,11 +1177,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name",
-          "kind",
-          "id"
-        ],
+        "required": ["name", "kind", "id"],
         "title": "EntityOut",
         "type": "object"
       },
@@ -1136,11 +1197,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "label",
-          "citation",
-          "amount"
-        ],
+        "required": ["label", "citation", "amount"],
         "title": "ExcludedAmount",
         "type": "object"
       },
@@ -1278,9 +1335,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "status"
-        ],
+        "required": ["status"],
         "title": "Health",
         "type": "object"
       },
@@ -1307,14 +1362,294 @@
             "type": "integer"
           }
         },
-        "required": [
-          "batch_id",
-          "format",
-          "staged",
-          "duplicates",
-          "suggested"
-        ],
+        "required": ["batch_id", "format", "staged", "duplicates", "suggested"],
         "title": "ImportSummary",
+        "type": "object"
+      },
+      "LeaseDetail": {
+        "properties": {
+          "balance_due": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Balance Due",
+            "type": "string"
+          },
+          "charges": {
+            "items": {
+              "$ref": "#/components/schemas/ChargeOut"
+            },
+            "title": "Charges",
+            "type": "array"
+          },
+          "deposit_returned_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deposit Returned On"
+          },
+          "ends_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends On"
+          },
+          "escalation": {
+            "title": "Escalation",
+            "type": "string"
+          },
+          "escalation_value": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Escalation Value"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "property_id": {
+            "title": "Property Id",
+            "type": "string"
+          },
+          "property_label": {
+            "title": "Property Label",
+            "type": "string"
+          },
+          "rent": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Rent",
+            "type": "string"
+          },
+          "rent_due_day": {
+            "title": "Rent Due Day",
+            "type": "integer"
+          },
+          "residents": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Residents",
+            "type": "array"
+          },
+          "security_deposit": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Security Deposit",
+            "type": "string"
+          },
+          "starts_on": {
+            "format": "date",
+            "title": "Starts On",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "unit_label": {
+            "title": "Unit Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "property_id",
+          "property_label",
+          "unit_label",
+          "status",
+          "starts_on",
+          "ends_on",
+          "rent",
+          "rent_due_day",
+          "security_deposit",
+          "deposit_returned_on",
+          "escalation",
+          "escalation_value",
+          "residents",
+          "charges",
+          "balance_due"
+        ],
+        "title": "LeaseDetail",
+        "type": "object"
+      },
+      "LeaseIn": {
+        "properties": {
+          "ends_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends On"
+          },
+          "escalation": {
+            "default": "none",
+            "enum": ["none", "fixed_amount", "fixed_percent"],
+            "title": "Escalation",
+            "type": "string"
+          },
+          "escalation_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Escalation Value"
+          },
+          "rent": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,16}|(?=[\\d.]{1,19}0*$)\\d{0,16}\\.\\d{0,2}0*$)",
+                "type": "string"
+              }
+            ],
+            "title": "Rent"
+          },
+          "rent_due_day": {
+            "default": 1,
+            "maximum": 28.0,
+            "minimum": 1.0,
+            "title": "Rent Due Day",
+            "type": "integer"
+          },
+          "resident_ids": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Resident Ids",
+            "type": "array"
+          },
+          "security_deposit": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,16}|(?=[\\d.]{1,19}0*$)\\d{0,16}\\.\\d{0,2}0*$)",
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "title": "Security Deposit"
+          },
+          "starts_on": {
+            "format": "date",
+            "title": "Starts On",
+            "type": "string"
+          },
+          "status": {
+            "default": "active",
+            "enum": ["active", "month_to_month", "draft"],
+            "title": "Status",
+            "type": "string"
+          },
+          "unit_id": {
+            "title": "Unit Id",
+            "type": "string"
+          }
+        },
+        "required": ["unit_id", "starts_on", "rent"],
+        "title": "LeaseIn",
+        "type": "object"
+      },
+      "LeaseSummary": {
+        "properties": {
+          "balance_due": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Balance Due",
+            "type": "string"
+          },
+          "ends_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends On"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "property_label": {
+            "title": "Property Label",
+            "type": "string"
+          },
+          "rent": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Rent",
+            "type": "string"
+          },
+          "residents": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Residents",
+            "type": "array"
+          },
+          "starts_on": {
+            "format": "date",
+            "title": "Starts On",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "unit_label": {
+            "title": "Unit Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "property_label",
+          "unit_label",
+          "status",
+          "starts_on",
+          "ends_on",
+          "rent",
+          "residents",
+          "balance_due"
+        ],
+        "title": "LeaseSummary",
         "type": "object"
       },
       "LedgerEntryIn": {
@@ -1464,11 +1799,7 @@
             "title": "Unit Id"
           }
         },
-        "required": [
-          "occurred_on",
-          "category",
-          "amount"
-        ],
+        "required": ["occurred_on", "category", "amount"],
         "title": "LedgerEntryIn",
         "type": "object"
       },
@@ -1646,12 +1977,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "events",
-          "total_in",
-          "total_out",
-          "net"
-        ],
+        "required": ["events", "total_in", "total_out", "net"],
         "title": "LedgerRegister",
         "type": "object"
       },
@@ -1663,9 +1989,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "event_uuid"
-        ],
+        "required": ["event_uuid"],
         "title": "MatchIn",
         "type": "object"
       },
@@ -1750,13 +2074,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "event_uuid",
-          "occurred_on",
-          "memo",
-          "amount",
-          "reason"
-        ],
+        "required": ["event_uuid", "occurred_on", "memo", "amount", "reason"],
         "title": "NeedsClassification",
         "type": "object"
       },
@@ -1846,12 +2164,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "property_id",
-          "kind",
-          "effective_from",
-          "effective_to"
-        ],
+        "required": ["property_id", "kind", "effective_from", "effective_to"],
         "title": "PolicyIn",
         "type": "object"
       },
@@ -1954,13 +2267,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "property_id",
-          "label",
-          "state",
-          "resolution",
-          "domains"
-        ],
+        "required": ["property_id", "label", "state", "resolution", "domains"],
         "title": "PropertyCoverage",
         "type": "object"
       },
@@ -2040,15 +2347,7 @@
             "title": "Year Built"
           }
         },
-        "required": [
-          "entity_id",
-          "label",
-          "street_1",
-          "city",
-          "state",
-          "postal_code",
-          "kind"
-        ],
+        "required": ["entity_id", "label", "street_1", "city", "state", "postal_code", "kind"],
         "title": "PropertyIn",
         "type": "object"
       },
@@ -2261,11 +2560,174 @@
             "type": "string"
           }
         },
-        "required": [
-          "status",
-          "migrations"
-        ],
+        "required": ["status", "migrations"],
         "title": "Readiness",
+        "type": "object"
+      },
+      "ReceiptIn": {
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,16}|(?=[\\d.]{1,19}0*$)\\d{0,16}\\.\\d{0,2}0*$)",
+                "type": "string"
+              }
+            ],
+            "title": "Amount"
+          },
+          "category": {
+            "default": "rent",
+            "enum": ["rent", "late_fee", "deposit_received"],
+            "title": "Category",
+            "type": "string"
+          },
+          "memo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Memo"
+          },
+          "occurred_on": {
+            "format": "date",
+            "title": "Occurred On",
+            "type": "string"
+          }
+        },
+        "required": ["occurred_on", "amount"],
+        "title": "ReceiptIn",
+        "type": "object"
+      },
+      "ReceiptOut": {
+        "properties": {
+          "allocations": {
+            "items": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "title": "Allocations",
+            "type": "array"
+          },
+          "event_uuid": {
+            "title": "Event Uuid",
+            "type": "string"
+          },
+          "unallocated": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Unallocated",
+            "type": "string"
+          }
+        },
+        "required": ["event_uuid", "allocations", "unallocated"],
+        "title": "ReceiptOut",
+        "type": "object"
+      },
+      "RenewalContextOut": {
+        "properties": {
+          "assumptions_source": {
+            "title": "Assumptions Source",
+            "type": "string"
+          },
+          "current_rent": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Current Rent",
+            "type": "string"
+          },
+          "ends_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends On"
+          },
+          "lease_id": {
+            "title": "Lease Id",
+            "type": "string"
+          },
+          "market_rent": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market Rent"
+          },
+          "market_rent_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market Rent Source"
+          },
+          "turn_cost": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Turn Cost",
+            "type": "string"
+          },
+          "vacancy_days": {
+            "title": "Vacancy Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "lease_id",
+          "current_rent",
+          "ends_on",
+          "market_rent",
+          "market_rent_source",
+          "turn_cost",
+          "vacancy_days",
+          "assumptions_source"
+        ],
+        "title": "RenewalContextOut",
+        "type": "object"
+      },
+      "RenewalOfferIn": {
+        "properties": {
+          "offered_on": {
+            "format": "date",
+            "title": "Offered On",
+            "type": "string"
+          },
+          "offered_rent": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,16}|(?=[\\d.]{1,19}0*$)\\d{0,16}\\.\\d{0,2}0*$)",
+                "type": "string"
+              }
+            ],
+            "title": "Offered Rent"
+          }
+        },
+        "required": ["offered_on", "offered_rent"],
+        "title": "RenewalOfferIn",
         "type": "object"
       },
       "RentRollRow": {
@@ -2324,6 +2786,62 @@
         "title": "RentRollRow",
         "type": "object"
       },
+      "RentSweepResult": {
+        "properties": {
+          "charges_created": {
+            "title": "Charges Created",
+            "type": "integer"
+          },
+          "gaps": {
+            "items": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "title": "Gaps",
+            "type": "array"
+          }
+        },
+        "required": ["charges_created", "gaps"],
+        "title": "RentSweepResult",
+        "type": "object"
+      },
+      "ResidentIn": {
+        "properties": {
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "full_name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Full Name",
+            "type": "string"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          }
+        },
+        "required": ["full_name"],
+        "title": "ResidentIn",
+        "type": "object"
+      },
       "Resolution": {
         "properties": {
           "chain": {
@@ -2338,10 +2856,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "level",
-          "chain"
-        ],
+        "required": ["level", "chain"],
         "title": "Resolution",
         "type": "object"
       },
@@ -2388,10 +2903,7 @@
             "$ref": "#/components/schemas/LedgerEventOut"
           }
         },
-        "required": [
-          "reversal",
-          "corrected"
-        ],
+        "required": ["reversal", "corrected"],
         "title": "ReversalOut",
         "type": "object"
       },
@@ -2415,12 +2927,7 @@
             "type": "integer"
           }
         },
-        "required": [
-          "line_no",
-          "label",
-          "citation",
-          "amount"
-        ],
+        "required": ["line_no", "label", "citation", "amount"],
         "title": "ScheduleELine",
         "type": "object"
       },
@@ -2542,11 +3049,7 @@
             "title": "Note"
           }
         },
-        "required": [
-          "confirmed_by",
-          "confirmed_at",
-          "note"
-        ],
+        "required": ["confirmed_by", "confirmed_at", "note"],
         "title": "Signoff",
         "type": "object"
       },
@@ -2573,11 +3076,7 @@
             "type": "string"
           },
           "report_kind": {
-            "enum": [
-              "schedule_e",
-              "p_and_l",
-              "cash_flow"
-            ],
+            "enum": ["schedule_e", "p_and_l", "cash_flow"],
             "title": "Report Kind",
             "type": "string"
           },
@@ -2586,12 +3085,7 @@
             "type": "integer"
           }
         },
-        "required": [
-          "property_id",
-          "tax_year",
-          "report_kind",
-          "confirmed_by"
-        ],
+        "required": ["property_id", "tax_year", "report_kind", "confirmed_by"],
         "title": "SignoffIn",
         "type": "object"
       },
@@ -2671,10 +3165,7 @@
             "title": "Memo"
           }
         },
-        "required": [
-          "category",
-          "amount"
-        ],
+        "required": ["category", "amount"],
         "title": "SplitIn",
         "type": "object"
       },
@@ -2782,11 +3273,7 @@
             "type": "string"
           },
           "reason": {
-            "enum": [
-              "no_state_jurisdiction",
-              "no_rule_for_domain",
-              "calendar_key_unregistered"
-            ],
+            "enum": ["no_state_jurisdiction", "no_rule_for_domain", "calendar_key_unregistered"],
             "title": "Reason",
             "type": "string"
           },
@@ -2795,13 +3282,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "property_id",
-          "state",
-          "domain",
-          "reason",
-          "detail"
-        ],
+        "required": ["property_id", "state", "domain", "reason", "detail"],
         "title": "SweepGapOut",
         "type": "object"
       },
@@ -2831,13 +3312,41 @@
             "type": "integer"
           }
         },
-        "required": [
-          "as_of",
-          "inserted",
-          "total",
-          "coverage_gaps"
-        ],
+        "required": ["as_of", "inserted", "total", "coverage_gaps"],
         "title": "SweepOut",
+        "type": "object"
+      },
+      "UnitIn": {
+        "properties": {
+          "label": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          },
+          "market_rent": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,16}|(?=[\\d.]{1,19}0*$)\\d{0,16}\\.\\d{0,2}0*$)",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market Rent"
+          },
+          "property_id": {
+            "title": "Property Id",
+            "type": "string"
+          }
+        },
+        "required": ["property_id", "label"],
+        "title": "UnitIn",
         "type": "object"
       },
       "ValidationError": {
@@ -2872,11 +3381,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "loc",
-          "msg",
-          "type"
-        ],
+        "required": ["loc", "msg", "type"],
         "title": "ValidationError",
         "type": "object"
       },
@@ -2920,12 +3425,7 @@
             "title": "Value"
           }
         },
-        "required": [
-          "property_id",
-          "value",
-          "source",
-          "as_of"
-        ],
+        "required": ["property_id", "value", "source", "as_of"],
         "title": "ValuationIn",
         "type": "object"
       },
@@ -2946,12 +3446,20 @@
             "type": "string"
           }
         },
-        "required": [
-          "value",
-          "source",
-          "as_of"
-        ],
+        "required": ["value", "source", "as_of"],
         "title": "ValuationOut",
+        "type": "object"
+      },
+      "WaiveIn": {
+        "properties": {
+          "reason": {
+            "minLength": 3,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": ["reason"],
+        "title": "WaiveIn",
         "type": "object"
       }
     }
@@ -3114,13 +3622,7 @@
             "schema": {
               "anyOf": [
                 {
-                  "enum": [
-                    "pending",
-                    "accepted",
-                    "excluded",
-                    "duplicate",
-                    "matched_existing"
-                  ],
+                  "enum": ["pending", "accepted", "excluded", "duplicate", "matched_existing"],
                   "type": "string"
                 },
                 {
@@ -3518,6 +4020,344 @@
         "summary": "Healthz"
       }
     },
+    "/leases": {
+      "get": {
+        "operationId": "list_leases_leases_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/LeaseSummary"
+                  },
+                  "title": "Response List Leases Leases Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Leases"
+      },
+      "post": {
+        "operationId": "create_lease_leases_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LeaseIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Create Lease Leases Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Lease"
+      }
+    },
+    "/leases/{lease_id}": {
+      "get": {
+        "operationId": "lease_detail_leases__lease_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lease_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Lease Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaseDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Lease Detail"
+      }
+    },
+    "/leases/{lease_id}/collect": {
+      "post": {
+        "operationId": "collect_rent_leases__lease_id__collect_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lease_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Lease Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CollectIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Collect Rent"
+      }
+    },
+    "/leases/{lease_id}/receipts": {
+      "post": {
+        "operationId": "record_receipt_leases__lease_id__receipts_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lease_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Lease Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReceiptIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceiptOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Record Receipt"
+      }
+    },
+    "/leases/{lease_id}/renewal-context": {
+      "get": {
+        "operationId": "renewal_context_leases__lease_id__renewal_context_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lease_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Lease Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RenewalContextOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Renewal Context"
+      }
+    },
+    "/leases/{lease_id}/renewals": {
+      "post": {
+        "operationId": "record_renewal_leases__lease_id__renewals_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lease_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Lease Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenewalOfferIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Record Renewal Leases  Lease Id  Renewals Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Record Renewal"
+      }
+    },
     "/ledger": {
       "get": {
         "operationId": "ledger_register_ledger_get",
@@ -3757,6 +4597,28 @@
           }
         },
         "summary": "Reverse Ledger Event"
+      }
+    },
+    "/payments/stripe/webhook": {
+      "post": {
+        "operationId": "stripe_webhook_payments_stripe_webhook_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Stripe Webhook Payments Stripe Webhook Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Stripe Webhook"
       }
     },
     "/policies": {
@@ -4274,6 +5136,59 @@
         "summary": "Readyz"
       }
     },
+    "/rent-charges/{charge_id}/waive": {
+      "post": {
+        "operationId": "waive_charge_rent_charges__charge_id__waive_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "charge_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Charge Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WaiveIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Waive Charge"
+      }
+    },
     "/reports/rent-roll": {
       "get": {
         "operationId": "rent_roll_report_reports_rent_roll_get",
@@ -4350,6 +5265,60 @@
         "summary": "Signoff Report"
       }
     },
+    "/residents": {
+      "post": {
+        "operationId": "create_resident_residents_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidentIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Create Resident Residents Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Resident"
+      }
+    },
     "/sweep/deadlines": {
       "post": {
         "operationId": "sweep_deadlines_sweep_deadlines_post",
@@ -4405,6 +5374,174 @@
           }
         },
         "summary": "Sweep Deadlines"
+      }
+    },
+    "/sweep/late-fees": {
+      "post": {
+        "operationId": "sweep_late_fees_sweep_late_fees_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "as_of",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "As Of"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RentSweepResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Sweep Late Fees"
+      }
+    },
+    "/sweep/rent-charges": {
+      "post": {
+        "operationId": "sweep_rent_charges_sweep_rent_charges_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "as_of",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "As Of"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RentSweepResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Sweep Rent Charges"
+      }
+    },
+    "/units": {
+      "post": {
+        "operationId": "create_unit_units_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnitIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Create Unit Units Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Unit"
       }
     },
     "/valuations": {

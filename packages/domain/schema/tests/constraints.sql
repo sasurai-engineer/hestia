@@ -615,6 +615,41 @@ SELECT assert_rejected(
   'plausible_line', 'a Schedule E line number that does not exist');
 
 \echo ''
+\echo 'rent charges and payments'
+INSERT INTO units (id, property_id, label)
+  VALUES ('bbbbbbbb-1111-1111-1111-111111111111',
+          '33333333-3333-3333-3333-333333333333', 'RC');
+INSERT INTO leases (id, unit_id, status, starts_on, rent)
+  VALUES ('bbbbbbbb-2222-2222-2222-222222222222',
+          'bbbbbbbb-1111-1111-1111-111111111111', 'active', '2026-01-01', 1450.00);
+SELECT assert_accepted(
+  $$INSERT INTO rent_charges (lease_id, kind, period_start, due_on, amount)
+    VALUES ('bbbbbbbb-2222-2222-2222-222222222222', 'rent', '2026-08-01',
+            '2026-08-01', 1450.00)$$,
+  'a monthly rent charge');
+SELECT assert_rejected(
+  $$INSERT INTO rent_charges (lease_id, kind, period_start, due_on, amount)
+    VALUES ('bbbbbbbb-2222-2222-2222-222222222222', 'rent', '2026-08-01',
+            '2026-08-05', 1450.00)$$,
+  'one_charge_per_period', 're-sweeping the same rent period');
+SELECT assert_rejected(
+  $$INSERT INTO rent_charges (lease_id, kind, period_start, due_on, amount)
+    VALUES ('bbbbbbbb-2222-2222-2222-222222222222', 'late_fee', '2026-08-01',
+            '2026-08-06', 0)$$,
+  'charges_charge_something', 'a zero-dollar charge');
+SELECT assert_rejected(
+  $$UPDATE rent_charges SET status = 'waived'
+    WHERE lease_id = 'bbbbbbbb-2222-2222-2222-222222222222'$$,
+  'waived_says_why', 'a waiver with no reason');
+SELECT assert_rejected(
+  $$INSERT INTO payment_requests (lease_id, amount, provider, status)
+    VALUES ('bbbbbbbb-2222-2222-2222-222222222222', 1450.00, 'stripe', 'succeeded')$$,
+  'success_posts_its_receipt', 'a succeeded payment with no receipt linked');
+DELETE FROM rent_charges WHERE lease_id = 'bbbbbbbb-2222-2222-2222-222222222222';
+DELETE FROM leases WHERE id = 'bbbbbbbb-2222-2222-2222-222222222222';
+DELETE FROM units WHERE id = 'bbbbbbbb-1111-1111-1111-111111111111';
+
+\echo ''
 \echo 'deadlines'
 SELECT assert_rejected(
   $$INSERT INTO deadlines (kind, due_on, citation)

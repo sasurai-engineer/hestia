@@ -33,6 +33,14 @@ export type CashFlowReport = components['schemas']['CashFlowReport'];
 export type RentRollRow = components['schemas']['RentRollRow'];
 export type Financials = components['schemas']['Financials'];
 export type CapexForecastOut = components['schemas']['CapexForecastOut'];
+export type LeaseSummary = components['schemas']['LeaseSummary'];
+export type LeaseDetail = components['schemas']['LeaseDetail'];
+export type ChargeOut = components['schemas']['ChargeOut'];
+export type LeaseIn = components['schemas']['LeaseIn'];
+export type ReceiptIn = components['schemas']['ReceiptIn'];
+export type ReceiptOut = components['schemas']['ReceiptOut'];
+export type RenewalContextOut = components['schemas']['RenewalContextOut'];
+export type CollectOut = components['schemas']['CollectOut'];
 
 export class ApiError extends Error {
   readonly status: number;
@@ -143,4 +151,34 @@ export const api = {
   financials: (propertyId: string) => request<Financials>(`/properties/${propertyId}/financials`),
   capexForecast: (propertyId: string) =>
     request<CapexForecastOut>(`/properties/${propertyId}/capex-forecast`),
+  listLeases: () => request<LeaseSummary[]>('/leases'),
+  leaseDetail: (leaseId: string) => request<LeaseDetail>(`/leases/${leaseId}`),
+  createUnit: (body: { property_id: string; label: string; market_rent?: string | null }) =>
+    request<{ id: string }>('/units', { method: 'POST', body: JSON.stringify(body) }),
+  createResident: (body: { full_name: string; email?: string | null }) =>
+    request<{ id: string }>('/residents', { method: 'POST', body: JSON.stringify(body) }),
+  createLease: (body: LeaseIn) =>
+    request<{ id: string }>('/leases', { method: 'POST', body: JSON.stringify(body) }),
+  sweepRentCharges: () =>
+    request<{ charges_created: number }>('/sweep/rent-charges', {
+      method: 'POST',
+      body: JSON.stringify({}),
+    }),
+  recordLeaseReceipt: (leaseId: string, body: ReceiptIn) =>
+    request<ReceiptOut>(`/leases/${leaseId}/receipts`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  renewalContext: (leaseId: string) =>
+    request<RenewalContextOut>(`/leases/${leaseId}/renewal-context`),
+  recordRenewalOffer: (leaseId: string, body: { offered_on: string; offered_rent: string }) =>
+    request<{ id: string }>(`/leases/${leaseId}/renewals`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  collectRent: (leaseId: string) =>
+    request<CollectOut>(`/leases/${leaseId}/collect`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    }),
 };
