@@ -1,0 +1,11 @@
+-- Apply the whole schema in order.
+\ir 001_foundations.sql
+\ir 002_property.sql
+\ir 003_leasing_and_debt.sql
+\ir 004_tax.sql
+\ir 005_risk_ledger_documents.sql
+\ir 006_integrity.sql
+\ir 007_deadlines_hazards_market.sql
+\ir 008_tax_profile_elections_disclosures.sql
+\ir 009_deadline_sweep_identity.sql
+\ir 010_nationwide_foundations.sql

@@ -1,0 +1,2251 @@
+{
+  "components": {
+    "schemas": {
+      "ChainLink": {
+        "properties": {
+          "level": {
+            "title": "Level",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": ["name", "level"],
+        "title": "ChainLink",
+        "type": "object"
+      },
+      "ComponentOut": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "condition": {
+            "title": "Condition",
+            "type": "string"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          },
+          "derived_from": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Derived From"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "installed_year_high": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Installed Year High"
+          },
+          "installed_year_low": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Installed Year Low"
+          },
+          "life_years_high": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Life Years High"
+          },
+          "life_years_low": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Life Years Low"
+          },
+          "provenance_kind": {
+            "title": "Provenance Kind",
+            "type": "string"
+          },
+          "system": {
+            "title": "System",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "display_name",
+          "system",
+          "installed_year_low",
+          "installed_year_high",
+          "life_years_low",
+          "life_years_high",
+          "condition",
+          "provenance_kind",
+          "confidence",
+          "derived_from"
+        ],
+        "title": "ComponentOut",
+        "type": "object"
+      },
+      "CoverageGapOut": {
+        "properties": {
+          "domain": {
+            "title": "Domain",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "property_id": {
+            "title": "Property Id",
+            "type": "string"
+          },
+          "reason": {
+            "const": "no_state_jurisdiction",
+            "title": "Reason",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": ["property_id", "state", "domain", "reason", "message"],
+        "title": "CoverageGapOut",
+        "type": "object"
+      },
+      "CoverageReport": {
+        "properties": {
+          "as_of": {
+            "format": "date",
+            "title": "As Of",
+            "type": "string"
+          },
+          "gaps": {
+            "items": {
+              "$ref": "#/components/schemas/CoverageGapOut"
+            },
+            "title": "Gaps",
+            "type": "array"
+          },
+          "properties": {
+            "items": {
+              "$ref": "#/components/schemas/PropertyCoverage"
+            },
+            "title": "Properties",
+            "type": "array"
+          }
+        },
+        "required": ["as_of", "properties", "gaps"],
+        "title": "CoverageReport",
+        "type": "object"
+      },
+      "DeadlineOut": {
+        "properties": {
+          "citation": {
+            "title": "Citation",
+            "type": "string"
+          },
+          "due_on": {
+            "format": "date",
+            "title": "Due On",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "property_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Property Label"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "window_opens_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Window Opens On"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "due_on",
+          "window_opens_on",
+          "citation",
+          "note",
+          "property_label"
+        ],
+        "title": "DeadlineOut",
+        "type": "object"
+      },
+      "DefectOut": {
+        "properties": {
+          "affects_financing": {
+            "title": "Affects Financing",
+            "type": "boolean"
+          },
+          "affects_insurance": {
+            "title": "Affects Insurance",
+            "type": "boolean"
+          },
+          "affects_safety": {
+            "title": "Affects Safety",
+            "type": "boolean"
+          },
+          "citation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Citation"
+          },
+          "derived_from": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Derived From"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "triggers_disclosure": {
+            "title": "Triggers Disclosure",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "kind",
+          "status",
+          "affects_safety",
+          "affects_insurance",
+          "affects_financing",
+          "triggers_disclosure",
+          "citation",
+          "derived_from"
+        ],
+        "title": "DefectOut",
+        "type": "object"
+      },
+      "DomainCoverage": {
+        "properties": {
+          "calendar_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Calendar Key"
+          },
+          "calendar_registered": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Calendar Registered"
+          },
+          "citation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Citation"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "status": {
+            "enum": ["covered", "no_rules_loaded"],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": ["status"],
+        "title": "DomainCoverage",
+        "type": "object"
+      },
+      "DossierOut": {
+        "properties": {
+          "as_of": {
+            "format": "date",
+            "title": "As Of",
+            "type": "string"
+          },
+          "property_id": {
+            "format": "uuid",
+            "title": "Property Id",
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/DossierStepOut"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "sweep": {
+            "additionalProperties": true,
+            "title": "Sweep",
+            "type": "object"
+          }
+        },
+        "required": ["property_id", "as_of", "steps", "sweep"],
+        "title": "DossierOut",
+        "type": "object"
+      },
+      "DossierStepOut": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "status": {
+            "enum": ["ok", "skipped", "failed"],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": ["name", "status", "detail"],
+        "title": "DossierStepOut",
+        "type": "object"
+      },
+      "DossierView": {
+        "properties": {
+          "city": {
+            "title": "City",
+            "type": "string"
+          },
+          "components": {
+            "items": {
+              "$ref": "#/components/schemas/ComponentOut"
+            },
+            "title": "Components",
+            "type": "array"
+          },
+          "county": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "County"
+          },
+          "deadlines": {
+            "items": {
+              "$ref": "#/components/schemas/DeadlineOut"
+            },
+            "title": "Deadlines",
+            "type": "array"
+          },
+          "defects": {
+            "items": {
+              "$ref": "#/components/schemas/DefectOut"
+            },
+            "title": "Defects",
+            "type": "array"
+          },
+          "entity_id": {
+            "title": "Entity Id",
+            "type": "string"
+          },
+          "hazards": {
+            "items": {
+              "$ref": "#/components/schemas/HazardOut"
+            },
+            "title": "Hazards",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "jurisdiction_chain": {
+            "items": {
+              "$ref": "#/components/schemas/ChainLink"
+            },
+            "title": "Jurisdiction Chain",
+            "type": "array"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "latitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latitude"
+          },
+          "longitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Longitude"
+          },
+          "postal_code": {
+            "title": "Postal Code",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "street_1": {
+            "title": "Street 1",
+            "type": "string"
+          },
+          "year_built": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year Built"
+          }
+        },
+        "required": [
+          "id",
+          "entity_id",
+          "label",
+          "street_1",
+          "city",
+          "state",
+          "postal_code",
+          "county",
+          "kind",
+          "year_built",
+          "latitude",
+          "longitude",
+          "jurisdiction_chain",
+          "hazards",
+          "components",
+          "defects",
+          "deadlines"
+        ],
+        "title": "DossierView",
+        "type": "object"
+      },
+      "EntityIn": {
+        "properties": {
+          "formation_state": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Z]{2}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Formation State"
+          },
+          "kind": {
+            "enum": [
+              "individual",
+              "joint",
+              "llc",
+              "series_llc_cell",
+              "limited_partnership",
+              "s_corporation",
+              "c_corporation",
+              "revocable_trust",
+              "irrevocable_trust",
+              "land_trust"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": ["name", "kind"],
+        "title": "EntityIn",
+        "type": "object"
+      },
+      "EntityOut": {
+        "properties": {
+          "formation_state": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Z]{2}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Formation State"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "individual",
+              "joint",
+              "llc",
+              "series_llc_cell",
+              "limited_partnership",
+              "s_corporation",
+              "c_corporation",
+              "revocable_trust",
+              "irrevocable_trust",
+              "land_trust"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": ["name", "kind", "id"],
+        "title": "EntityOut",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HazardOut": {
+        "properties": {
+          "base_flood_elevation_ft": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Flood Elevation Ft"
+          },
+          "in_special_flood_hazard_area": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "In Special Flood Hazard Area"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "observed_at": {
+            "format": "date-time",
+            "title": "Observed At",
+            "type": "string"
+          },
+          "zone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Zone"
+          }
+        },
+        "required": [
+          "kind",
+          "zone",
+          "in_special_flood_hazard_area",
+          "base_flood_elevation_ft",
+          "observed_at"
+        ],
+        "title": "HazardOut",
+        "type": "object"
+      },
+      "Health": {
+        "properties": {
+          "status": {
+            "const": "alive",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": ["status"],
+        "title": "Health",
+        "type": "object"
+      },
+      "LedgerEntryIn": {
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,16}|(?=[\\d.]{1,19}0*$)\\d{0,16}\\.\\d{0,2}0*$)",
+                "type": "string"
+              }
+            ],
+            "title": "Amount"
+          },
+          "capitalisation_rationale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capitalisation Rationale"
+          },
+          "category": {
+            "enum": [
+              "rent",
+              "other_income",
+              "late_fee",
+              "deposit_received",
+              "deposit_returned",
+              "mortgage_interest",
+              "mortgage_principal",
+              "property_tax",
+              "insurance",
+              "repairs",
+              "capital_improvement",
+              "utilities",
+              "management_fee",
+              "hoa",
+              "legal_professional",
+              "advertising",
+              "supplies",
+              "travel",
+              "acquisition_cost",
+              "disposition_cost",
+              "owner_contribution",
+              "owner_distribution"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "counterparty": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Counterparty"
+          },
+          "entity_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Id"
+          },
+          "is_capital": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Capital"
+          },
+          "lease_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lease Id"
+          },
+          "memo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Memo"
+          },
+          "occurred_on": {
+            "format": "date",
+            "title": "Occurred On",
+            "type": "string"
+          },
+          "property_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Property Id"
+          },
+          "unit_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Id"
+          }
+        },
+        "required": ["occurred_on", "category", "amount"],
+        "title": "LedgerEntryIn",
+        "type": "object"
+      },
+      "LedgerEventOut": {
+        "properties": {
+          "amount": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Amount",
+            "type": "string"
+          },
+          "capitalisation_rationale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capitalisation Rationale"
+          },
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "counterparty": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Counterparty"
+          },
+          "entity_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Id"
+          },
+          "event_uuid": {
+            "title": "Event Uuid",
+            "type": "string"
+          },
+          "is_capital": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Capital"
+          },
+          "lease_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lease Id"
+          },
+          "memo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Memo"
+          },
+          "occurred_on": {
+            "format": "date",
+            "title": "Occurred On",
+            "type": "string"
+          },
+          "property_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Property Id"
+          },
+          "recorded_at": {
+            "format": "date-time",
+            "title": "Recorded At",
+            "type": "string"
+          },
+          "reversed": {
+            "title": "Reversed",
+            "type": "boolean"
+          },
+          "reverses_event_uuid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reverses Event Uuid"
+          },
+          "unit_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Id"
+          }
+        },
+        "required": [
+          "event_uuid",
+          "occurred_on",
+          "recorded_at",
+          "category",
+          "amount",
+          "memo",
+          "counterparty",
+          "is_capital",
+          "capitalisation_rationale",
+          "property_id",
+          "unit_id",
+          "lease_id",
+          "entity_id",
+          "reverses_event_uuid",
+          "reversed"
+        ],
+        "title": "LedgerEventOut",
+        "type": "object"
+      },
+      "LedgerRegister": {
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/LedgerEventOut"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "net": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Net",
+            "type": "string"
+          },
+          "total_in": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total In",
+            "type": "string"
+          },
+          "total_out": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Out",
+            "type": "string"
+          }
+        },
+        "required": ["events", "total_in", "total_out", "net"],
+        "title": "LedgerRegister",
+        "type": "object"
+      },
+      "PropertyCoverage": {
+        "properties": {
+          "domains": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/DomainCoverage"
+            },
+            "title": "Domains",
+            "type": "object"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "property_id": {
+            "title": "Property Id",
+            "type": "string"
+          },
+          "resolution": {
+            "$ref": "#/components/schemas/Resolution"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": ["property_id", "label", "state", "resolution", "domains"],
+        "title": "PropertyCoverage",
+        "type": "object"
+      },
+      "PropertyIn": {
+        "properties": {
+          "city": {
+            "minLength": 1,
+            "title": "City",
+            "type": "string"
+          },
+          "county": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "County"
+          },
+          "entity_id": {
+            "format": "uuid",
+            "title": "Entity Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "single_family",
+              "duplex",
+              "triplex",
+              "fourplex",
+              "small_multifamily",
+              "condominium",
+              "townhouse",
+              "manufactured",
+              "mixed_use",
+              "land"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          },
+          "postal_code": {
+            "maxLength": 10,
+            "minLength": 3,
+            "title": "Postal Code",
+            "type": "string"
+          },
+          "state": {
+            "pattern": "^[A-Z]{2}$",
+            "title": "State",
+            "type": "string"
+          },
+          "street_1": {
+            "minLength": 1,
+            "title": "Street 1",
+            "type": "string"
+          },
+          "year_built": {
+            "anyOf": [
+              {
+                "maximum": 2200.0,
+                "minimum": 1600.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year Built"
+          }
+        },
+        "required": ["entity_id", "label", "street_1", "city", "state", "postal_code", "kind"],
+        "title": "PropertyIn",
+        "type": "object"
+      },
+      "PropertyOut": {
+        "properties": {
+          "city": {
+            "minLength": 1,
+            "title": "City",
+            "type": "string"
+          },
+          "county": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "County"
+          },
+          "entity_id": {
+            "format": "uuid",
+            "title": "Entity Id",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "jurisdiction_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jurisdiction Id"
+          },
+          "kind": {
+            "enum": [
+              "single_family",
+              "duplex",
+              "triplex",
+              "fourplex",
+              "small_multifamily",
+              "condominium",
+              "townhouse",
+              "manufactured",
+              "mixed_use",
+              "land"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          },
+          "postal_code": {
+            "maxLength": 10,
+            "minLength": 3,
+            "title": "Postal Code",
+            "type": "string"
+          },
+          "state": {
+            "pattern": "^[A-Z]{2}$",
+            "title": "State",
+            "type": "string"
+          },
+          "street_1": {
+            "minLength": 1,
+            "title": "Street 1",
+            "type": "string"
+          },
+          "year_built": {
+            "anyOf": [
+              {
+                "maximum": 2200.0,
+                "minimum": 1600.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year Built"
+          }
+        },
+        "required": [
+          "entity_id",
+          "label",
+          "street_1",
+          "city",
+          "state",
+          "postal_code",
+          "kind",
+          "id",
+          "jurisdiction_id"
+        ],
+        "title": "PropertyOut",
+        "type": "object"
+      },
+      "PropertySummary": {
+        "properties": {
+          "city": {
+            "title": "City",
+            "type": "string"
+          },
+          "component_count": {
+            "title": "Component Count",
+            "type": "integer"
+          },
+          "defect_count": {
+            "title": "Defect Count",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "jurisdiction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jurisdiction"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "next_deadline_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Deadline On"
+          },
+          "postal_code": {
+            "title": "Postal Code",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "street_1": {
+            "title": "Street 1",
+            "type": "string"
+          },
+          "year_built": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year Built"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "street_1",
+          "city",
+          "state",
+          "postal_code",
+          "kind",
+          "year_built",
+          "jurisdiction",
+          "defect_count",
+          "component_count",
+          "next_deadline_on"
+        ],
+        "title": "PropertySummary",
+        "type": "object"
+      },
+      "Readiness": {
+        "properties": {
+          "migrations": {
+            "title": "Migrations",
+            "type": "integer"
+          },
+          "status": {
+            "const": "ready",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": ["status", "migrations"],
+        "title": "Readiness",
+        "type": "object"
+      },
+      "Resolution": {
+        "properties": {
+          "chain": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Chain",
+            "type": "array"
+          },
+          "level": {
+            "title": "Level",
+            "type": "string"
+          }
+        },
+        "required": ["level", "chain"],
+        "title": "Resolution",
+        "type": "object"
+      },
+      "ReversalIn": {
+        "properties": {
+          "corrected": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LedgerEntryIn"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "memo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Memo"
+          }
+        },
+        "title": "ReversalIn",
+        "type": "object"
+      },
+      "ReversalOut": {
+        "properties": {
+          "corrected": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LedgerEventOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reversal": {
+            "$ref": "#/components/schemas/LedgerEventOut"
+          }
+        },
+        "required": ["reversal", "corrected"],
+        "title": "ReversalOut",
+        "type": "object"
+      },
+      "SweepGapOut": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "domain": {
+            "title": "Domain",
+            "type": "string"
+          },
+          "property_id": {
+            "format": "uuid",
+            "title": "Property Id",
+            "type": "string"
+          },
+          "reason": {
+            "enum": ["no_state_jurisdiction", "no_rule_for_domain", "calendar_key_unregistered"],
+            "title": "Reason",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": ["property_id", "state", "domain", "reason", "detail"],
+        "title": "SweepGapOut",
+        "type": "object"
+      },
+      "SweepOut": {
+        "properties": {
+          "as_of": {
+            "format": "date",
+            "title": "As Of",
+            "type": "string"
+          },
+          "coverage_gaps": {
+            "items": {
+              "$ref": "#/components/schemas/SweepGapOut"
+            },
+            "title": "Coverage Gaps",
+            "type": "array"
+          },
+          "inserted": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Inserted",
+            "type": "object"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": ["as_of", "inserted", "total", "coverage_gaps"],
+        "title": "SweepOut",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": ["loc", "msg", "type"],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "The owner's operating platform for real property.",
+    "title": "Hestia API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/coverage/jurisdictions": {
+      "get": {
+        "operationId": "coverage_jurisdictions_coverage_jurisdictions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "as_of",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "As Of"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoverageReport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Coverage Jurisdictions"
+      }
+    },
+    "/deadlines": {
+      "get": {
+        "operationId": "list_deadlines_deadlines_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "due_before",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Due Before"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DeadlineOut"
+                  },
+                  "title": "Response List Deadlines Deadlines Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Deadlines"
+      }
+    },
+    "/entities": {
+      "get": {
+        "operationId": "list_entities_entities_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/EntityOut"
+                  },
+                  "title": "Response List Entities Entities Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Entities"
+      },
+      "post": {
+        "operationId": "create_entity_entities_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntityIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntityOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Entity"
+      }
+    },
+    "/healthz": {
+      "get": {
+        "operationId": "healthz_healthz_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Healthz"
+      }
+    },
+    "/ledger": {
+      "get": {
+        "operationId": "ledger_register_ledger_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "property_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Property Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "rent",
+                    "other_income",
+                    "late_fee",
+                    "deposit_received",
+                    "deposit_returned",
+                    "mortgage_interest",
+                    "mortgage_principal",
+                    "property_tax",
+                    "insurance",
+                    "repairs",
+                    "capital_improvement",
+                    "utilities",
+                    "management_fee",
+                    "hoa",
+                    "legal_professional",
+                    "advertising",
+                    "supplies",
+                    "travel",
+                    "acquisition_cost",
+                    "disposition_cost",
+                    "owner_contribution",
+                    "owner_distribution"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          },
+          {
+            "in": "query",
+            "name": "occurred_from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Occurred From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "occurred_to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Occurred To"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerRegister"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ledger Register"
+      },
+      "post": {
+        "operationId": "append_ledger_event_ledger_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LedgerEntryIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerEventOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Append Ledger Event"
+      }
+    },
+    "/ledger/{event_uuid}/reverse": {
+      "post": {
+        "operationId": "reverse_ledger_event_ledger__event_uuid__reverse_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_uuid",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Event Uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReversalIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReversalOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reverse Ledger Event"
+      }
+    },
+    "/properties": {
+      "get": {
+        "operationId": "list_properties_properties_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PropertySummary"
+                  },
+                  "title": "Response List Properties Properties Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Properties"
+      },
+      "post": {
+        "operationId": "create_property_properties_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PropertyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropertyOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Property"
+      }
+    },
+    "/properties/{property_id}": {
+      "get": {
+        "operationId": "get_property_properties__property_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "property_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Property Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropertyOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Property"
+      }
+    },
+    "/properties/{property_id}/dossier": {
+      "get": {
+        "operationId": "read_dossier_properties__property_id__dossier_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "property_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Property Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DossierView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Dossier"
+      },
+      "post": {
+        "operationId": "assemble_dossier_properties__property_id__dossier_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "property_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Property Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "as_of",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "As Of"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DossierOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Assemble Dossier"
+      }
+    },
+    "/readyz": {
+      "get": {
+        "operationId": "readyz_readyz_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Readiness"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Readyz"
+      }
+    },
+    "/sweep/deadlines": {
+      "post": {
+        "operationId": "sweep_deadlines_sweep_deadlines_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "as_of",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "As Of"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SweepOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Sweep Deadlines"
+      }
+    }
+  }
+}

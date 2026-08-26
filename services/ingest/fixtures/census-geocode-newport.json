@@ -1,0 +1,287 @@
+{
+  "result": {
+    "input": {
+      "address": { "address": "998 Monmouth St, Newport, KY 41071" },
+      "vintage": {
+        "isDefault": true,
+        "id": "4",
+        "vintageName": "Current_Current",
+        "vintageDescription": "Current Vintage - Current Benchmark"
+      },
+      "benchmark": {
+        "isDefault": true,
+        "benchmarkDescription": "Public Address Ranges - Current Benchmark",
+        "id": "4",
+        "benchmarkName": "Public_AR_Current"
+      }
+    },
+    "addressMatches": [
+      {
+        "tigerLine": { "side": "R", "tigerLineId": "104462263" },
+        "geographies": {
+          "States": [
+            {
+              "STATENS": "01779786",
+              "GEOID": "21",
+              "CENTLAT": "+37.5351657",
+              "AREAWATER": "2383076137",
+              "STATE": "21",
+              "BASENAME": "Kentucky",
+              "STUSAB": "KY",
+              "OID": "27490100360204",
+              "LSADC": "00",
+              "FUNCSTAT": "A",
+              "INTPTLAT": "+37.5336844",
+              "DIVISION": "6",
+              "NAME": "Kentucky",
+              "REGION": "3",
+              "OBJECTID": 48,
+              "CENTLON": "-085.3018147",
+              "AREALAND": "102267815478",
+              "INTPTLON": "-085.2929801",
+              "MTFCC": "G4000"
+            }
+          ],
+          "Combined Statistical Areas": [
+            {
+              "POP100": "",
+              "GEOID": "178",
+              "CENTLAT": "+39.1090196",
+              "AREAWATER": "218022099",
+              "BASENAME": "Cincinnati-Wilmington, OH-KY-IN",
+              "OID": "2619034687908000",
+              "LSADC": "M0",
+              "FUNCSTAT": "S",
+              "INTPTLAT": "+39.1026336",
+              "NAME": "Cincinnati-Wilmington, OH-KY-IN CSA",
+              "OBJECTID": 103,
+              "CSA": "178",
+              "CENTLON": "-084.4086964",
+              "INTPTLON": "-084.4181710",
+              "AREALAND": "12416264392",
+              "HU100": "",
+              "MTFCC": "G3100"
+            }
+          ],
+          "County Subdivisions": [
+            {
+              "COUSUB": "92545",
+              "GEOID": "2103792545",
+              "CENTLAT": "+39.0434231",
+              "AREAWATER": "9636306",
+              "STATE": "21",
+              "BASENAME": "Newport-Fort Thomas",
+              "OID": "27690119605570",
+              "LSADC": "22",
+              "FUNCSTAT": "S",
+              "INTPTLAT": "+39.0460261",
+              "NAME": "Newport-Fort Thomas CCD",
+              "OBJECTID": 26361,
+              "CENTLON": "-084.4401586",
+              "COUSUBCC": "Z5",
+              "AREALAND": "99081472",
+              "INTPTLON": "-084.4432226",
+              "MTFCC": "G4040",
+              "COUSUBNS": "01937173",
+              "COUNTY": "037"
+            }
+          ],
+          "Urban Areas": [
+            {
+              "GEOID": "16885",
+              "CENTLAT": "+39.1795283",
+              "AREAWATER": "22177255",
+              "BASENAME": "Cincinnati, OH--KY",
+              "OID": "27021106254510",
+              "UA": "16885",
+              "LSADC": "67",
+              "FUNCSTAT": "S",
+              "INTPTLAT": "+39.1808005",
+              "NAME": "Cincinnati, OH--KY Urban Area",
+              "OBJECTID": 116,
+              "CENTLON": "-084.4614892",
+              "AREALAND": "1948430977",
+              "INTPTLON": "-084.4605843",
+              "MTFCC": "G3500"
+            }
+          ],
+          "Incorporated Places": [
+            {
+              "DISP_CLR": 5,
+              "NECTAPCI": "N",
+              "GEOID": "2155884",
+              "CENTLAT": "+39.0857410",
+              "AREAWATER": "653031",
+              "BASENAME": "Newport",
+              "STATE": "21",
+              "OID": "27890119606826",
+              "LSADC": "25",
+              "PLACE": "55884",
+              "FUNCSTAT": "A",
+              "INTPTLAT": "+39.0861000",
+              "NAME": "Newport city",
+              "OBJECTID": 20493,
+              "PLACECC": "C1",
+              "CENTLON": "-084.4868656",
+              "CBSAPCI": "N",
+              "AREALAND": "7143493",
+              "INTPTLON": "-084.4869327",
+              "PLACENS": "02404373",
+              "MTFCC": "G4110"
+            }
+          ],
+          "Counties": [
+            {
+              "GEOID": "21037",
+              "CENTLAT": "+38.9464088",
+              "AREAWATER": "20943965",
+              "STATE": "21",
+              "BASENAME": "Campbell",
+              "OID": "27590119604357",
+              "LSADC": "06",
+              "FUNCSTAT": "A",
+              "INTPTLAT": "+38.9469811",
+              "NAME": "Campbell County",
+              "OBJECTID": 1250,
+              "CENTLON": "-084.3796422",
+              "COUNTYCC": "H1",
+              "COUNTYNS": "00516865",
+              "AREALAND": "391916805",
+              "INTPTLON": "-084.3795832",
+              "MTFCC": "G4020",
+              "COUNTY": "037"
+            }
+          ],
+          "2024 State Legislative Districts - Upper": [
+            {
+              "GEOID": "21024",
+              "CENTLAT": "+38.7551965",
+              "AREAWATER": "49617172",
+              "STATE": "21",
+              "BASENAME": "24",
+              "OID": "2129035951825382",
+              "SLDU": "024",
+              "LSADC": "LU",
+              "FUNCSTAT": "N",
+              "INTPTLAT": "+38.7499775",
+              "NAME": "State Senate District 24",
+              "OBJECTID": 1905,
+              "CENTLON": "-084.2783217",
+              "LSY": "2024",
+              "AREALAND": "1635798065",
+              "INTPTLON": "-084.2791794",
+              "MTFCC": "G5210",
+              "LDTYP": "O"
+            }
+          ],
+          "2024 State Legislative Districts - Lower": [
+            {
+              "GEOID": "21067",
+              "CENTLAT": "+39.0452050",
+              "SLDL": "067",
+              "AREAWATER": "3747274",
+              "STATE": "21",
+              "BASENAME": "67",
+              "OID": "2139035951825514",
+              "LSADC": "LL",
+              "FUNCSTAT": "N",
+              "INTPTLAT": "+39.0453020",
+              "NAME": "State House District 67",
+              "OBJECTID": 3132,
+              "CENTLON": "-084.4653472",
+              "LSY": "2024",
+              "AREALAND": "49644646",
+              "INTPTLON": "-084.4647945",
+              "MTFCC": "G5220",
+              "LDTYP": "O"
+            }
+          ],
+          "2020 Census Blocks": [
+            {
+              "SUFFIX": "",
+              "GEOID": "210370505002000",
+              "CENTLAT": "+39.0876004",
+              "BLOCK": "2000",
+              "AREAWATER": "0",
+              "STATE": "21",
+              "BASENAME": "2000",
+              "OID": "210701003854318",
+              "LSADC": "BK",
+              "FUNCSTAT": "S",
+              "INTPTLAT": "+39.0876004",
+              "NAME": "Block 2000",
+              "OBJECTID": 1183901,
+              "TRACT": "050500",
+              "CENTLON": "-084.4896578",
+              "BLKGRP": "2",
+              "AREALAND": "6932",
+              "INTPTLON": "-084.4896578",
+              "MTFCC": "G5040",
+              "LWBLKTYP": "L",
+              "UR": "U",
+              "COUNTY": "037"
+            }
+          ],
+          "Census Tracts": [
+            {
+              "GEOID": "21037050500",
+              "CENTLAT": "+39.0863211",
+              "AREAWATER": "0",
+              "STATE": "21",
+              "BASENAME": "505",
+              "OID": "20790119609364",
+              "LSADC": "CT",
+              "FUNCSTAT": "S",
+              "INTPTLAT": "+39.0863211",
+              "NAME": "Census Tract 505",
+              "OBJECTID": 61070,
+              "TRACT": "050500",
+              "CENTLON": "-084.4905888",
+              "AREALAND": "507929",
+              "INTPTLON": "-084.4905888",
+              "MTFCC": "G5020",
+              "COUNTY": "037"
+            }
+          ],
+          "119th Congressional Districts": [
+            {
+              "GEOID": "2104",
+              "CENTLAT": "+38.5299928",
+              "CDSESSN": "119",
+              "AREAWATER": "319313629",
+              "BASENAME": "4",
+              "STATE": "21",
+              "OID": "2119035951821822",
+              "LSADC": "C2",
+              "FUNCSTAT": "N",
+              "INTPTLAT": "+38.5253193",
+              "NAME": "Congressional District 4",
+              "OBJECTID": 195,
+              "CENTLON": "-084.4559329",
+              "CD119": "04",
+              "AREALAND": "12547250449",
+              "INTPTLON": "-084.4541873",
+              "MTFCC": "G5200"
+            }
+          ]
+        },
+        "coordinates": { "x": -84.48894974779, "y": 39.087211436086 },
+        "addressComponents": {
+          "zip": "41071",
+          "streetName": "MONMOUTH",
+          "preType": "",
+          "city": "NEWPORT",
+          "preDirection": "",
+          "suffixDirection": "",
+          "fromAddress": "948",
+          "state": "KY",
+          "suffixType": "ST",
+          "toAddress": "998",
+          "suffixQualifier": "",
+          "preQualifier": ""
+        },
+        "matchedAddress": "998 MONMOUTH ST, NEWPORT, KY, 41071"
+      }
+    ]
+  }
+}

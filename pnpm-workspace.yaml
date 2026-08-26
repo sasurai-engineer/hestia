@@ -1,0 +1,18 @@
+packages:
+  - "packages/*"
+  - "apps/*"
+
+# Postinstall build scripts are denied by default; these two are the known,
+# reviewed exceptions (esbuild's binary install; sharp's native image codecs).
+allowBuilds:
+  esbuild: true
+  sharp: true
+
+# Supply-chain policy: refuse a dependency published within the last 24 hours,
+# so a compromised release cannot be consumed the moment it lands. This mirrors
+# the `minimumReleaseAge` Renovate applies to our own upgrade PRs.
+#
+# Consequence, by design: dependency ranges must be wide enough that a matured
+# version exists. Pinning a package to a release published today will not
+# install, and that is the policy working rather than failing.
+minimumReleaseAge: 1440

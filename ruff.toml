@@ -1,0 +1,20 @@
+# Python lives in scripts/ (build gates) and services/ (engines, later).
+line-length = 100
+target-version = "py311"
+
+[lint]
+select = [
+  "E", "W",    # pycodestyle
+  "F",         # pyflakes
+  "I",         # import sorting
+  "B",         # bugbear
+  "UP",        # pyupgrade
+  "SIM",       # simplify
+  "RUF",       # ruff-specific
+  "S",         # bandit — this tree contains a security gate
+]
+# The audit script necessarily contains credential-shaped strings and runs git.
+ignore = ["S101", "S603", "S607"]
+
+[lint.per-file-ignores]
+"scripts/tests/*" = ["S105", "S106"]

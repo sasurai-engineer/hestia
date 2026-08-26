@@ -1,0 +1,70 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits",
+    ":dependencyDashboard",
+    "helpers:pinGitHubActionDigests",
+    "security:openssf-scorecard"
+  ],
+  "timezone": "America/New_York",
+  "schedule": ["before 5am on monday"],
+  "prConcurrentLimit": 10,
+  "rangeStrategy": "bump",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 5am on monday"]
+  },
+  "osvVulnerabilityAlerts": true,
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["security", "priority"],
+    "schedule": ["at any time"],
+    "prCreation": "immediate",
+    "minimumReleaseAge": null,
+    "description": "Security releases bypass the maturation window here, but pnpm enforces its own 24-hour minimumReleaseAge at install time (pnpm-workspace.yaml). A CVE PR raised within that window cannot install until it lapses; when that happens, lower the pnpm-side window for the one install rather than removing it."
+  },
+  "packageRules": [
+    {
+      "description": "TypeScript 7 is the native Go port and removes legacy compiler APIs (parseConfigFileTextToJson, readConfigFile) that Stryker's sandbox preprocessor calls. Holding at 6.x until Stryker supports it; revisit when stryker-js ships TS7 compatibility.",
+      "matchPackageNames": ["typescript"],
+      "allowedVersions": "<7.0.0"
+    },
+    {
+      "description": "Dev tooling: automerge patch and minor once CI is green.",
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["patch", "minor"],
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true
+    },
+    {
+      "description": "Let a release settle before adopting it, except for CVEs.",
+      "matchUpdateTypes": ["patch", "minor"],
+      "minimumReleaseAge": "3 days"
+    },
+    {
+      "description": "Major upgrades are never automatic.",
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "labels": ["breaking"]
+    },
+    {
+      "description": "Group the toolchain so its parts move together.",
+      "groupName": "toolchain",
+      "matchPackageNames": [
+        "typescript",
+        "turbo",
+        "@biomejs/biome",
+        "vitest",
+        "@vitest/**",
+        "@stryker-mutator/**"
+      ]
+    },
+    {
+      "description": "Node itself is pinned by .nvmrc and moves deliberately.",
+      "matchPackageNames": ["node"],
+      "enabled": false
+    }
+  ]
+}

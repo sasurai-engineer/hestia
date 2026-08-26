@@ -1,0 +1,28 @@
+{
+  "displayFieldName": "FLD_AR_ID",
+  "fieldAliases": {
+    "FLD_ZONE": "FLD_ZONE",
+    "ZONE_SUBTY": "ZONE_SUBTY",
+    "SFHA_TF": "SFHA_TF",
+    "STATIC_BFE": "STATIC_BFE",
+    "DFIRM_ID": "DFIRM_ID"
+  },
+  "fields": [
+    { "name": "FLD_ZONE", "type": "esriFieldTypeString", "alias": "FLD_ZONE", "length": 17 },
+    { "name": "ZONE_SUBTY", "type": "esriFieldTypeString", "alias": "ZONE_SUBTY", "length": 76 },
+    { "name": "SFHA_TF", "type": "esriFieldTypeString", "alias": "SFHA_TF", "length": 1 },
+    { "name": "STATIC_BFE", "type": "esriFieldTypeDouble", "alias": "STATIC_BFE" },
+    { "name": "DFIRM_ID", "type": "esriFieldTypeString", "alias": "DFIRM_ID", "length": 6 }
+  ],
+  "features": [
+    {
+      "attributes": {
+        "FLD_ZONE": "X",
+        "ZONE_SUBTY": "AREA OF MINIMAL FLOOD HAZARD",
+        "SFHA_TF": "F",
+        "STATIC_BFE": -9999.0,
+        "DFIRM_ID": "21037C"
+      }
+    }
+  ]
+}

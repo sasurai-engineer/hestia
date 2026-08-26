@@ -1,0 +1,30 @@
+Copyright (c) 2026 The Aletheia Institute. All rights reserved.
+
+PROPRIETARY — SOURCE-AVAILABLE
+
+This repository is published so that it may be READ: inspected, audited, and
+verified. Publication is transparency, not permission.
+
+You may read this source and reference it for the purpose of evaluating the
+conduct, security posture, and correctness of the software.
+
+You may not copy, modify, distribute, sublicense, or create derivative works
+from this source, nor use it to provide a service, without prior written
+permission from The Aletheia Institute.
+
+"Hestia", "The Aletheia Institute", "Veritas ex Datis", the Institute seal, and
+the colour names "Aletheia Midnight" and "Veritas Gold" are marks of The
+Aletheia Institute.
+
+Third-party dependencies remain under their own licences; see the CycloneDX SBOM
+attached to each release.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Nothing produced by this software constitutes tax, legal, accounting, or
+investment advice.

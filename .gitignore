@@ -1,0 +1,56 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build output
+dist/
+build/
+.next/
+out/
+.turbo/
+*.tsbuildinfo
+
+# test & coverage
+coverage/
+.nyc_output/
+reports/
+stryker.log
+.stryker-tmp/
+test-results/
+playwright-report/
+blob-report/
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+.coverage.*
+
+# rust / tauri
+target/
+
+# env & secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+!**/testdata/**/*.key
+
+# supply chain artifacts
+sbom*.json
+*.sig
+*.intoto.jsonl
+
+# os / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json

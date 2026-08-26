@@ -1,0 +1,375 @@
+{
+  "amortization": [
+    {
+      "principal": "300000.00",
+      "annualRate": "0.0675",
+      "termMonths": 360,
+      "payment": "1945.79",
+      "totalInterest": "400489.69",
+      "month1Interest": "1687.50",
+      "month1Principal": "258.29",
+      "finalPayment": "1951.08",
+      "balanceAfter12": "296802.83"
+    },
+    {
+      "principal": "185000.00",
+      "annualRate": "0.0525",
+      "termMonths": 180,
+      "payment": "1487.17",
+      "totalInterest": "82691.74",
+      "month1Interest": "809.38",
+      "month1Principal": "677.79",
+      "finalPayment": "1488.31",
+      "balanceAfter12": "176667.88"
+    },
+    {
+      "principal": "12000.00",
+      "annualRate": "0",
+      "termMonths": 12,
+      "payment": "1000.00",
+      "totalInterest": "0.00",
+      "month1Interest": "0.00",
+      "month1Principal": "1000.00",
+      "finalPayment": "1000.00",
+      "balanceAfter12": "0.00"
+    }
+  ],
+  "depreciation": [
+    {
+      "label": "residential-27.5-may",
+      "basis": "300000.00",
+      "method": "macrs_sl",
+      "lifeYears": "27.5",
+      "convention": "mid_month",
+      "bonusPercent": "0",
+      "section179": "0.00",
+      "placedInServiceMonth": 5,
+      "quarter": null,
+      "bonus": "0.00",
+      "schedule": [
+        "6818.18",
+        "10909.09",
+        "10909.09",
+        "10909.09",
+        "10909.09",
+        "10909.09",
+        "10909.09",
+        "10909.09",
+        "10909.09",
+        "10909.09",
+        "10909.09",
+        "10909.09",
+        "10909.09",
+        "10909.09",
+        "10909.09",
+        "10909.09",
+        "10909.09",
+        "10909.09",
+        "10909.09",
+        "10909.09",
+        "10909.09",
+        "10909.09",
+        "10909.09",
+        "10909.09",
+        "10909.09",
+        "10909.09",
+        "10909.09",
+        "9545.48"
+      ]
+    },
+    {
+      "label": "5yr-200db-hy",
+      "basis": "118000.00",
+      "method": "macrs_200db",
+      "lifeYears": "5",
+      "convention": "half_year",
+      "bonusPercent": "0",
+      "section179": "0.00",
+      "placedInServiceMonth": null,
+      "quarter": null,
+      "bonus": "0.00",
+      "schedule": ["23600.00", "37760.00", "22656.00", "13593.60", "13593.60", "6796.80"]
+    },
+    {
+      "label": "5yr-200db-mq-q4",
+      "basis": "10000.00",
+      "method": "macrs_200db",
+      "lifeYears": "5",
+      "convention": "mid_quarter",
+      "bonusPercent": "0",
+      "section179": "0.00",
+      "placedInServiceMonth": null,
+      "quarter": 4,
+      "bonus": "0.00",
+      "schedule": ["500.00", "3800.00", "2280.00", "1368.00", "1094.40", "957.60"]
+    },
+    {
+      "label": "7yr-200db-hy",
+      "basis": "10000.00",
+      "method": "macrs_200db",
+      "lifeYears": "7",
+      "convention": "half_year",
+      "bonusPercent": "0",
+      "section179": "0.00",
+      "placedInServiceMonth": null,
+      "quarter": null,
+      "bonus": "0.00",
+      "schedule": [
+        "1428.57",
+        "2448.98",
+        "1749.27",
+        "1249.48",
+        "892.49",
+        "892.49",
+        "892.49",
+        "446.23"
+      ]
+    },
+    {
+      "label": "15yr-150db-hy",
+      "basis": "50000.00",
+      "method": "macrs_150db",
+      "lifeYears": "15",
+      "convention": "half_year",
+      "bonusPercent": "0",
+      "section179": "0.00",
+      "placedInServiceMonth": null,
+      "quarter": null,
+      "bonus": "0.00",
+      "schedule": [
+        "2500.00",
+        "4750.00",
+        "4275.00",
+        "3847.50",
+        "3462.75",
+        "3116.48",
+        "2952.45",
+        "2952.45",
+        "2952.45",
+        "2952.45",
+        "2952.45",
+        "2952.45",
+        "2952.45",
+        "2952.45",
+        "2952.45",
+        "1476.22"
+      ]
+    },
+    {
+      "label": "federal-100pct-bonus",
+      "basis": "118000.00",
+      "method": "macrs_200db",
+      "lifeYears": "5",
+      "convention": "half_year",
+      "bonusPercent": "1",
+      "section179": "0.00",
+      "placedInServiceMonth": null,
+      "quarter": null,
+      "bonus": "118000.00",
+      "schedule": []
+    },
+    {
+      "label": "s179-plus-bonus",
+      "basis": "118000.00",
+      "method": "macrs_200db",
+      "lifeYears": "5",
+      "convention": "half_year",
+      "bonusPercent": "1/2",
+      "section179": "18000.00",
+      "placedInServiceMonth": null,
+      "quarter": null,
+      "bonus": "50000.00",
+      "schedule": ["10000.00", "16000.00", "9600.00", "5760.00", "5760.00", "2880.00"]
+    }
+  ],
+  "disposal": [
+    {
+      "label": "plan-worked-example",
+      "salePrice": "500000.00",
+      "sellingCosts": "40000.00",
+      "originalBasis": "400000.00",
+      "depreciationTaken": "118000.00",
+      "kind": "real_property_sl",
+      "gain": "178000.00",
+      "loss": "0.00",
+      "ordinaryRecapture": "0.00",
+      "unrecaptured1250": "118000.00",
+      "capitalGain": "60000.00"
+    },
+    {
+      "label": "cost-seg-personal",
+      "salePrice": "30000.00",
+      "sellingCosts": "0.00",
+      "originalBasis": "25000.00",
+      "depreciationTaken": "25000.00",
+      "kind": "personal_property",
+      "gain": "30000.00",
+      "loss": "0.00",
+      "ordinaryRecapture": "25000.00",
+      "unrecaptured1250": "0.00",
+      "capitalGain": "5000.00"
+    },
+    {
+      "label": "underwater",
+      "salePrice": "200000.00",
+      "sellingCosts": "16000.00",
+      "originalBasis": "250000.00",
+      "depreciationTaken": "30000.00",
+      "kind": "real_property_sl",
+      "gain": "0.00",
+      "loss": "36000.00",
+      "ordinaryRecapture": "0.00",
+      "unrecaptured1250": "0.00",
+      "capitalGain": "0.00"
+    }
+  ],
+  "cashflow": {
+    "flows": ["-100000.00", "5000.00", "5000.00", "5000.00", "105000.00"],
+    "npvAt4pct": "3629.89",
+    "npvAt5pct": "0.00",
+    "npvAt6pct": "-3465.11",
+    "irrNear": "0.05",
+    "irrTolerance": "0.000001"
+  },
+  "rent": [
+    {
+      "currentRent": "1450.00",
+      "turnCost": "1800.00",
+      "vacancyDays": 21,
+      "increase": "0.00",
+      "pStay": "0.95",
+      "expectedGain": "0.00",
+      "expectedTurnLoss": "140.05",
+      "expectedValue": "-140.05"
+    },
+    {
+      "currentRent": "1450.00",
+      "turnCost": "1800.00",
+      "vacancyDays": 21,
+      "increase": "50.00",
+      "pStay": "0.85",
+      "expectedGain": "510.00",
+      "expectedTurnLoss": "420.16",
+      "expectedValue": "89.84"
+    },
+    {
+      "currentRent": "1450.00",
+      "turnCost": "1800.00",
+      "vacancyDays": 21,
+      "increase": "100.00",
+      "pStay": "0.7",
+      "expectedGain": "840.00",
+      "expectedTurnLoss": "840.32",
+      "expectedValue": "-0.32"
+    }
+  ],
+  "coinsurance": [
+    {
+      "loss": "100000.00",
+      "carriedLimit": "240000.00",
+      "replacementCost": "400000.00",
+      "coinsurancePercent": "0.8",
+      "deductible": "2500.00",
+      "recovery": "72500.00",
+      "retained": "27500.00"
+    },
+    {
+      "loss": "50000.00",
+      "carriedLimit": "400000.00",
+      "replacementCost": "400000.00",
+      "coinsurancePercent": "0.8",
+      "deductible": "1000.00",
+      "recovery": "49000.00",
+      "retained": "1000.00"
+    }
+  ],
+  "section179Limits": [
+    {
+      "state": "KY",
+      "cap": "25000.00",
+      "phaseoutStart": "200000.00",
+      "totalPlacedInService": "150000.00",
+      "limit": "25000.00"
+    },
+    {
+      "state": "KY",
+      "cap": "25000.00",
+      "phaseoutStart": "200000.00",
+      "totalPlacedInService": "200000.00",
+      "limit": "25000.00"
+    },
+    {
+      "state": "KY",
+      "cap": "25000.00",
+      "phaseoutStart": "200000.00",
+      "totalPlacedInService": "210000.00",
+      "limit": "15000.00"
+    },
+    {
+      "state": "KY",
+      "cap": "25000.00",
+      "phaseoutStart": "200000.00",
+      "totalPlacedInService": "225000.00",
+      "limit": "0.00"
+    },
+    {
+      "state": "KY",
+      "cap": "25000.00",
+      "phaseoutStart": "200000.00",
+      "totalPlacedInService": "226000.00",
+      "limit": "0.00"
+    }
+  ],
+  "conformityAddback": [
+    {
+      "label": "plug rounds the final slice up",
+      "state": "OH",
+      "accelerated": "118000.00",
+      "numerator": 2,
+      "denominator": 3,
+      "recoveryYears": 6,
+      "addback": "78666.67",
+      "recovery": ["13111.11", "13111.11", "13111.11", "13111.11", "13111.11", "13111.12"]
+    },
+    {
+      "label": "plug rounds the final slice down",
+      "state": "OH",
+      "accelerated": "60000.00",
+      "numerator": 2,
+      "denominator": 3,
+      "recoveryYears": 6,
+      "addback": "40000.00",
+      "recovery": ["6666.67", "6666.67", "6666.67", "6666.67", "6666.67", "6666.65"]
+    },
+    {
+      "label": "clean division needs no plug",
+      "state": "OH",
+      "accelerated": "90000.00",
+      "numerator": 2,
+      "denominator": 3,
+      "recoveryYears": 6,
+      "addback": "60000.00",
+      "recovery": ["10000.00", "10000.00", "10000.00", "10000.00", "10000.00", "10000.00"]
+    },
+    {
+      "label": "zero accelerated, zero everywhere",
+      "state": "OH",
+      "accelerated": "0.00",
+      "numerator": 2,
+      "denominator": 3,
+      "recoveryYears": 6,
+      "addback": "0.00",
+      "recovery": ["0.00", "0.00", "0.00", "0.00", "0.00", "0.00"]
+    },
+    {
+      "label": "full addback over one year",
+      "state": "OH",
+      "accelerated": "12345.67",
+      "numerator": 1,
+      "denominator": 1,
+      "recoveryYears": 1,
+      "addback": "12345.67",
+      "recovery": ["12345.67"]
+    }
+  ]
+}

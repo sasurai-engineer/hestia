@@ -1,0 +1,201 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    # Tags too. Without this a release ran none of these jobs, so a tag could be
+    # built, attested and signed over a schema that fails its own constraint
+    # tests -- while release.yml asserts it "must never ship code that would
+    # fail the everyday gates".
+    tags: ['v*.*.*']
+  pull_request:
+  workflow_dispatch:
+
+# Least privilege by default; jobs elevate only what they need.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Turbo telemetry is off; builds must be reproducible and quiet.
+  TURBO_TELEMETRY_DISABLED: 1
+  DO_NOT_TRACK: 1
+  NODE_OPTIONS: --max-old-space-size=4096
+
+jobs:
+  verify:
+    name: lint · typecheck · test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Enable corepack
+        run: corepack enable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint & format check
+        run: pnpm run lint
+
+      - name: Typecheck
+        run: pnpm run typecheck
+
+      - name: Test with coverage
+        run: pnpm run test:coverage
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: '**/coverage/**'
+          retention-days: 14
+          if-no-files-found: ignore
+
+  mutation:
+    name: mutation score
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    # Mutation testing is slow, but it must not be skipped on the paths that
+    # actually ship: pushes to main and tags both run it.
+    if: github.event_name != 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Enable corepack
+        run: corepack enable
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Stryker
+        run: pnpm run test:mutation
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mutation-report
+          path: '**/reports/mutation/**'
+          retention-days: 14
+          if-no-files-found: ignore
+
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Enable corepack
+        run: corepack enable
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+
+  schema:
+    name: schema · apply · constraint tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          # Ephemeral service container, destroyed with the job.
+          POSTGRES_PASSWORD: postgres  # config-audit: allow
+          POSTGRES_DB: hestia
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres  # config-audit: allow
+      PGDATABASE: hestia
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Apply schema and prove the constraints bite
+        run: ./scripts/verify-schema.sh
+
+  python:
+    name: python · lint · test · coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          # Ephemeral service container for the API suite, destroyed with the job.
+          POSTGRES_PASSWORD: postgres  # config-audit: allow
+          POSTGRES_DB: hestia_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      HESTIA_TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/hestia_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Ruff
+        run: uv tool run ruff check scripts/ services/
+      - name: Ruff format check
+        run: uv tool run ruff format --check scripts/ services/
+      - name: State-literal ratchet (ADR 0003)
+        run: ./scripts/check_state_literals.sh
+      - name: Config audit self-test
+        run: uv run python scripts/tests/test_config_audit.py
+      - name: Migration runner self-test
+        run: uv run python scripts/tests/test_migrate.py
+      # Unconditional: the simulation service exists, so a skip-guard here
+      # would be a gate that can quietly stop gating.
+      - name: Simulation tests with coverage gate
+        run: |
+          uv run --directory services/sim pytest \
+            --cov=hestia_sim --cov-branch --cov-fail-under=100 -q
+      - name: Ingestion tests with coverage gate
+        run: |
+          uv run --directory services/ingest pytest \
+            --cov=hestia_ingest --cov-branch --cov-fail-under=100 -q
+      # The API suite runs against the real service database above — migrated
+      # by scripts/migrate.py, never mocked — so the schema's constraints are
+      # part of what these tests exercise.
+      - name: API tests with coverage gate
+        run: |
+          uv run --directory services/api --group dev pytest \
+            --cov=hestia_api --cov-branch --cov-fail-under=100 -q
+      # The committed OpenAPI document is what the web client's types are
+      # generated from; if the API changed and the export was not rerun, the
+      # contract and the client have silently diverged.
+      - name: OpenAPI contract drift
+        run: |
+          uv run --directory services/api python ../../scripts/export_openapi.py
+          git diff --exit-code apps/web/src/lib/openapi.json

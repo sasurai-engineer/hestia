@@ -1,0 +1,36 @@
+{
+  "name": "hestia",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "An owner's operating platform for real property.",
+  "license": "UNLICENSED",
+  "packageManager": "pnpm@11.23.0",
+  "engines": {
+    "node": ">=22.13.0",
+    "pnpm": ">=11.0.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.0.0",
+    "@stryker-mutator/core": "^10.0.0",
+    "@stryker-mutator/vitest-runner": "^10.0.0",
+    "@vitest/coverage-v8": "^4.0.0",
+    "fast-check": "^4.0.0",
+    "turbo": "^2.0.0",
+    "typescript": "^6.0.0",
+    "vitest": "^4.0.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:coverage": "turbo run test:coverage",
+    "test:mutation": "turbo run test:mutation",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "verify": "pnpm run lint && pnpm run typecheck && pnpm run test:coverage && pnpm run test:mutation",
+    "audit": "pnpm audit --audit-level=low",
+    "clean": "git clean -xdf -- ':(glob)**/node_modules' ':(glob)**/dist' ':(glob)**/coverage' ':(glob)**/.turbo' ':(glob)**/reports'"
+  }
+}
