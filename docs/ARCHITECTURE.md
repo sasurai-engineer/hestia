@@ -262,6 +262,12 @@ Ordered for execution; struck items are closed and kept for the record.
   catalog-driven CI assertion: any table declaring the column without a
   maintaining trigger fails the schema job by name.
 
+> **Tracking moved to GitHub (2026-08-26):** every open item below — and the
+> whole remaining program — now lives as issues on the
+> [Hestia Roadmap](https://github.com/users/sasurai-engineer/projects/1)
+> (36 issues across 6 milestones). The sections below remain as the
+> architectural record; the issues are the source of truth for status.
+
 ## Carried findings from the web slice (2026-08-26, still open)
 
 - ~~Playwright e2e~~ — **closed with increment 3**: `apps/web/e2e/smoke.spec.ts`

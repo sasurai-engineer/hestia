@@ -87,6 +87,15 @@ survival simulation and optimization stay in Python where numpy and scipy belong
 Both sides are held to the same standard and cross-validated to the cent against
 shared fixtures.
 
+## The roadmap
+
+All future work is tracked as issues on the
+[Hestia Roadmap board](https://github.com/users/sasurai-engineer/projects/1) —
+six milestones from operational parity (M1) through the trained domain model
+(M4) to the May-2027 real-world drill (M6). Issues carry their acceptance
+criteria and the code seams they build on; decisions and owner-blocked items
+are labeled `kind:decision` / `kind:external`.
+
 ## Run it
 
 ```bash
