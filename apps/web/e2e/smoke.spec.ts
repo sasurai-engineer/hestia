@@ -69,6 +69,16 @@ test('the dossier carries the spine and the exit instrument', async ({ page }) =
   await expect(page.getByText(/Record a valuation to unlock the exit instrument/)).toBeVisible();
 });
 
+test('the command palette answers ⌘K and navigates', async ({ page }) => {
+  await page.goto('/');
+  await page.keyboard.press('ControlOrMeta+k');
+  const paletteInput = page.getByPlaceholder('Type a command…');
+  await expect(paletteInput).toBeVisible();
+  await paletteInput.fill('calen');
+  await paletteInput.press('Enter');
+  await expect(page.getByRole('heading', { name: 'Calendar' })).toBeVisible();
+});
+
 test('the calendar and coverage pages answer', async ({ page }) => {
   await page.goto('/calendar');
   await expect(
