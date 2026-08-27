@@ -70,3 +70,14 @@ survivors are equivalent by argument, not by fatigue:
 The `switched` flag and a `!strictlyBetter` guard that produced three more
 survivors were removed instead of documented — redundant state is where
 equivalent mutants breed.
+
+## @hestia/design — 96.97% (32/33 killed)
+
+The design package's one mutable module is the WCAG contrast arithmetic the
+livery's accessibility claims are recomputed from. Its single survivor is
+equivalent by argument:
+
+- `contrast` — `c <= 0.04045` vs `c < 0.04045` at the sRGB linearization
+  threshold: the boundary would need a channel of exactly `0.04045 × 255 =
+  10.31475`, and 8-bit channels are integers, so no representable color can
+  distinguish the two comparisons.

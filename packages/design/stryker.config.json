@@ -1,0 +1,24 @@
+{
+  "$schema": "https://raw.githubusercontent.com/stryker-mutator/stryker-js/master/packages/api/schema/stryker-schema.json",
+  "packageManager": "pnpm",
+  "testRunner": "vitest",
+  "_comment": "Plugins are registered explicitly: Stryker's default glob discovery does not traverse pnpm's symlinked node_modules from inside its sandbox.",
+  "plugins": ["@stryker-mutator/vitest-runner"],
+  "vitest": {
+    "configFile": "vitest.config.ts"
+  },
+  "reporters": ["html", "json", "clear-text", "progress"],
+  "htmlReporter": {
+    "fileName": "reports/mutation/index.html"
+  },
+  "mutate": ["src/**/*.ts", "!src/**/*.test.ts", "!src/index.ts"],
+  "coverageAnalysis": "perTest",
+  "thresholds": {
+    "high": 100,
+    "low": 95,
+    "break": 90
+  },
+  "jsonReporter": {
+    "fileName": "reports/mutation/report.json"
+  }
+}

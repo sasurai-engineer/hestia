@@ -1,12 +1,14 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import tokens from '../src/lib/hestia-tokens.json';
 
 /**
- * The brand laws as tests: Hestia's livery is its own. globals.css is held
- * to the committed tokens, and the consultancy that built the product may
- * never leak into it — the un-borrowing is a permanent test, not a cleanup.
+ * The brand laws as tests, app side. The token contract and the base voice
+ * live in @hestia/design (with their own parity, purity, and contrast laws);
+ * what the app answers for is how it SPENDS the livery: roles bound where
+ * the law says, every color drawn through a token, and the consultancy that
+ * built the product never leaking into it — the un-borrowing is a permanent
+ * test, not a cleanup.
  */
 const SRC = join(__dirname, '../src');
 const css = readFileSync(join(SRC, 'app/globals.css'), 'utf8');
@@ -17,30 +19,25 @@ const walk = (dir: string): string[] =>
     return statSync(path).isDirectory() ? walk(path) : [path];
   });
 
-describe('the livery holds to the Hestia tokens', () => {
-  for (const [name, value] of Object.entries(tokens)) {
-    it(`--${name} is ${value}`, () => {
-      expect(css).toContain(`--${name}: ${value};`);
-    });
-  }
-
-  it('never uses pure white or pure black in declarations', () => {
-    // Comments may TALK about them; declarations may not use them.
-    const declarations = css.replaceAll(/\/\*[\s\S]*?\*\//g, '');
-    // Lookbehind: the token NAME hearth-white is legal; the color is not.
-    expect(declarations).not.toMatch(/#fff\b|#ffffff\b|(?<!-)\bwhite\b/i);
-    expect(declarations).not.toMatch(/#000\b|#000000\b|(?<!-)\bblack\b/i);
-  });
-
+describe('the app spends the livery lawfully', () => {
   it('reserves survey-blue for citations and ember for actions', () => {
     expect(css).toMatch(/\.citation\s*\{[^}]*var\(--survey-blue\)/);
     expect(css).toMatch(/\.button\s*\{[^}]*var\(--ember\)/);
   });
 
-  it('sets Hestia in its own faces: Bitter, IBM Plex Sans, IBM Plex Mono', () => {
-    expect(css).toMatch(/--serif:[^;]*Bitter/);
-    expect(css).toMatch(/--sans:[^;]*IBM Plex Sans/);
-    expect(css).toMatch(/--mono:[^;]*IBM Plex Mono/);
+  it('never uses pure white or pure black in declarations', () => {
+    const declarations = css.replaceAll(/\/\*[\s\S]*?\*\//g, '');
+    expect(declarations).not.toMatch(/#fff\b|#ffffff\b|(?<!-)\bwhite\b/i);
+    expect(declarations).not.toMatch(/#000\b|#000000\b|(?<!-)\bblack\b/i);
+  });
+
+  it('draws every color through a token: no raw hex in app stylesheets', () => {
+    for (const file of walk(SRC).filter((path) => path.endsWith('.css'))) {
+      const declarations = readFileSync(file, 'utf8').replaceAll(/\/\*[\s\S]*?\*\//g, '');
+      expect(declarations, `raw hex in ${file.slice(SRC.length + 1)}`).not.toMatch(
+        /#[0-9a-f]{3,8}\b/i,
+      );
+    }
   });
 });
 

@@ -1,0 +1,120 @@
+/* The Field Book — tokens layer.
+
+   Held to ../../tokens/hestia-tokens.json: the parity test fails any commit
+   where a token's value here drifts from the contract. The layer order below
+   is the whole cascade story — an app rule beats a pattern beats a primitive,
+   by structure, never by specificity contest. */
+
+@layer tokens, base, primitives, patterns, motion, app;
+
+@layer tokens {
+  :root {
+    /* The nine tinctures — committed, untouchable. */
+    --hearth-white: #faf7f2;
+    --parchment: #f1ebe1;
+    --char: #221e19;
+    --umber: #6b6257;
+    --ember: #b24a17;
+    --ember-wash: #f3ddd0;
+    --fern: #3e6b4f;
+    --madder: #8f2d3c;
+    --survey-blue: #33628c;
+
+    /* Tints and shades of the nine — never a new hue. */
+    --graphite: #4a443c;
+    --sandstone: #d9cfbe;
+    --ember-deep: #8f3a10;
+    --fern-wash: #e3ece6;
+    --madder-wash: #f6e3e5;
+    --survey-wash: #e6edf4;
+
+    /* Roles — the laws, self-documenting. Money-out is umber, never madder:
+       an expense is not an error. */
+    --ground: var(--hearth-white);
+    --surface: var(--parchment);
+    --surface-2: var(--sandstone);
+    --ink: var(--char);
+    --ink-2: var(--graphite);
+    --ink-dim: var(--umber);
+    --ink-faint: rgb(34 30 25 / 45%);
+    --line: rgb(34 30 25 / 12%);
+    --line-soft: rgb(34 30 25 / 7%);
+    --money-in: var(--fern);
+    --money-out: var(--umber);
+
+    /* Hestia's faces only — the fallbacks share nothing with the
+       consultancy's stacks either. */
+    --serif: var(--font-display, "Bitter"), "Rockwell", Cambria, serif;
+    --sans: var(--font-ui, "IBM Plex Sans"), "Helvetica Neue", Arial, sans-serif;
+    --mono: var(--font-mono, "IBM Plex Mono"), "Courier New", monospace;
+
+    /* Type scale. The stat size is the instrument readout. */
+    --type-display: 38px;
+    --type-title: 30px;
+    --type-heading: 25px;
+    --type-sub: 20px;
+    --type-lead: 17px;
+    --type-body: 15px;
+    --type-small: 13px;
+    --type-label: 12px;
+    --type-micro: 11px;
+    --type-stat: 28px;
+    --track-label: 0.09em;
+    --track-section: 0.15em;
+
+    /* Space — the 4px grid — and the measures. */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-7: 32px;
+    --space-8: 40px;
+    --space-9: 48px;
+    --space-10: 64px;
+    --measure-page: 1080px;
+    --measure-wide: 1360px;
+    --measure-prose: 62ch;
+
+    /* Radius. */
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 10px;
+    --radius-full: 999px;
+
+    /* Elevation is paper, not glass: umber-tinted char, never pure black,
+       and every shadow level keeps its drawn hairline edge. */
+    --shadow-1: 0 1px 2px rgb(34 30 25 / 6%);
+    --shadow-2: 0 2px 8px rgb(34 30 25 / 9%);
+    --shadow-3: 0 6px 24px rgb(34 30 25 / 13%);
+    --shadow-press: inset 0 1px 2px rgb(34 30 25 / 12%);
+
+    /* One focus ring, everywhere. */
+    --focus-outline: 2px solid var(--ember);
+
+    /* Stacking — a z-index outside these is a bug the livery test catches. */
+    --layer-base: 0;
+    --layer-sticky: 10;
+    --layer-overlay: 100;
+    --layer-toast: 200;
+
+    /* Motion vocabulary — a raw duration outside these is likewise a bug. */
+    --dur-1: 90ms;
+    --dur-2: 180ms;
+    --dur-3: 320ms;
+    --dur-4: 600ms;
+    --ease-out: cubic-bezier(0.2, 0, 0, 1);
+    --ease-settle: cubic-bezier(0.34, 1.4, 0.64, 1);
+  }
+
+  /* Stronger rules and a darker second voice for readers who ask for it. */
+  @media (prefers-contrast: more) {
+    :root {
+      --line: rgb(34 30 25 / 24%);
+      --line-soft: rgb(34 30 25 / 14%);
+      --ink-dim: var(--graphite);
+      --ink-faint: rgb(34 30 25 / 60%);
+    }
+  }
+}
