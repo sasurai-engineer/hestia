@@ -146,6 +146,84 @@ class TestScheduleE:
         ).json()
         assert report["signoff"]["confirmed_by"] == "Jane CPA"
 
+    def test_a_reversed_repair_leaves_the_classification_queue(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        """A reversal PAIR nets to zero, so it is no longer an open question —
+        and the reversal half mirrors a charge rather than being one. Both
+        halves leave the queue: asking twice, forever, about money that no
+        longer exists is the defect."""
+        posted = client.post(
+            "/ledger",
+            json={
+                "occurred_on": "2026-09-12",
+                "category": "repairs",
+                "amount": "-3600.00",
+                "memo": "furnace invoice, mis-posted",
+                "property_id": world["property"],
+            },
+        ).json()
+        report = client.get(
+            f"/properties/{world['property']}/reports/schedule-e?tax_year=2026"
+        ).json()
+        assert {Decimal(flag["amount"]) for flag in report["needs_classification"]} == {
+            Decimal("4800.00"),
+            Decimal("3600.00"),
+        }
+
+        reversal = client.post(f"/ledger/{posted['event_uuid']}/reverse", json={})
+        assert reversal.status_code == 201
+        report = client.get(
+            f"/properties/{world['property']}/reports/schedule-e?tax_year=2026"
+        ).json()
+        flagged = {flag["event_uuid"] for flag in report["needs_classification"]}
+        assert posted["event_uuid"] not in flagged
+        assert reversal.json()["reversal"]["event_uuid"] not in flagged
+        assert [Decimal(flag["amount"]) for flag in report["needs_classification"]] == [
+            Decimal("4800.00")
+        ]
+        # The pair cancels on the form too: line 14 is unmoved by the round trip.
+        expenses = {line["line_no"]: line for line in report["expense_lines"]}
+        assert Decimal(expenses[14]["amount"]) == Decimal("5180.00")
+
+    def test_a_correction_that_is_still_unanswered_stays_in_the_queue(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        """Dropping settled pairs must not swallow a live question: the
+        corrected entry is its own charge and is judged on its own merits."""
+        posted = client.post(
+            "/ledger",
+            json={
+                "occurred_on": "2026-09-12",
+                "category": "repairs",
+                "amount": "-5100.00",
+                "memo": "porch rebuild invoice",
+                "property_id": world["property"],
+            },
+        ).json()
+        result = client.post(
+            f"/ledger/{posted['event_uuid']}/reverse",
+            json={
+                "memo": "transposed digits",
+                "corrected": {
+                    "occurred_on": "2026-09-12",
+                    "category": "repairs",
+                    "amount": "-4650.00",
+                    "memo": "porch rebuild invoice, restated",
+                    "property_id": world["property"],
+                },
+            },
+        ).json()
+        report = client.get(
+            f"/properties/{world['property']}/reports/schedule-e?tax_year=2026"
+        ).json()
+        flagged = {flag["event_uuid"]: flag for flag in report["needs_classification"]}
+        assert posted["event_uuid"] not in flagged
+        assert result["reversal"]["event_uuid"] not in flagged
+        corrected = flagged[result["corrected"]["event_uuid"]]
+        assert Decimal(corrected["amount"]) == Decimal("4650.00")
+        assert "1.263(a)-1(f)" in corrected["reason"]
+
     def test_missing_property_is_a_404(self, clean: None, client: TestClient) -> None:
         assert (
             client.get(f"/properties/{uuid.uuid4()}/reports/schedule-e?tax_year=2026").status_code

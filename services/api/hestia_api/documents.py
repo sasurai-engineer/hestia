@@ -713,12 +713,21 @@ def apply_document(conn: Conn, doc_id: str, body: ApplyIn, actor: str) -> ApplyR
         if current["status"] == "applied":
             raise AlreadyApplied(doc_id)
         raise NotConfirmed(current["status"])
+    # FOR UPDATE OF p, because the acquired_on / parcel_number decisions below
+    # are read-then-write: unlocked, two applies of two documents for the SAME
+    # property both read NULL, both write, and the second silently clobbers the
+    # fact the first recorded while BOTH report having set it. The lock makes
+    # the read a decision (the module-014 lesson, as in re_extract), and
+    # ORDER BY p.id fixes the lock order so a multi-property statement queues
+    # behind another instead of deadlocking with it.
     links = conn.execute(
         """
         SELECT p.id::text AS id, p.entity_id::text AS entity_id, p.acquired_on,
                p.parcel_number, p.label
         FROM document_properties dp JOIN properties p ON p.id = dp.property_id
         WHERE dp.document_id = %s
+        ORDER BY p.id
+        FOR UPDATE OF p
         """,
         (doc_id,),
     ).fetchall()
@@ -737,6 +746,15 @@ def apply_document(conn: Conn, doc_id: str, body: ApplyIn, actor: str) -> ApplyR
     )
     if total_basis <= 0:
         raise InvalidAllocation(f"total basis {total_basis} is not a purchase")
+    # Each half fits money_amount; their SUM need not. price_allocations and the
+    # ledger event are both NUMERIC(18, 2), so an unbounded total reached the
+    # caller as a psycopg NumericValueOutOfRange 500 — after the gate above had
+    # already flipped the document to 'applied'. Refused here in a sentence,
+    # before anything is written, and the gate rolls back with the refusal.
+    if total_basis > MAX_MONEY:
+        raise InvalidAllocation(
+            f"total basis {total_basis} exceeds the largest amount this records"
+        )
     improvement = total_basis - body.land_value - body.personal_property
     if improvement < 0:
         raise InvalidAllocation(

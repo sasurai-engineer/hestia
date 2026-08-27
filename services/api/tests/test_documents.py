@@ -9,6 +9,7 @@ trailing PDF comment changes the hash without changing what parses.
 from __future__ import annotations
 
 import datetime as dt
+import threading
 import time
 from decimal import Decimal
 from pathlib import Path
@@ -587,6 +588,56 @@ class TestReviewFindings:
             )
         assert client.get(f"/documents/{doc_id}").json()["suggestion"]["address_matches"] is False
 
+    def test_a_racing_writer_is_not_clobbered_by_a_stale_apply(
+        self, newport_property: str, client: TestClient, conn: psycopg.Connection[Any]
+    ) -> None:
+        """apply read the property's acquired_on and parcel_number and then
+        wrote back what it had read, unlocked: a writer that committed in
+        between lost its fact to the stale read, and the apply reported
+        having set a fact it had actually overwritten. The gate locks the
+        DOCUMENT, and two documents for one property have two gates — only a
+        lock on the property row makes the read a decision."""
+        detail = upload(client, newport_property, pdf_variant("fact-race"))
+        doc_id = detail["id"]
+        ratify(client, doc_id)
+        # Hold the property row the way a concurrent apply holds it, then let
+        # the request run into it.
+        conn.execute(
+            "SELECT acquired_on FROM properties WHERE id = %s FOR UPDATE",
+            (newport_property,),
+        )
+        outcome: dict[str, Any] = {}
+
+        def apply_against_the_lock() -> None:
+            outcome["response"] = client.post(
+                f"/documents/{doc_id}/apply", json={"land_value": "0.00"}
+            )
+
+        racer = threading.Thread(target=apply_against_the_lock)
+        racer.start()
+        time.sleep(0.5)  # long enough for the request to reach the property row
+        conn.execute(
+            "UPDATE properties SET acquired_on = '2018-01-01', parcel_number = 'OLD-1'"
+            " WHERE id = %s",
+            (newport_property,),
+        )
+        conn.commit()
+        racer.join(timeout=30)
+        assert not racer.is_alive()
+        response = outcome["response"]
+        assert response.status_code == 201, response.text
+        result = response.json()
+        # It waited, re-read, and left the recorded facts alone.
+        assert result["acquired_on_set"] is False
+        assert result["parcel_number_set"] is False
+        assert any("acquired_on already 2018-01-01" in note for note in result["notes"])
+        assert any("parcel_number already OLD-1" in note for note in result["notes"])
+        prop = conn.execute(
+            "SELECT acquired_on, parcel_number FROM properties WHERE id = %s",
+            (newport_property,),
+        ).fetchone()
+        assert prop == {"acquired_on": dt.date(2018, 1, 1), "parcel_number": "OLD-1"}
+
     def test_an_oversized_upload_is_refused_before_it_is_read(
         self,
         newport_property: str,
@@ -946,6 +997,39 @@ class TestApply:
         response = client.post(f"/documents/{doc_id}/apply", json={"land_value": "0.00"})
         assert response.status_code == 422
         assert "not a purchase" in response.json()["detail"]
+
+    def test_apply_refuses_a_basis_too_large_to_record(
+        self, newport_property: str, client: TestClient
+    ) -> None:
+        """Each half fits money_amount; their sum does not. price_allocations
+        and the ledger event are NUMERIC(18, 2), so the insert raised
+        NumericValueOutOfRange and it reached the caller as a 500 — after the
+        compare-and-set had already flipped the document to 'applied'. The
+        bound belongs at the edge, and the rollback that follows the refusal
+        must leave the document appliable."""
+        detail = upload(client, newport_property, pdf_variant("basis-overflow"))
+        doc_id = detail["id"]
+        review(client, doc_id, "settlement.closing_date", "accept")
+        review(client, doc_id, "settlement.property_address", "accept")
+        review(client, doc_id, "settlement.sale_price", "correct", "9999999999999999.99")
+        after = review(
+            client,
+            doc_id,
+            "settlement.capitalizable_closing_costs",
+            "correct",
+            "9999999999999999.99",
+        )
+        assert after["status"] == "confirmed"
+        response = client.post(f"/documents/{doc_id}/apply", json={"land_value": "0.00"})
+        assert response.status_code == 422
+        assert "exceeds the largest amount" in response.json()["detail"]
+        # The gate reset with the rollback: the record is not half-applied.
+        assert client.get(f"/documents/{doc_id}").json()["status"] == "confirmed"
+        review(client, doc_id, "settlement.sale_price", "correct", "187500.00")
+        review(client, doc_id, "settlement.capitalizable_closing_costs", "correct", "1783.00")
+        applied = client.post(f"/documents/{doc_id}/apply", json={"land_value": "0.00"})
+        assert applied.status_code == 201, applied.text
+        assert Decimal(applied.json()["total_basis"]) == Decimal("189283.00")
 
     def test_apply_refuses_multi_property_statements(
         self, newport_property: str, client: TestClient, conn: psycopg.Connection[Any]

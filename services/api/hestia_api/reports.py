@@ -180,6 +180,13 @@ def schedule_e(conn: Conn, property_id: str, tax_year: int) -> ScheduleEReport:
         """,
         (property_id, tax_year),
     ).fetchone()["total"]  # type: ignore[index]
+    # A correction PAIR is not an open tax question. The reversal half mirrors
+    # a charge and is never an independent one, and a reversed original nets to
+    # exactly zero (one_reversal_per_event, amount negated) — flagging either
+    # asks the owner, permanently, to characterise money that no longer exists.
+    # A corrected replacement is a fresh row that reverses nothing and is
+    # reversed by nothing, so it still surfaces on its own merits: this drops
+    # settled pairs, not live questions.
     flags = conn.execute(
         f"""
         SELECT e.event_uuid::text, e.occurred_on, e.memo, e.amount
@@ -190,6 +197,9 @@ def schedule_e(conn: Conn, property_id: str, tax_year: int) -> ScheduleEReport:
           AND e.category = 'repairs'
           AND e.is_capital IS NULL
           AND abs(e.amount) >= %(threshold)s
+          AND e.reverses_event_id IS NULL
+          AND NOT EXISTS (SELECT 1 FROM ledger_events r
+                          WHERE r.reverses_event_id = e.id)
         ORDER BY e.occurred_on
         """,  # noqa: S608 - PROPERTY_SCOPE is a module constant
         {"property_id": property_id, "year": tax_year, "threshold": DE_MINIMIS_CENTS},
