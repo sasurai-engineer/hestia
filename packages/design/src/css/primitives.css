@@ -78,6 +78,19 @@
     box-shadow: var(--shadow-press);
   }
 
+  /* Engine provenance: the figure's maker, signed in graphite — never in
+     survey-blue, which belongs to statutes alone. */
+  .engine-chip {
+    display: inline-block;
+    color: var(--graphite);
+    font-family: var(--mono);
+    font-size: var(--type-label);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 1px var(--space-2);
+  }
+
   /* ---- cards & tables ---- */
 
   .card {

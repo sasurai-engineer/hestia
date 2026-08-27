@@ -42,9 +42,11 @@ describe('HoldSellCard', () => {
       ],
     };
     render(<HoldSellCard financials={drowned} />);
-    expect(screen.getByText('underwater')).toBeDefined();
-    expect(screen.getByText(/no\s+return to compute/)).toBeDefined();
+    expect(screen.getByText('underwater').className).toBe('pill pill--failed');
     expect(screen.queryByText(/Forward ROE/)).toBeNull();
+    expect(screen.getByText('Equity', { selector: '.stat__label' })).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: /the working/ }));
+    expect(screen.getByText(/no forward return to compute/)).toBeDefined();
   });
 
   it('renders the verdict and recomputes when an assumption is dragged', () => {
@@ -75,7 +77,13 @@ describe('HoldSellCard', () => {
         }}
       />,
     );
-    expect(screen.getByText(/note balance/)).toBeDefined();
+    // The balance lives at audit depth, with the amortization engine signed
+    // at scan depth — every figure carries its maker.
+    fireEvent.click(screen.getByRole('button', { name: /the working/ }));
+    expect(screen.getByText('engines/amortization')).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: /adjust the inputs/ }));
+    fireEvent.click(screen.getByRole('button', { name: /audit every figure/ }));
+    expect(screen.getByText('Note balance')).toBeDefined();
   });
 
   it('asks for a valuation when there is none', () => {
@@ -87,8 +95,11 @@ describe('HoldSellCard', () => {
 describe('InsuranceCard', () => {
   it('renders the coinsurance position', () => {
     render(<InsuranceCard financials={financials} />);
-    expect(screen.getByText('99% of requirement')).toBeDefined();
-    expect(screen.getByText(/Loss of rents: 12 months/)).toBeDefined();
+    expect(screen.getByText('99%').className).toBe('stat__value');
+    expect(screen.getByText('Of coinsurance requirement')).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: /the working/ }));
+    fireEvent.click(screen.getByRole('button', { name: /audit every figure/ }));
+    expect(screen.getByText('12 months')).toBeDefined();
   });
 
   it('asks for inputs when the position cannot be computed', () => {
@@ -115,8 +126,11 @@ describe('InsuranceCard', () => {
         }}
       />,
     );
-    expect(screen.getByText('100% of requirement')).toBeDefined();
-    expect(screen.getByText(/No loss-of-rents coverage on record/)).toBeDefined();
+    expect(screen.getByText('100%').className).toBe('stat__value');
+    expect(screen.getByText('adequate').className).toBe('pill pill--ok');
+    fireEvent.click(screen.getByRole('button', { name: /the working/ }));
+    fireEvent.click(screen.getByRole('button', { name: /audit every figure/ }));
+    expect(screen.getByText('none on record')).toBeDefined();
   });
 });
 
