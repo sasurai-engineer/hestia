@@ -4,4701 +4,4470 @@
  */
 
 export interface paths {
-  '/bank/accounts': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/bank/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Bank Accounts */
+        get: operations["list_bank_accounts_bank_accounts_get"];
+        put?: never;
+        /** Create Bank Account */
+        post: operations["create_bank_account_bank_accounts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** List Bank Accounts */
-    get: operations['list_bank_accounts_bank_accounts_get'];
-    put?: never;
-    /** Create Bank Account */
-    post: operations['create_bank_account_bank_accounts_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/bank/accounts/{account_id}/imports': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/bank/accounts/{account_id}/imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import Bank Statement */
+        post: operations["import_bank_statement_bank_accounts__account_id__imports_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Import Bank Statement */
-    post: operations['import_bank_statement_bank_accounts__account_id__imports_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/bank/imports/{batch_id}/transactions': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/bank/imports/{batch_id}/transactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Bank Review Queue */
+        get: operations["bank_review_queue_bank_imports__batch_id__transactions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Bank Review Queue */
-    get: operations['bank_review_queue_bank_imports__batch_id__transactions_get'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/bank/transactions/{txn_id}/accept': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/bank/transactions/{txn_id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept Bank Transaction */
+        post: operations["accept_bank_transaction_bank_transactions__txn_id__accept_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Accept Bank Transaction */
-    post: operations['accept_bank_transaction_bank_transactions__txn_id__accept_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/bank/transactions/{txn_id}/exclude': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/bank/transactions/{txn_id}/exclude": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Exclude Bank Transaction */
+        post: operations["exclude_bank_transaction_bank_transactions__txn_id__exclude_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Exclude Bank Transaction */
-    post: operations['exclude_bank_transaction_bank_transactions__txn_id__exclude_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/bank/transactions/{txn_id}/match': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/bank/transactions/{txn_id}/match": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Match Bank Transaction */
+        post: operations["match_bank_transaction_bank_transactions__txn_id__match_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Match Bank Transaction */
-    post: operations['match_bank_transaction_bank_transactions__txn_id__match_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/coverage/jurisdictions': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/coverage/jurisdictions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Coverage Jurisdictions */
+        get: operations["coverage_jurisdictions_coverage_jurisdictions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Coverage Jurisdictions */
-    get: operations['coverage_jurisdictions_coverage_jurisdictions_get'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/deadlines': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/deadlines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Deadlines */
+        get: operations["list_deadlines_deadlines_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** List Deadlines */
-    get: operations['list_deadlines_deadlines_get'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/documents': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Documents */
+        get: operations["list_documents_documents_get"];
+        put?: never;
+        /** Upload Document */
+        post: operations["upload_document_documents_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** List Documents */
-    get: operations['list_documents_documents_get'];
-    put?: never;
-    /** Upload Document */
-    post: operations['upload_document_documents_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/documents/{document_id}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/documents/{document_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Document Detail */
+        get: operations["document_detail_documents__document_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Document Detail */
-    get: operations['document_detail_documents__document_id__get'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/documents/{document_id}/apply': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/documents/{document_id}/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Apply Document */
+        post: operations["apply_document_documents__document_id__apply_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Apply Document */
-    post: operations['apply_document_documents__document_id__apply_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/documents/{document_id}/content': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/documents/{document_id}/content": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Document Content */
+        get: operations["document_content_documents__document_id__content_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Document Content */
-    get: operations['document_content_documents__document_id__content_get'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/documents/{document_id}/extract': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/documents/{document_id}/extract": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Re Extract Document */
+        post: operations["re_extract_document_documents__document_id__extract_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Re Extract Document */
-    post: operations['re_extract_document_documents__document_id__extract_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/documents/{document_id}/review': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/documents/{document_id}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Review Document Field */
+        post: operations["review_document_field_documents__document_id__review_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Review Document Field */
-    post: operations['review_document_field_documents__document_id__review_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/entities': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/entities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Entities */
+        get: operations["list_entities_entities_get"];
+        put?: never;
+        /** Create Entity */
+        post: operations["create_entity_entities_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** List Entities */
-    get: operations['list_entities_entities_get'];
-    put?: never;
-    /** Create Entity */
-    post: operations['create_entity_entities_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/healthz': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/healthz": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Healthz */
+        get: operations["healthz_healthz_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Healthz */
-    get: operations['healthz_healthz_get'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/leases': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/leases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Leases */
+        get: operations["list_leases_leases_get"];
+        put?: never;
+        /** Create Lease */
+        post: operations["create_lease_leases_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** List Leases */
-    get: operations['list_leases_leases_get'];
-    put?: never;
-    /** Create Lease */
-    post: operations['create_lease_leases_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/leases/{lease_id}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/leases/{lease_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lease Detail */
+        get: operations["lease_detail_leases__lease_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Lease Detail */
-    get: operations['lease_detail_leases__lease_id__get'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/leases/{lease_id}/collect': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/leases/{lease_id}/collect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Collect Rent */
+        post: operations["collect_rent_leases__lease_id__collect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Collect Rent */
-    post: operations['collect_rent_leases__lease_id__collect_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/leases/{lease_id}/receipts': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/leases/{lease_id}/receipts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record Receipt */
+        post: operations["record_receipt_leases__lease_id__receipts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Record Receipt */
-    post: operations['record_receipt_leases__lease_id__receipts_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/leases/{lease_id}/renewal-context': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/leases/{lease_id}/renewal-context": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Renewal Context */
+        get: operations["renewal_context_leases__lease_id__renewal_context_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Renewal Context */
-    get: operations['renewal_context_leases__lease_id__renewal_context_get'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/leases/{lease_id}/renewals': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/leases/{lease_id}/renewals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record Renewal */
+        post: operations["record_renewal_leases__lease_id__renewals_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Record Renewal */
-    post: operations['record_renewal_leases__lease_id__renewals_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/ledger': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/ledger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ledger Register */
+        get: operations["ledger_register_ledger_get"];
+        put?: never;
+        /** Append Ledger Event */
+        post: operations["append_ledger_event_ledger_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Ledger Register */
-    get: operations['ledger_register_ledger_get'];
-    put?: never;
-    /** Append Ledger Event */
-    post: operations['append_ledger_event_ledger_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/ledger/{event_uuid}/reverse': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/ledger/{event_uuid}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverse Ledger Event */
+        post: operations["reverse_ledger_event_ledger__event_uuid__reverse_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Reverse Ledger Event */
-    post: operations['reverse_ledger_event_ledger__event_uuid__reverse_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/payments/stripe/webhook': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/payments/stripe/webhook": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Stripe Webhook */
+        post: operations["stripe_webhook_payments_stripe_webhook_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Stripe Webhook */
-    post: operations['stripe_webhook_payments_stripe_webhook_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/policies': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/policies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Policy */
+        post: operations["create_policy_policies_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Create Policy */
-    post: operations['create_policy_policies_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/properties': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/properties": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Properties */
+        get: operations["list_properties_properties_get"];
+        put?: never;
+        /** Create Property */
+        post: operations["create_property_properties_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** List Properties */
-    get: operations['list_properties_properties_get'];
-    put?: never;
-    /** Create Property */
-    post: operations['create_property_properties_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/properties/{property_id}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/properties/{property_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Property */
+        get: operations["get_property_properties__property_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Get Property */
-    get: operations['get_property_properties__property_id__get'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/properties/{property_id}/capex-forecast': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/properties/{property_id}/capex-forecast": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Property Capex Forecast */
+        get: operations["property_capex_forecast_properties__property_id__capex_forecast_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Property Capex Forecast */
-    get: operations['property_capex_forecast_properties__property_id__capex_forecast_get'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/properties/{property_id}/dossier': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/properties/{property_id}/dossier": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Dossier */
+        get: operations["read_dossier_properties__property_id__dossier_get"];
+        put?: never;
+        /** Assemble Dossier */
+        post: operations["assemble_dossier_properties__property_id__dossier_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Read Dossier */
-    get: operations['read_dossier_properties__property_id__dossier_get'];
-    put?: never;
-    /** Assemble Dossier */
-    post: operations['assemble_dossier_properties__property_id__dossier_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/properties/{property_id}/financials': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/properties/{property_id}/financials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Property Financials */
+        get: operations["property_financials_properties__property_id__financials_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Property Financials */
-    get: operations['property_financials_properties__property_id__financials_get'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/properties/{property_id}/reports/cash-flow': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/properties/{property_id}/reports/cash-flow": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Cash Flow Report */
+        get: operations["cash_flow_report_properties__property_id__reports_cash_flow_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Cash Flow Report */
-    get: operations['cash_flow_report_properties__property_id__reports_cash_flow_get'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/properties/{property_id}/reports/schedule-e': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/properties/{property_id}/reports/schedule-e": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Schedule E Report */
+        get: operations["schedule_e_report_properties__property_id__reports_schedule_e_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Schedule E Report */
-    get: operations['schedule_e_report_properties__property_id__reports_schedule_e_get'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/readyz': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/readyz": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Readyz */
+        get: operations["readyz_readyz_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Readyz */
-    get: operations['readyz_readyz_get'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/rent-charges/{charge_id}/waive': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/rent-charges/{charge_id}/waive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Waive Charge */
+        post: operations["waive_charge_rent_charges__charge_id__waive_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Waive Charge */
-    post: operations['waive_charge_rent_charges__charge_id__waive_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/reports/rent-roll': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/reports/rent-roll": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Rent Roll Report */
+        get: operations["rent_roll_report_reports_rent_roll_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Rent Roll Report */
-    get: operations['rent_roll_report_reports_rent_roll_get'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/reports/signoff': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/reports/signoff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Signoff Report */
+        post: operations["signoff_report_reports_signoff_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Signoff Report */
-    post: operations['signoff_report_reports_signoff_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/residents': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/residents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Resident */
+        post: operations["create_resident_residents_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Create Resident */
-    post: operations['create_resident_residents_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/sweep/deadlines': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/sweep/deadlines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sweep Deadlines */
+        post: operations["sweep_deadlines_sweep_deadlines_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Sweep Deadlines */
-    post: operations['sweep_deadlines_sweep_deadlines_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/sweep/late-fees': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/sweep/late-fees": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sweep Late Fees */
+        post: operations["sweep_late_fees_sweep_late_fees_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Sweep Late Fees */
-    post: operations['sweep_late_fees_sweep_late_fees_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/sweep/rent-charges': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/sweep/rent-charges": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sweep Rent Charges */
+        post: operations["sweep_rent_charges_sweep_rent_charges_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Sweep Rent Charges */
-    post: operations['sweep_rent_charges_sweep_rent_charges_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/units': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/units": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Unit */
+        post: operations["create_unit_units_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Create Unit */
-    post: operations['create_unit_units_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/valuations': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/valuations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Valuation */
+        post: operations["create_valuation_valuations_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Create Valuation */
-    post: operations['create_valuation_valuations_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/vendors': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/vendors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Vendors */
+        get: operations["list_vendors_vendors_get"];
+        put?: never;
+        /** Create Vendor */
+        post: operations["create_vendor_vendors_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** List Vendors */
-    get: operations['list_vendors_vendors_get'];
-    put?: never;
-    /** Create Vendor */
-    post: operations['create_vendor_vendors_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/vendors/{vendor_id}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/vendors/{vendor_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Vendor */
+        get: operations["read_vendor_vendors__vendor_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Read Vendor */
-    get: operations['read_vendor_vendors__vendor_id__get'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/work-orders': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/work-orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Work Orders */
+        get: operations["list_work_orders_work_orders_get"];
+        put?: never;
+        /** Create Work Order */
+        post: operations["create_work_order_work_orders_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** List Work Orders */
-    get: operations['list_work_orders_work_orders_get'];
-    put?: never;
-    /** Create Work Order */
-    post: operations['create_work_order_work_orders_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/work-orders/{work_order_id}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/work-orders/{work_order_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Work Order */
+        get: operations["read_work_order_work_orders__work_order_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Read Work Order */
-    get: operations['read_work_order_work_orders__work_order_id__get'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/work-orders/{work_order_id}/complete': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/work-orders/{work_order_id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Complete Work Order */
+        post: operations["complete_work_order_work_orders__work_order_id__complete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Complete Work Order */
-    post: operations['complete_work_order_work_orders__work_order_id__complete_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/work-orders/{work_order_id}/costs': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/work-orders/{work_order_id}/costs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add Work Order Cost */
+        post: operations["add_work_order_cost_work_orders__work_order_id__costs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Add Work Order Cost */
-    post: operations['add_work_order_cost_work_orders__work_order_id__costs_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/work-orders/{work_order_id}/transitions': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/work-orders/{work_order_id}/transitions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Transition Work Order */
+        post: operations["transition_work_order_work_orders__work_order_id__transitions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Transition Work Order */
-    post: operations['transition_work_order_work_orders__work_order_id__transitions_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-  schemas: {
-    /** AcceptIn */
-    AcceptIn: {
-      /** Capitalisation Rationale */
-      capitalisation_rationale?: string | null;
-      /** Category */
-      category?:
-        | (
-            | 'rent'
-            | 'other_income'
-            | 'late_fee'
-            | 'deposit_received'
-            | 'deposit_returned'
-            | 'mortgage_interest'
-            | 'mortgage_principal'
-            | 'property_tax'
-            | 'insurance'
-            | 'repairs'
-            | 'capital_improvement'
-            | 'utilities'
-            | 'management_fee'
-            | 'hoa'
-            | 'legal_professional'
-            | 'advertising'
-            | 'supplies'
-            | 'travel'
-            | 'acquisition_cost'
-            | 'disposition_cost'
-            | 'owner_contribution'
-            | 'owner_distribution'
-          )
-        | null;
-      /** Is Capital */
-      is_capital?: boolean | null;
-      /** Memo */
-      memo?: string | null;
-      /** Property Id */
-      property_id?: string | null;
-      /** Splits */
-      splits?: components['schemas']['SplitIn'][] | null;
-    };
-    /** ApplyIn */
-    ApplyIn: {
-      /** Land Value */
-      land_value: number | string;
-      /**
-       * Method
-       * @default owner allocation at apply
-       */
-      method: string;
-      /**
-       * Personal Property
-       * @default 0
-       */
-      personal_property: number | string;
-    };
-    /** ApplyResult */
-    ApplyResult: {
-      /** Acquired On Set */
-      acquired_on_set: boolean;
-      /** Improvement Value */
-      improvement_value: string;
-      /** Land Value */
-      land_value: string;
-      /** Ledger Event Uuid */
-      ledger_event_uuid: string;
-      /** Notes */
-      notes: string[];
-      /** Parcel Number Set */
-      parcel_number_set: boolean;
-      /** Personal Property */
-      personal_property: string;
-      /** Price Allocation Id */
-      price_allocation_id: string;
-      /** Total Basis */
-      total_basis: string;
-    };
-    /**
-     * ApplySuggestion
-     * @description Server-computed apply preview: the browser displays, never computes.
-     */
-    ApplySuggestion: {
-      /** Address Matches */
-      address_matches: boolean | null;
-      /** Suggested Land Value */
-      suggested_land_value: string | null;
-      /** Suggestion Citation */
-      suggestion_citation: string | null;
-      /** Total Basis */
-      total_basis: string;
-    };
-    /** BankAccountIn */
-    BankAccountIn: {
-      /** Account Last4 */
-      account_last4?: string | null;
-      /**
-       * Entity Id
-       * Format: uuid
-       */
-      entity_id: string;
-      /** Institution */
-      institution?: string | null;
-      /**
-       * Invert Amounts
-       * @default false
-       */
-      invert_amounts: boolean;
-      /**
-       * Kind
-       * @enum {string}
-       */
-      kind: 'checking' | 'savings' | 'credit_card' | 'escrow';
-      /** Nickname */
-      nickname: string;
-      /** Property Id */
-      property_id?: string | null;
-    };
-    /** BankAccountOut */
-    BankAccountOut: {
-      /** Account Last4 */
-      account_last4?: string | null;
-      /**
-       * Entity Id
-       * Format: uuid
-       */
-      entity_id: string;
-      /** Id */
-      id: string;
-      /** Institution */
-      institution?: string | null;
-      /**
-       * Invert Amounts
-       * @default false
-       */
-      invert_amounts: boolean;
-      /** Is Active */
-      is_active: boolean;
-      /**
-       * Kind
-       * @enum {string}
-       */
-      kind: 'checking' | 'savings' | 'credit_card' | 'escrow';
-      /** Nickname */
-      nickname: string;
-      /** Property Id */
-      property_id?: string | null;
-    };
-    /** Body_import_bank_statement_bank_accounts__account_id__imports_post */
-    Body_import_bank_statement_bank_accounts__account_id__imports_post: {
-      /** File */
-      file: string;
-    };
-    /** Body_upload_document_documents_post */
-    Body_upload_document_documents_post: {
-      /** Document Date */
-      document_date?: string | null;
-      /** File */
-      file: string;
-      /**
-       * Kind
-       * @enum {string}
-       */
-      kind:
-        | 'settlement_statement'
-        | 'deed'
-        | 'lease'
-        | 'lease_amendment'
-        | 'insurance_declaration'
-        | 'mortgage_note'
-        | 'mortgage_statement'
-        | 'assessment_notice'
-        | 'tax_bill'
-        | 'inspection_report'
-        | 'appraisal'
-        | 'permit'
-        | 'invoice'
-        | 'receipt'
-        | 'estoppel'
-        | 'photo'
-        | 'other';
-      /**
-       * Property Id
-       * Format: uuid
-       */
-      property_id: string;
-    };
-    /** CapexBand */
-    CapexBand: {
-      /** Expected */
-      expected: string;
-      /** P10 */
-      p10: string;
-      /** P50 */
-      p50: string;
-      /** P90 */
-      p90: string;
-      /** Year */
-      year: number;
-    };
-    /** CapexForecastOut */
-    CapexForecastOut: {
-      /** Bands */
-      bands: components['schemas']['CapexBand'][];
-      /** Components Simulated */
-      components_simulated: number;
-      /** Components Without Cost */
-      components_without_cost: string[];
-      /** Horizon Years */
-      horizon_years: number;
-      /** Property Id */
-      property_id: string;
-      /** Total Expected */
-      total_expected: string;
-    };
-    /** CashFlowReport */
-    CashFlowReport: {
-      /** Months */
-      months: components['schemas']['MonthlyFlow'][];
-      /** Property Id */
-      property_id: string;
-      /** Total Net */
-      total_net: string;
-      /** Year */
-      year: number;
-    };
-    /** ChainLink */
-    ChainLink: {
-      /** Level */
-      level: string;
-      /** Name */
-      name: string;
-    };
-    /** ChargeOut */
-    ChargeOut: {
-      /** Allocated */
-      allocated: string;
-      /** Amount */
-      amount: string;
-      /**
-       * Due On
-       * Format: date
-       */
-      due_on: string;
-      /** Id */
-      id: string;
-      /** Kind */
-      kind: string;
-      /** Outstanding */
-      outstanding: string;
-      /**
-       * Period Start
-       * Format: date
-       */
-      period_start: string;
-      /** Rule Citation */
-      rule_citation: string | null;
-      /** Status */
-      status: string;
-      /** Waived Reason */
-      waived_reason: string | null;
-    };
-    /** CollectIn */
-    CollectIn: {
-      /** Amount */
-      amount?: number | string | null;
-    };
-    /** CollectOut */
-    CollectOut: {
-      /** Amount */
-      amount: string;
-      /** Client Secret */
-      client_secret: string | null;
-      /** Payment Request Id */
-      payment_request_id: string;
-      /** Provider Ref */
-      provider_ref: string;
-      /** Status */
-      status: string;
-    };
-    /** CompletionIn */
-    CompletionIn: {
-      /**
-       * Completed On
-       * Format: date
-       */
-      completed_on: string;
-      cost?: components['schemas']['CostIn'] | null;
-      replacement?: components['schemas']['ReplacementIn'] | null;
-      /**
-       * Resolution
-       * @enum {string}
-       */
-      resolution: 'repaired' | 'replaced' | 'no_action';
-      /** Resolution Note */
-      resolution_note?: string | null;
-    };
-    /** CompletionOut */
-    CompletionOut: {
-      /** Capitalisation Citation */
-      capitalisation_citation: string | null;
-      /** Installed Component Id */
-      installed_component_id: string | null;
-      /** Ledger Event Uuid */
-      ledger_event_uuid: string | null;
-      /** Retired Component Id */
-      retired_component_id: string | null;
-      work_order: components['schemas']['WorkOrderOut'];
-    };
-    /** ComponentOut */
-    ComponentOut: {
-      /** Code */
-      code: string;
-      /** Condition */
-      condition: string;
-      /** Confidence */
-      confidence: number;
-      /** Derived From */
-      derived_from: string | null;
-      /** Display Name */
-      display_name: string;
-      /** Installed Year High */
-      installed_year_high: number | null;
-      /** Installed Year Low */
-      installed_year_low: number | null;
-      /** Life Years High */
-      life_years_high: number | null;
-      /** Life Years Low */
-      life_years_low: number | null;
-      /** Provenance Kind */
-      provenance_kind: string;
-      /** System */
-      system: string;
-    };
-    /**
-     * CostIn
-     * @description A cost typed as a positive magnitude; the ledger's sign is our business,
-     *     not the operator's.
-     */
-    CostIn: {
-      /** Amount */
-      amount: number | string;
-      /** Capitalisation Rationale */
-      capitalisation_rationale?: string | null;
-      /** Counterparty */
-      counterparty?: string | null;
-      /** Document Id */
-      document_id?: string | null;
-      /** Is Capital */
-      is_capital?: boolean | null;
-      /** Memo */
-      memo?: string | null;
-      /** Occurred On */
-      occurred_on?: string | null;
-      /**
-       * Relation
-       * @default invoice
-       * @enum {string}
-       */
-      relation:
-        | 'invoice'
-        | 'materials'
-        | 'deposit'
-        | 'tenant_chargeback'
-        | 'warranty_credit'
-        | 'other';
-    };
-    /**
-     * CostLinkIn
-     * @description Either a new cost to post, or an existing ledger event to associate.
-     */
-    CostLinkIn: {
-      cost?: components['schemas']['CostIn'] | null;
-      /** Ledger Event Uuid */
-      ledger_event_uuid?: string | null;
-      /**
-       * Relation
-       * @default invoice
-       * @enum {string}
-       */
-      relation:
-        | 'invoice'
-        | 'materials'
-        | 'deposit'
-        | 'tenant_chargeback'
-        | 'warranty_credit'
-        | 'other';
-    };
-    /** CostOut */
-    CostOut: {
-      /** Amount */
-      amount: string;
-      /** Category */
-      category: string;
-      /** Is Capital */
-      is_capital: boolean | null;
-      /** Ledger Event Uuid */
-      ledger_event_uuid: string;
-      /**
-       * Occurred On
-       * Format: date
-       */
-      occurred_on: string;
-      /**
-       * Relation
-       * @enum {string}
-       */
-      relation:
-        | 'invoice'
-        | 'materials'
-        | 'deposit'
-        | 'tenant_chargeback'
-        | 'warranty_credit'
-        | 'other';
-      /** Reversed */
-      reversed: boolean;
-    };
-    /** CoverageGapOut */
-    CoverageGapOut: {
-      /** Domain */
-      domain: string;
-      /** Message */
-      message: string;
-      /** Property Id */
-      property_id: string;
-      /**
-       * Reason
-       * @constant
-       */
-      reason: 'no_state_jurisdiction';
-      /** State */
-      state: string;
-    };
-    /** CoverageIn */
-    CoverageIn: {
-      /** Description */
-      description: string;
-      /** Limit Amount */
-      limit_amount?: number | string | null;
-      /** Months Covered */
-      months_covered?: number | null;
-      /**
-       * Peril
-       * @default all_other
-       */
-      peril: string;
-    };
-    /** CoverageReport */
-    CoverageReport: {
-      /**
-       * As Of
-       * Format: date
-       */
-      as_of: string;
-      /** Gaps */
-      gaps: components['schemas']['CoverageGapOut'][];
-      /** Properties */
-      properties: components['schemas']['PropertyCoverage'][];
-    };
-    /** DeadlineOut */
-    DeadlineOut: {
-      /** Citation */
-      citation: string;
-      /**
-       * Due On
-       * Format: date
-       */
-      due_on: string;
-      /** Id */
-      id: string;
-      /** Kind */
-      kind: string;
-      /** Note */
-      note: string | null;
-      /** Property Label */
-      property_label: string | null;
-      /** Status */
-      status: string;
-      /** Window Opens On */
-      window_opens_on: string | null;
-    };
-    /** DebtTerms */
-    DebtTerms: {
-      /** Annual Rate */
-      annual_rate: string;
-      /** Lender */
-      lender: string | null;
-      /** Months Elapsed */
-      months_elapsed: number;
-      /** Original Principal */
-      original_principal: string;
-      /** Term Months */
-      term_months: number;
-    };
-    /** DefectOut */
-    DefectOut: {
-      /** Affects Financing */
-      affects_financing: boolean;
-      /** Affects Insurance */
-      affects_insurance: boolean;
-      /** Affects Safety */
-      affects_safety: boolean;
-      /** Citation */
-      citation: string | null;
-      /** Derived From */
-      derived_from: string | null;
-      /** Kind */
-      kind: string;
-      /** Status */
-      status: string;
-      /** Triggers Disclosure */
-      triggers_disclosure: boolean;
-    };
-    /** DocumentDetail */
-    DocumentDetail: {
-      /** Applied At */
-      applied_at: string | null;
-      /** Applied By */
-      applied_by: string | null;
-      /** Document Date */
-      document_date: string | null;
-      /** Extracted Count */
-      extracted_count: number;
-      /** Fields */
-      fields: components['schemas']['FieldOut'][];
-      /** Filename */
-      filename: string;
-      /** Has Content */
-      has_content: boolean;
-      /** Id */
-      id: string;
-      /** Kind */
-      kind: string;
-      /** Open Review Count */
-      open_review_count: number;
-      /** Property Ids */
-      property_ids: string[];
-      /** Property Labels */
-      property_labels: string[];
-      /** Status */
-      status: string;
-      suggestion: components['schemas']['ApplySuggestion'] | null;
-      /**
-       * Uploaded At
-       * Format: date-time
-       */
-      uploaded_at: string;
-      /** Uploaded By */
-      uploaded_by: string | null;
-    };
-    /** DocumentSummary */
-    DocumentSummary: {
-      /** Document Date */
-      document_date: string | null;
-      /** Extracted Count */
-      extracted_count: number;
-      /** Filename */
-      filename: string;
-      /** Has Content */
-      has_content: boolean;
-      /** Id */
-      id: string;
-      /** Kind */
-      kind: string;
-      /** Open Review Count */
-      open_review_count: number;
-      /** Property Labels */
-      property_labels: string[];
-      /** Status */
-      status: string;
-      /**
-       * Uploaded At
-       * Format: date-time
-       */
-      uploaded_at: string;
-      /** Uploaded By */
-      uploaded_by: string | null;
-    };
-    /** DomainCoverage */
-    DomainCoverage: {
-      /** Calendar Key */
-      calendar_key?: string | null;
-      /** Calendar Registered */
-      calendar_registered?: boolean | null;
-      /** Citation */
-      citation?: string | null;
-      /** Source */
-      source?: string | null;
-      /**
-       * Status
-       * @enum {string}
-       */
-      status: 'covered' | 'no_rules_loaded';
-    };
-    /** DossierOut */
-    DossierOut: {
-      /**
-       * As Of
-       * Format: date
-       */
-      as_of: string;
-      /**
-       * Property Id
-       * Format: uuid
-       */
-      property_id: string;
-      /** Steps */
-      steps: components['schemas']['DossierStepOut'][];
-      /** Sweep */
-      sweep: {
-        [key: string]: unknown;
-      };
-    };
-    /** DossierStepOut */
-    DossierStepOut: {
-      /** Detail */
-      detail: string;
-      /** Name */
-      name: string;
-      /**
-       * Status
-       * @enum {string}
-       */
-      status: 'ok' | 'skipped' | 'failed';
-    };
-    /** DossierView */
-    DossierView: {
-      /** City */
-      city: string;
-      /** Components */
-      components: components['schemas']['ComponentOut'][];
-      /** County */
-      county: string | null;
-      /** Deadlines */
-      deadlines: components['schemas']['DeadlineOut'][];
-      /** Defects */
-      defects: components['schemas']['DefectOut'][];
-      /** Entity Id */
-      entity_id: string;
-      /** Hazards */
-      hazards: components['schemas']['HazardOut'][];
-      /** Id */
-      id: string;
-      /** Jurisdiction Chain */
-      jurisdiction_chain: components['schemas']['ChainLink'][];
-      /** Kind */
-      kind: string;
-      /** Label */
-      label: string;
-      /** Latitude */
-      latitude: number | null;
-      /** Longitude */
-      longitude: number | null;
-      /** Postal Code */
-      postal_code: string;
-      /** State */
-      state: string;
-      /** Street 1 */
-      street_1: string;
-      /** Year Built */
-      year_built: number | null;
-    };
-    /** EntityIn */
-    EntityIn: {
-      /** Formation State */
-      formation_state?: string | null;
-      /**
-       * Kind
-       * @enum {string}
-       */
-      kind:
-        | 'individual'
-        | 'joint'
-        | 'llc'
-        | 'series_llc_cell'
-        | 'limited_partnership'
-        | 's_corporation'
-        | 'c_corporation'
-        | 'revocable_trust'
-        | 'irrevocable_trust'
-        | 'land_trust';
-      /** Name */
-      name: string;
-    };
-    /** EntityOut */
-    EntityOut: {
-      /** Formation State */
-      formation_state?: string | null;
-      /**
-       * Id
-       * Format: uuid
-       */
-      id: string;
-      /**
-       * Kind
-       * @enum {string}
-       */
-      kind:
-        | 'individual'
-        | 'joint'
-        | 'llc'
-        | 'series_llc_cell'
-        | 'limited_partnership'
-        | 's_corporation'
-        | 'c_corporation'
-        | 'revocable_trust'
-        | 'irrevocable_trust'
-        | 'land_trust';
-      /** Name */
-      name: string;
-    };
-    /** ExcludedAmount */
-    ExcludedAmount: {
-      /** Amount */
-      amount: string;
-      /** Citation */
-      citation: string;
-      /** Label */
-      label: string;
-    };
-    /** FieldOut */
-    FieldOut: {
-      /** Accepted Value */
-      accepted_value: string | null;
-      /** Confidence */
-      confidence: string | null;
-      /**
-       * Datatype
-       * @enum {string}
-       */
-      datatype: 'money' | 'date' | 'text';
-      /** Display Order */
-      display_order: number;
-      /** Effective Value */
-      effective_value: string | null;
-      /** Field Path */
-      field_path: string;
-      /** Label */
-      label: string;
-      /** Model Id */
-      model_id: string | null;
-      /** Needs Review */
-      needs_review: boolean;
-      /** Normalised Value */
-      normalised_value: string | null;
-      /** Page */
-      page: number | null;
-      /** Raw Value */
-      raw_value: string | null;
-      /** Required */
-      required: boolean;
-      /** Reviewed At */
-      reviewed_at: string | null;
-      /** Reviewed By */
-      reviewed_by: string | null;
-      /** Target Hint */
-      target_hint: string | null;
-    };
-    /** Financials */
-    Financials: {
-      /** Debts */
-      debts: components['schemas']['DebtTerms'][];
-      /** Income 12Mo */
-      income_12mo: string;
-      /** Noi 12Mo */
-      noi_12mo: string;
-      /** Operating Expenses 12Mo */
-      operating_expenses_12mo: string;
-      /** Policies */
-      policies: components['schemas']['PolicyOut'][];
-      /** Property Id */
-      property_id: string;
-      valuation: components['schemas']['ValuationOut'] | null;
-    };
-    /** HTTPValidationError */
-    HTTPValidationError: {
-      /** Detail */
-      detail?: components['schemas']['ValidationError'][];
-    };
-    /** HazardOut */
-    HazardOut: {
-      /** Base Flood Elevation Ft */
-      base_flood_elevation_ft: number | null;
-      /** In Special Flood Hazard Area */
-      in_special_flood_hazard_area: boolean | null;
-      /** Kind */
-      kind: string;
-      /**
-       * Observed At
-       * Format: date-time
-       */
-      observed_at: string;
-      /** Zone */
-      zone: string | null;
-    };
-    /** Health */
-    Health: {
-      /**
-       * Status
-       * @constant
-       */
-      status: 'alive';
-    };
-    /** ImportSummary */
-    ImportSummary: {
-      /** Batch Id */
-      batch_id: string;
-      /** Duplicates */
-      duplicates: number;
-      /** Format */
-      format: string;
-      /** Staged */
-      staged: number;
-      /** Suggested */
-      suggested: number;
-    };
-    /** LeaseDetail */
-    LeaseDetail: {
-      /** Balance Due */
-      balance_due: string;
-      /** Charges */
-      charges: components['schemas']['ChargeOut'][];
-      /** Deposit Returned On */
-      deposit_returned_on: string | null;
-      /** Ends On */
-      ends_on: string | null;
-      /** Escalation */
-      escalation: string;
-      /** Escalation Value */
-      escalation_value: string | null;
-      /** Id */
-      id: string;
-      /** Open Credit */
-      open_credit: string;
-      /** Property Id */
-      property_id: string;
-      /** Property Label */
-      property_label: string;
-      /** Rent */
-      rent: string;
-      /** Rent Due Day */
-      rent_due_day: number;
-      /** Residents */
-      residents: string[];
-      /** Security Deposit */
-      security_deposit: string;
-      /**
-       * Starts On
-       * Format: date
-       */
-      starts_on: string;
-      /** Status */
-      status: string;
-      /** Unit Label */
-      unit_label: string;
-    };
-    /** LeaseIn */
-    LeaseIn: {
-      /** Ends On */
-      ends_on?: string | null;
-      /**
-       * Escalation
-       * @default none
-       * @enum {string}
-       */
-      escalation: 'none' | 'fixed_amount' | 'fixed_percent';
-      /** Escalation Value */
-      escalation_value?: number | string | null;
-      /** Rent */
-      rent: number | string;
-      /**
-       * Rent Due Day
-       * @default 1
-       */
-      rent_due_day: number;
-      /**
-       * Resident Ids
-       * @default []
-       */
-      resident_ids: string[];
-      /**
-       * Security Deposit
-       * @default 0
-       */
-      security_deposit: number | string;
-      /**
-       * Starts On
-       * Format: date
-       */
-      starts_on: string;
-      /**
-       * Status
-       * @default active
-       * @enum {string}
-       */
-      status: 'active' | 'month_to_month' | 'draft';
-      /** Unit Id */
-      unit_id: string;
-    };
-    /** LeaseSummary */
-    LeaseSummary: {
-      /** Balance Due */
-      balance_due: string;
-      /** Ends On */
-      ends_on: string | null;
-      /** Id */
-      id: string;
-      /** Open Credit */
-      open_credit: string;
-      /** Property Label */
-      property_label: string;
-      /** Rent */
-      rent: string;
-      /** Residents */
-      residents: string[];
-      /**
-       * Starts On
-       * Format: date
-       */
-      starts_on: string;
-      /** Status */
-      status: string;
-      /** Unit Label */
-      unit_label: string;
-    };
-    /** LedgerEntryIn */
-    LedgerEntryIn: {
-      /** Amount */
-      amount: number | string;
-      /** Capitalisation Rationale */
-      capitalisation_rationale?: string | null;
-      /**
-       * Category
-       * @enum {string}
-       */
-      category:
-        | 'rent'
-        | 'other_income'
-        | 'late_fee'
-        | 'deposit_received'
-        | 'deposit_returned'
-        | 'mortgage_interest'
-        | 'mortgage_principal'
-        | 'property_tax'
-        | 'insurance'
-        | 'repairs'
-        | 'capital_improvement'
-        | 'utilities'
-        | 'management_fee'
-        | 'hoa'
-        | 'legal_professional'
-        | 'advertising'
-        | 'supplies'
-        | 'travel'
-        | 'acquisition_cost'
-        | 'disposition_cost'
-        | 'owner_contribution'
-        | 'owner_distribution';
-      /** Counterparty */
-      counterparty?: string | null;
-      /** Document Id */
-      document_id?: string | null;
-      /** Entity Id */
-      entity_id?: string | null;
-      /** Is Capital */
-      is_capital?: boolean | null;
-      /** Lease Id */
-      lease_id?: string | null;
-      /** Memo */
-      memo?: string | null;
-      /**
-       * Occurred On
-       * Format: date
-       */
-      occurred_on: string;
-      /** Property Id */
-      property_id?: string | null;
-      /** Unit Id */
-      unit_id?: string | null;
-    };
-    /** LedgerEventOut */
-    LedgerEventOut: {
-      /** Amount */
-      amount: string;
-      /** Capitalisation Rationale */
-      capitalisation_rationale: string | null;
-      /** Category */
-      category: string;
-      /** Counterparty */
-      counterparty: string | null;
-      /** Entity Id */
-      entity_id: string | null;
-      /** Event Uuid */
-      event_uuid: string;
-      /** Is Capital */
-      is_capital: boolean | null;
-      /** Lease Id */
-      lease_id: string | null;
-      /** Memo */
-      memo: string | null;
-      /**
-       * Occurred On
-       * Format: date
-       */
-      occurred_on: string;
-      /** Property Id */
-      property_id: string | null;
-      /**
-       * Recorded At
-       * Format: date-time
-       */
-      recorded_at: string;
-      /** Reversed */
-      reversed: boolean;
-      /** Reverses Event Uuid */
-      reverses_event_uuid: string | null;
-      /** Unit Id */
-      unit_id: string | null;
-    };
-    /** LedgerRegister */
-    LedgerRegister: {
-      /** Events */
-      events: components['schemas']['LedgerEventOut'][];
-      /** Net */
-      net: string;
-      /** Total In */
-      total_in: string;
-      /** Total Out */
-      total_out: string;
-    };
-    /** MatchIn */
-    MatchIn: {
-      /**
-       * Event Uuid
-       * Format: uuid
-       */
-      event_uuid: string;
-    };
-    /** MonthlyFlow */
-    MonthlyFlow: {
-      /** Capital */
-      capital: string;
-      /** Debt Service */
-      debt_service: string;
-      /** Month */
-      month: number;
-      /** Net */
-      net: string;
-      /** Operating In */
-      operating_in: string;
-      /** Operating Out */
-      operating_out: string;
-      /** Owner Flows */
-      owner_flows: string;
-    };
-    /** NeedsClassification */
-    NeedsClassification: {
-      /** Amount */
-      amount: string;
-      /** Event Uuid */
-      event_uuid: string;
-      /** Memo */
-      memo: string | null;
-      /**
-       * Occurred On
-       * Format: date
-       */
-      occurred_on: string;
-      /** Reason */
-      reason: string;
-    };
-    /** PolicyIn */
-    PolicyIn: {
-      /** Annual Premium */
-      annual_premium?: number | string | null;
-      /** Carrier */
-      carrier?: string | null;
-      /** Coinsurance Percent */
-      coinsurance_percent?: number | string | null;
-      /**
-       * Coverages
-       * @default []
-       */
-      coverages: components['schemas']['CoverageIn'][];
-      /**
-       * Effective From
-       * Format: date
-       */
-      effective_from: string;
-      /**
-       * Effective To
-       * Format: date
-       */
-      effective_to: string;
-      /**
-       * Kind
-       * @enum {string}
-       */
-      kind:
-        | 'dwelling_fire'
-        | 'landlord_package'
-        | 'homeowners'
-        | 'commercial_property'
-        | 'general_liability'
-        | 'umbrella'
-        | 'flood_nfip'
-        | 'flood_private'
-        | 'earthquake'
-        | 'builders_risk'
-        | 'rent_guarantee';
-      /**
-       * Property Id
-       * Format: uuid
-       */
-      property_id: string;
-    };
-    /** PolicyOut */
-    PolicyOut: {
-      /** Carrier */
-      carrier: string | null;
-      /** Coinsurance Percent */
-      coinsurance_percent: string | null;
-      /** Dwelling Limit */
-      dwelling_limit: string | null;
-      /**
-       * Effective To
-       * Format: date
-       */
-      effective_to: string;
-      /** Id */
-      id: string;
-      /** Kind */
-      kind: string;
-      /** Loss Of Rents Months */
-      loss_of_rents_months: number | null;
-    };
-    /** PropertyCoverage */
-    PropertyCoverage: {
-      /** Domains */
-      domains: {
-        [key: string]: components['schemas']['DomainCoverage'];
-      };
-      /** Label */
-      label: string;
-      /** Property Id */
-      property_id: string;
-      resolution: components['schemas']['Resolution'];
-      /** State */
-      state: string;
-    };
-    /** PropertyIn */
-    PropertyIn: {
-      /** City */
-      city: string;
-      /** County */
-      county?: string | null;
-      /**
-       * Entity Id
-       * Format: uuid
-       */
-      entity_id: string;
-      /**
-       * Kind
-       * @enum {string}
-       */
-      kind:
-        | 'single_family'
-        | 'duplex'
-        | 'triplex'
-        | 'fourplex'
-        | 'small_multifamily'
-        | 'condominium'
-        | 'townhouse'
-        | 'manufactured'
-        | 'mixed_use'
-        | 'land';
-      /** Label */
-      label: string;
-      /** Postal Code */
-      postal_code: string;
-      /** State */
-      state: string;
-      /** Street 1 */
-      street_1: string;
-      /** Year Built */
-      year_built?: number | null;
-    };
-    /** PropertyOut */
-    PropertyOut: {
-      /** City */
-      city: string;
-      /** County */
-      county?: string | null;
-      /**
-       * Entity Id
-       * Format: uuid
-       */
-      entity_id: string;
-      /**
-       * Id
-       * Format: uuid
-       */
-      id: string;
-      /** Jurisdiction Id */
-      jurisdiction_id: string | null;
-      /**
-       * Kind
-       * @enum {string}
-       */
-      kind:
-        | 'single_family'
-        | 'duplex'
-        | 'triplex'
-        | 'fourplex'
-        | 'small_multifamily'
-        | 'condominium'
-        | 'townhouse'
-        | 'manufactured'
-        | 'mixed_use'
-        | 'land';
-      /** Label */
-      label: string;
-      /** Postal Code */
-      postal_code: string;
-      /** State */
-      state: string;
-      /** Street 1 */
-      street_1: string;
-      /** Year Built */
-      year_built?: number | null;
-    };
-    /** PropertySummary */
-    PropertySummary: {
-      /** City */
-      city: string;
-      /** Component Count */
-      component_count: number;
-      /** Defect Count */
-      defect_count: number;
-      /** Id */
-      id: string;
-      /** Jurisdiction */
-      jurisdiction: string | null;
-      /** Kind */
-      kind: string;
-      /** Label */
-      label: string;
-      /** Next Deadline On */
-      next_deadline_on: string | null;
-      /** Postal Code */
-      postal_code: string;
-      /** State */
-      state: string;
-      /** Street 1 */
-      street_1: string;
-      /** Year Built */
-      year_built: number | null;
-    };
-    /** Readiness */
-    Readiness: {
-      /** Migrations */
-      migrations: number;
-      /**
-       * Status
-       * @constant
-       */
-      status: 'ready';
-    };
-    /** ReceiptIn */
-    ReceiptIn: {
-      /** Amount */
-      amount: number | string;
-      /**
-       * Category
-       * @default rent
-       * @enum {string}
-       */
-      category: 'rent' | 'late_fee' | 'deposit_received';
-      /** Memo */
-      memo?: string | null;
-      /**
-       * Occurred On
-       * Format: date
-       */
-      occurred_on: string;
-    };
-    /** ReceiptOut */
-    ReceiptOut: {
-      /** Allocations */
-      allocations: {
-        [key: string]: string;
-      }[];
-      /** Event Uuid */
-      event_uuid: string;
-      /** Unallocated */
-      unallocated: string;
-    };
-    /** RenewalContextOut */
-    RenewalContextOut: {
-      /** Assumptions Source */
-      assumptions_source: string;
-      /** Current Rent */
-      current_rent: string;
-      /** Ends On */
-      ends_on: string | null;
-      /** Lease Id */
-      lease_id: string;
-      /** Market Rent */
-      market_rent: string | null;
-      /** Market Rent Source */
-      market_rent_source: string | null;
-      /** Turn Cost */
-      turn_cost: string;
-      /** Vacancy Days */
-      vacancy_days: number;
-    };
-    /** RenewalOfferIn */
-    RenewalOfferIn: {
-      /**
-       * Offered On
-       * Format: date
-       */
-      offered_on: string;
-      /** Offered Rent */
-      offered_rent: number | string;
-    };
-    /** RentRollRow */
-    RentRollRow: {
-      /** Ends On */
-      ends_on: string | null;
-      /** Property Label */
-      property_label: string;
-      /** Rent */
-      rent: string;
-      /** Residents */
-      residents: string[];
-      /**
-       * Starts On
-       * Format: date
-       */
-      starts_on: string;
-      /** Status */
-      status: string;
-      /** Unit Label */
-      unit_label: string;
-    };
-    /** RentSweepResult */
-    RentSweepResult: {
-      /** Charges Created */
-      charges_created: number;
-      /** Gaps */
-      gaps: {
-        [key: string]: string;
-      }[];
-    };
-    /** ReplacementIn */
-    ReplacementIn: {
-      /** Component Type Id */
-      component_type_id?: string | null;
-      /** Expected Life Years */
-      expected_life_years?: number | string | null;
-      /** Installed On */
-      installed_on?: string | null;
-      /** Notes */
-      notes?: string | null;
-      /** Quantity */
-      quantity?: number | string | null;
-      /** Replacement Cost */
-      replacement_cost?: number | string | null;
-      /** Warranty Expires On */
-      warranty_expires_on?: string | null;
-    };
-    /** ResidentIn */
-    ResidentIn: {
-      /** Email */
-      email?: string | null;
-      /** Full Name */
-      full_name: string;
-      /** Phone */
-      phone?: string | null;
-    };
-    /** Resolution */
-    Resolution: {
-      /** Chain */
-      chain: string[];
-      /** Level */
-      level: string;
-    };
-    /** ReversalIn */
-    ReversalIn: {
-      corrected?: components['schemas']['LedgerEntryIn'] | null;
-      /** Memo */
-      memo?: string | null;
-    };
-    /** ReversalOut */
-    ReversalOut: {
-      corrected: components['schemas']['LedgerEventOut'] | null;
-      reversal: components['schemas']['LedgerEventOut'];
-    };
-    /** ReviewIn */
-    ReviewIn: {
-      /**
-       * Action
-       * @enum {string}
-       */
-      action: 'accept' | 'correct' | 'reject';
-      /** Field Path */
-      field_path: string;
-      /** Value */
-      value?: string | null;
-    };
-    /** ScheduleELine */
-    ScheduleELine: {
-      /** Amount */
-      amount: string;
-      /** Citation */
-      citation: string;
-      /** Label */
-      label: string;
-      /** Line No */
-      line_no: number;
-    };
-    /** ScheduleEReport */
-    ScheduleEReport: {
-      /** Caveat */
-      caveat: string;
-      /** Depreciation Citation */
-      depreciation_citation: string;
-      /** Depreciation Line 18 */
-      depreciation_line_18: string;
-      /** Excluded */
-      excluded: components['schemas']['ExcludedAmount'][];
-      /** Expense Lines */
-      expense_lines: components['schemas']['ScheduleELine'][];
-      /** Income Lines */
-      income_lines: components['schemas']['ScheduleELine'][];
-      /** Needs Classification */
-      needs_classification: components['schemas']['NeedsClassification'][];
-      /** Net */
-      net: string;
-      /** Property Id */
-      property_id: string;
-      signoff: components['schemas']['Signoff'] | null;
-      /** Tax Year */
-      tax_year: number;
-      /** Total Expenses */
-      total_expenses: string;
-      /** Total Income */
-      total_income: string;
-    };
-    /** Signoff */
-    Signoff: {
-      /**
-       * Confirmed At
-       * Format: date-time
-       */
-      confirmed_at: string;
-      /** Confirmed By */
-      confirmed_by: string;
-      /** Note */
-      note: string | null;
-      /** Stale */
-      stale: boolean;
-    };
-    /** SignoffIn */
-    SignoffIn: {
-      /** Confirmed By */
-      confirmed_by: string;
-      /** Note */
-      note?: string | null;
-      /**
-       * Property Id
-       * Format: uuid
-       */
-      property_id: string;
-      /**
-       * Report Kind
-       * @enum {string}
-       */
-      report_kind: 'schedule_e' | 'p_and_l' | 'cash_flow';
-      /** Tax Year */
-      tax_year: number;
-    };
-    /** SplitIn */
-    SplitIn: {
-      /** Amount */
-      amount: number | string;
-      /** Capitalisation Rationale */
-      capitalisation_rationale?: string | null;
-      /**
-       * Category
-       * @enum {string}
-       */
-      category:
-        | 'rent'
-        | 'other_income'
-        | 'late_fee'
-        | 'deposit_received'
-        | 'deposit_returned'
-        | 'mortgage_interest'
-        | 'mortgage_principal'
-        | 'property_tax'
-        | 'insurance'
-        | 'repairs'
-        | 'capital_improvement'
-        | 'utilities'
-        | 'management_fee'
-        | 'hoa'
-        | 'legal_professional'
-        | 'advertising'
-        | 'supplies'
-        | 'travel'
-        | 'acquisition_cost'
-        | 'disposition_cost'
-        | 'owner_contribution'
-        | 'owner_distribution';
-      /** Is Capital */
-      is_capital?: boolean | null;
-      /** Memo */
-      memo?: string | null;
-    };
-    /** StagedTransaction */
-    StagedTransaction: {
-      /** Amount */
-      amount: string;
-      /** Description */
-      description: string;
-      /** Disposition */
-      disposition: string;
-      /** Id */
-      id: string;
-      /** Needs Review */
-      needs_review: boolean;
-      /**
-       * Posted On
-       * Format: date
-       */
-      posted_on: string;
-      /** Suggested Category */
-      suggested_category: string | null;
-      /** Suggested Is Capital */
-      suggested_is_capital: boolean | null;
-      /** Suggested Property Id */
-      suggested_property_id: string | null;
-      /** Suggestion Confidence */
-      suggestion_confidence: number | null;
-    };
-    /** SweepGapOut */
-    SweepGapOut: {
-      /** Detail */
-      detail: string;
-      /** Domain */
-      domain: string;
-      /**
-       * Property Id
-       * Format: uuid
-       */
-      property_id: string;
-      /**
-       * Reason
-       * @enum {string}
-       */
-      reason: 'no_state_jurisdiction' | 'no_rule_for_domain' | 'calendar_key_unregistered';
-      /** State */
-      state: string;
-    };
-    /** SweepOut */
-    SweepOut: {
-      /**
-       * As Of
-       * Format: date
-       */
-      as_of: string;
-      /** Coverage Gaps */
-      coverage_gaps: components['schemas']['SweepGapOut'][];
-      /** Inserted */
-      inserted: {
-        [key: string]: number;
-      };
-      /** Total */
-      total: number;
-    };
-    /** TransitionIn */
-    TransitionIn: {
-      /** Cancelled Reason */
-      cancelled_reason?: string | null;
-      /** Scheduled For */
-      scheduled_for?: string | null;
-      /**
-       * Status
-       * @enum {string}
-       */
-      status: 'triaged' | 'scheduled' | 'in_progress' | 'cancelled';
-      /** Vendor Id */
-      vendor_id?: string | null;
-    };
-    /** UnitIn */
-    UnitIn: {
-      /** Label */
-      label: string;
-      /** Market Rent */
-      market_rent?: number | string | null;
-      /** Property Id */
-      property_id: string;
-    };
-    /** ValidationError */
-    ValidationError: {
-      /** Context */
-      ctx?: Record<string, never>;
-      /** Input */
-      input?: unknown;
-      /** Location */
-      loc: (string | number)[];
-      /** Message */
-      msg: string;
-      /** Error Type */
-      type: string;
-    };
-    /** ValuationIn */
-    ValuationIn: {
-      /**
-       * As Of
-       * Format: date
-       */
-      as_of: string;
-      /**
-       * Property Id
-       * Format: uuid
-       */
-      property_id: string;
-      /**
-       * Source
-       * @enum {string}
-       */
-      source:
-        | 'avm'
-        | 'appraisal'
-        | 'broker_opinion'
-        | 'assessor'
-        | 'purchase_price'
-        | 'comparable_sales'
-        | 'owner_estimate'
-        | 'replacement_cost_estimate';
-      /** Value */
-      value: number | string;
-    };
-    /** ValuationOut */
-    ValuationOut: {
-      /**
-       * As Of
-       * Format: date
-       */
-      as_of: string;
-      /** Source */
-      source: string;
-      /** Value */
-      value: string;
-    };
-    /** VendorIn */
-    VendorIn: {
-      /** Email */
-      email?: string | null;
-      /** Entity Id */
-      entity_id: string;
-      /** Insurer */
-      insurer?: string | null;
-      /**
-       * Is 1099 Reportable
-       * @default true
-       */
-      is_1099_reportable: boolean;
-      /** Liability Expires On */
-      liability_expires_on?: string | null;
-      /** License Expires On */
-      license_expires_on?: string | null;
-      /** License Number */
-      license_number?: string | null;
-      /** Name */
-      name: string;
-      /** Notes */
-      notes?: string | null;
-      /** Phone */
-      phone?: string | null;
-      /**
-       * Trade
-       * @enum {string}
-       */
-      trade:
-        | 'plumbing'
-        | 'hvac'
-        | 'electrical'
-        | 'roofing'
-        | 'appliance'
-        | 'general_contractor'
-        | 'handyman'
-        | 'landscaping'
-        | 'pest_control'
-        | 'cleaning'
-        | 'flooring'
-        | 'painting'
-        | 'restoration'
-        | 'inspection'
-        | 'other';
-      /**
-       * W9 On File
-       * @default false
-       */
-      w9_on_file: boolean;
-      /** Workers Comp Expires On */
-      workers_comp_expires_on?: string | null;
-    };
-    /** VendorOut */
-    VendorOut: {
-      /** Also Registered Under */
-      also_registered_under: number;
-      /**
-       * Coverage State
-       * @enum {string}
-       */
-      coverage_state: 'current' | 'expiring' | 'expired' | 'unknown';
-      /** Earliest Expiry */
-      earliest_expiry: string | null;
-      /** Email */
-      email: string | null;
-      /** Entity Id */
-      entity_id: string;
-      /** Entity Name */
-      entity_name: string;
-      /** Id */
-      id: string;
-      /** Insurer */
-      insurer: string | null;
-      /** Is 1099 Reportable */
-      is_1099_reportable: boolean;
-      /** Liability Expires On */
-      liability_expires_on: string | null;
-      /** License Expires On */
-      license_expires_on: string | null;
-      /** License Number */
-      license_number: string | null;
-      /** Name */
-      name: string;
-      /** Notes */
-      notes: string | null;
-      /** Open Work Orders */
-      open_work_orders: number;
-      /** Phone */
-      phone: string | null;
-      /** Retired On */
-      retired_on: string | null;
-      /**
-       * Trade
-       * @enum {string}
-       */
-      trade:
-        | 'plumbing'
-        | 'hvac'
-        | 'electrical'
-        | 'roofing'
-        | 'appliance'
-        | 'general_contractor'
-        | 'handyman'
-        | 'landscaping'
-        | 'pest_control'
-        | 'cleaning'
-        | 'flooring'
-        | 'painting'
-        | 'restoration'
-        | 'inspection'
-        | 'other';
-      /** W9 On File */
-      w9_on_file: boolean;
-      /** Workers Comp Expires On */
-      workers_comp_expires_on: string | null;
-    };
-    /** WaiveIn */
-    WaiveIn: {
-      /** Reason */
-      reason: string;
-    };
-    /** WorkOrderIn */
-    WorkOrderIn: {
-      /** Component Id */
-      component_id?: string | null;
-      /** Detail */
-      detail?: string | null;
-      /**
-       * Priority
-       * @default routine
-       * @enum {string}
-       */
-      priority: 'emergency' | 'urgent' | 'routine' | 'planned';
-      /** Property Id */
-      property_id: string;
-      /**
-       * Reported By
-       * @default owner
-       * @enum {string}
-       */
-      reported_by: 'resident' | 'owner' | 'inspection' | 'vendor';
-      /** Reported On */
-      reported_on?: string | null;
-      /** Summary */
-      summary: string;
-      /** Unit Id */
-      unit_id?: string | null;
-      /** Vendor Id */
-      vendor_id?: string | null;
-    };
-    /** WorkOrderOut */
-    WorkOrderOut: {
-      /** Cancelled Reason */
-      cancelled_reason: string | null;
-      /** Completed On */
-      completed_on: string | null;
-      /** Component Id */
-      component_id: string | null;
-      /** Component Label */
-      component_label: string | null;
-      /** Costs */
-      costs: components['schemas']['CostOut'][];
-      /** Detail */
-      detail: string | null;
-      /** Id */
-      id: string;
-      /** Legal Transitions */
-      legal_transitions: (
-        | 'reported'
-        | 'triaged'
-        | 'scheduled'
-        | 'in_progress'
-        | 'completed'
-        | 'cancelled'
-      )[];
-      /** Net Cost */
-      net_cost: string;
-      /**
-       * Priority
-       * @enum {string}
-       */
-      priority: 'emergency' | 'urgent' | 'routine' | 'planned';
-      /** Property Id */
-      property_id: string;
-      /** Property Label */
-      property_label: string;
-      /** Replacement Component Id */
-      replacement_component_id: string | null;
-      /**
-       * Reported By
-       * @enum {string}
-       */
-      reported_by: 'resident' | 'owner' | 'inspection' | 'vendor';
-      /**
-       * Reported On
-       * Format: date
-       */
-      reported_on: string;
-      /** Resolution */
-      resolution: ('repaired' | 'replaced' | 'no_action') | null;
-      /** Resolution Note */
-      resolution_note: string | null;
-      /** Scheduled For */
-      scheduled_for: string | null;
-      /**
-       * Status
-       * @enum {string}
-       */
-      status: 'reported' | 'triaged' | 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
-      /** Summary */
-      summary: string;
-      /** Unit Id */
-      unit_id: string | null;
-      /** Unit Label */
-      unit_label: string | null;
-      /** Vendor Id */
-      vendor_id: string | null;
-      /** Vendor Name */
-      vendor_name: string | null;
-    };
-  };
-  responses: never;
-  parameters: never;
-  requestBodies: never;
-  headers: never;
-  pathItems: never;
+    schemas: {
+        /** AcceptIn */
+        AcceptIn: {
+            /** Capitalisation Rationale */
+            capitalisation_rationale?: string | null;
+            /** Category */
+            category?: ("rent" | "other_income" | "late_fee" | "deposit_received" | "deposit_returned" | "mortgage_interest" | "mortgage_principal" | "property_tax" | "insurance" | "repairs" | "capital_improvement" | "utilities" | "management_fee" | "hoa" | "legal_professional" | "advertising" | "supplies" | "travel" | "acquisition_cost" | "disposition_cost" | "owner_contribution" | "owner_distribution") | null;
+            /** Is Capital */
+            is_capital?: boolean | null;
+            /** Memo */
+            memo?: string | null;
+            /** Property Id */
+            property_id?: string | null;
+            /** Splits */
+            splits?: components["schemas"]["SplitIn"][] | null;
+        };
+        /** ApplyIn */
+        ApplyIn: {
+            /** Land Value */
+            land_value: number | string;
+            /**
+             * Method
+             * @default owner allocation at apply
+             */
+            method: string;
+            /**
+             * Personal Property
+             * @default 0
+             */
+            personal_property: number | string;
+        };
+        /** ApplyResult */
+        ApplyResult: {
+            /** Acquired On Set */
+            acquired_on_set: boolean;
+            /** Improvement Value */
+            improvement_value: string;
+            /** Land Value */
+            land_value: string;
+            /** Ledger Event Uuid */
+            ledger_event_uuid: string;
+            /** Notes */
+            notes: string[];
+            /** Parcel Number Set */
+            parcel_number_set: boolean;
+            /** Personal Property */
+            personal_property: string;
+            /** Price Allocation Id */
+            price_allocation_id: string;
+            /** Total Basis */
+            total_basis: string;
+        };
+        /**
+         * ApplySuggestion
+         * @description Server-computed apply preview: the browser displays, never computes.
+         */
+        ApplySuggestion: {
+            /** Address Matches */
+            address_matches: boolean | null;
+            /** Suggested Land Value */
+            suggested_land_value: string | null;
+            /** Suggestion Citation */
+            suggestion_citation: string | null;
+            /** Total Basis */
+            total_basis: string;
+        };
+        /** BankAccountIn */
+        BankAccountIn: {
+            /** Account Last4 */
+            account_last4?: string | null;
+            /**
+             * Entity Id
+             * Format: uuid
+             */
+            entity_id: string;
+            /** Institution */
+            institution?: string | null;
+            /**
+             * Invert Amounts
+             * @default false
+             */
+            invert_amounts: boolean;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "checking" | "savings" | "credit_card" | "escrow";
+            /** Nickname */
+            nickname: string;
+            /** Property Id */
+            property_id?: string | null;
+        };
+        /** BankAccountOut */
+        BankAccountOut: {
+            /** Account Last4 */
+            account_last4?: string | null;
+            /**
+             * Entity Id
+             * Format: uuid
+             */
+            entity_id: string;
+            /** Id */
+            id: string;
+            /** Institution */
+            institution?: string | null;
+            /**
+             * Invert Amounts
+             * @default false
+             */
+            invert_amounts: boolean;
+            /** Is Active */
+            is_active: boolean;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "checking" | "savings" | "credit_card" | "escrow";
+            /** Nickname */
+            nickname: string;
+            /** Property Id */
+            property_id?: string | null;
+        };
+        /** Body_import_bank_statement_bank_accounts__account_id__imports_post */
+        Body_import_bank_statement_bank_accounts__account_id__imports_post: {
+            /** File */
+            file: string;
+        };
+        /** Body_upload_document_documents_post */
+        Body_upload_document_documents_post: {
+            /** Document Date */
+            document_date?: string | null;
+            /** File */
+            file: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "settlement_statement" | "deed" | "lease" | "lease_amendment" | "insurance_declaration" | "mortgage_note" | "mortgage_statement" | "assessment_notice" | "tax_bill" | "inspection_report" | "appraisal" | "permit" | "invoice" | "receipt" | "estoppel" | "photo" | "other";
+            /**
+             * Property Id
+             * Format: uuid
+             */
+            property_id: string;
+        };
+        /** CapexBand */
+        CapexBand: {
+            /** Expected */
+            expected: string;
+            /** P10 */
+            p10: string;
+            /** P50 */
+            p50: string;
+            /** P90 */
+            p90: string;
+            /** Year */
+            year: number;
+        };
+        /** CapexForecastOut */
+        CapexForecastOut: {
+            /** Bands */
+            bands: components["schemas"]["CapexBand"][];
+            /** Components Simulated */
+            components_simulated: number;
+            /** Components Without Cost */
+            components_without_cost: string[];
+            /** Horizon Years */
+            horizon_years: number;
+            /** Property Id */
+            property_id: string;
+            /** Total Expected */
+            total_expected: string;
+        };
+        /** CashFlowReport */
+        CashFlowReport: {
+            /** Months */
+            months: components["schemas"]["MonthlyFlow"][];
+            /** Property Id */
+            property_id: string;
+            /** Total Net */
+            total_net: string;
+            /** Year */
+            year: number;
+        };
+        /** ChainLink */
+        ChainLink: {
+            /** Level */
+            level: string;
+            /** Name */
+            name: string;
+        };
+        /** ChargeOut */
+        ChargeOut: {
+            /** Allocated */
+            allocated: string;
+            /** Amount */
+            amount: string;
+            /**
+             * Due On
+             * Format: date
+             */
+            due_on: string;
+            /** Id */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Outstanding */
+            outstanding: string;
+            /**
+             * Period Start
+             * Format: date
+             */
+            period_start: string;
+            /** Rule Citation */
+            rule_citation: string | null;
+            /** Status */
+            status: string;
+            /** Waived Reason */
+            waived_reason: string | null;
+        };
+        /** CollectIn */
+        CollectIn: {
+            /** Amount */
+            amount?: number | string | null;
+        };
+        /** CollectOut */
+        CollectOut: {
+            /** Amount */
+            amount: string;
+            /** Client Secret */
+            client_secret: string | null;
+            /** Payment Request Id */
+            payment_request_id: string;
+            /** Provider Ref */
+            provider_ref: string;
+            /** Status */
+            status: string;
+        };
+        /** CompletionIn */
+        CompletionIn: {
+            /**
+             * Completed On
+             * Format: date
+             */
+            completed_on: string;
+            cost?: components["schemas"]["CostIn"] | null;
+            replacement?: components["schemas"]["ReplacementIn"] | null;
+            /**
+             * Resolution
+             * @enum {string}
+             */
+            resolution: "repaired" | "replaced" | "no_action";
+            /** Resolution Note */
+            resolution_note?: string | null;
+        };
+        /** CompletionOut */
+        CompletionOut: {
+            /** Capitalisation Citation */
+            capitalisation_citation: string | null;
+            /** Installed Component Id */
+            installed_component_id: string | null;
+            /** Ledger Event Uuid */
+            ledger_event_uuid: string | null;
+            /** Retired Component Id */
+            retired_component_id: string | null;
+            work_order: components["schemas"]["WorkOrderOut"];
+        };
+        /** ComponentOut */
+        ComponentOut: {
+            /** Code */
+            code: string;
+            /** Condition */
+            condition: string;
+            /** Confidence */
+            confidence: number;
+            /** Derived From */
+            derived_from: string | null;
+            /** Display Name */
+            display_name: string;
+            /** Installed Year High */
+            installed_year_high: number | null;
+            /** Installed Year Low */
+            installed_year_low: number | null;
+            /** Life Years High */
+            life_years_high: number | null;
+            /** Life Years Low */
+            life_years_low: number | null;
+            /** Provenance Kind */
+            provenance_kind: string;
+            /** System */
+            system: string;
+        };
+        /**
+         * CostIn
+         * @description A cost typed as a positive magnitude; the ledger's sign is our business,
+         *     not the operator's.
+         */
+        CostIn: {
+            /** Amount */
+            amount: number | string;
+            /** Capitalisation Rationale */
+            capitalisation_rationale?: string | null;
+            /** Counterparty */
+            counterparty?: string | null;
+            /** Document Id */
+            document_id?: string | null;
+            /** Is Capital */
+            is_capital?: boolean | null;
+            /** Memo */
+            memo?: string | null;
+            /** Occurred On */
+            occurred_on?: string | null;
+            /**
+             * Relation
+             * @default invoice
+             * @enum {string}
+             */
+            relation: "invoice" | "materials" | "deposit" | "tenant_chargeback" | "warranty_credit" | "other";
+        };
+        /**
+         * CostLinkIn
+         * @description Either a new cost to post, or an existing ledger event to associate.
+         */
+        CostLinkIn: {
+            cost?: components["schemas"]["CostIn"] | null;
+            /** Ledger Event Uuid */
+            ledger_event_uuid?: string | null;
+            /**
+             * Relation
+             * @default invoice
+             * @enum {string}
+             */
+            relation: "invoice" | "materials" | "deposit" | "tenant_chargeback" | "warranty_credit" | "other";
+        };
+        /** CostOut */
+        CostOut: {
+            /** Amount */
+            amount: string;
+            /** Category */
+            category: string;
+            /** Is Capital */
+            is_capital: boolean | null;
+            /** Ledger Event Uuid */
+            ledger_event_uuid: string;
+            /**
+             * Occurred On
+             * Format: date
+             */
+            occurred_on: string;
+            /**
+             * Relation
+             * @enum {string}
+             */
+            relation: "invoice" | "materials" | "deposit" | "tenant_chargeback" | "warranty_credit" | "other";
+            /** Reversed */
+            reversed: boolean;
+        };
+        /** CoverageGapOut */
+        CoverageGapOut: {
+            /** Domain */
+            domain: string;
+            /** Message */
+            message: string;
+            /** Property Id */
+            property_id: string;
+            /**
+             * Reason
+             * @constant
+             */
+            reason: "no_state_jurisdiction";
+            /** State */
+            state: string;
+        };
+        /** CoverageIn */
+        CoverageIn: {
+            /** Description */
+            description: string;
+            /** Limit Amount */
+            limit_amount?: number | string | null;
+            /** Months Covered */
+            months_covered?: number | null;
+            /**
+             * Peril
+             * @default all_other
+             */
+            peril: string;
+        };
+        /** CoverageReport */
+        CoverageReport: {
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** Gaps */
+            gaps: components["schemas"]["CoverageGapOut"][];
+            /** Properties */
+            properties: components["schemas"]["PropertyCoverage"][];
+        };
+        /** DeadlineOut */
+        DeadlineOut: {
+            /** Citation */
+            citation: string;
+            /**
+             * Due On
+             * Format: date
+             */
+            due_on: string;
+            /** Id */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Note */
+            note: string | null;
+            /** Property Label */
+            property_label: string | null;
+            /** Status */
+            status: string;
+            /** Window Opens On */
+            window_opens_on: string | null;
+        };
+        /** DebtTerms */
+        DebtTerms: {
+            /** Annual Rate */
+            annual_rate: string;
+            /** Lender */
+            lender: string | null;
+            /** Months Elapsed */
+            months_elapsed: number;
+            /** Original Principal */
+            original_principal: string;
+            /** Term Months */
+            term_months: number;
+        };
+        /** DefectOut */
+        DefectOut: {
+            /** Affects Financing */
+            affects_financing: boolean;
+            /** Affects Insurance */
+            affects_insurance: boolean;
+            /** Affects Safety */
+            affects_safety: boolean;
+            /** Citation */
+            citation: string | null;
+            /** Derived From */
+            derived_from: string | null;
+            /** Kind */
+            kind: string;
+            /** Status */
+            status: string;
+            /** Triggers Disclosure */
+            triggers_disclosure: boolean;
+        };
+        /** DocumentDetail */
+        DocumentDetail: {
+            /** Applied At */
+            applied_at: string | null;
+            /** Applied By */
+            applied_by: string | null;
+            /** Document Date */
+            document_date: string | null;
+            /** Extracted Count */
+            extracted_count: number;
+            /** Fields */
+            fields: components["schemas"]["FieldOut"][];
+            /** Filename */
+            filename: string;
+            /** Has Content */
+            has_content: boolean;
+            /** Id */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Open Review Count */
+            open_review_count: number;
+            /** Property Ids */
+            property_ids: string[];
+            /** Property Labels */
+            property_labels: string[];
+            /** Status */
+            status: string;
+            suggestion: components["schemas"]["ApplySuggestion"] | null;
+            /**
+             * Uploaded At
+             * Format: date-time
+             */
+            uploaded_at: string;
+            /** Uploaded By */
+            uploaded_by: string | null;
+        };
+        /** DocumentSummary */
+        DocumentSummary: {
+            /** Document Date */
+            document_date: string | null;
+            /** Extracted Count */
+            extracted_count: number;
+            /** Filename */
+            filename: string;
+            /** Has Content */
+            has_content: boolean;
+            /** Id */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Open Review Count */
+            open_review_count: number;
+            /** Property Labels */
+            property_labels: string[];
+            /** Status */
+            status: string;
+            /**
+             * Uploaded At
+             * Format: date-time
+             */
+            uploaded_at: string;
+            /** Uploaded By */
+            uploaded_by: string | null;
+        };
+        /** DomainCoverage */
+        DomainCoverage: {
+            /** Calendar Key */
+            calendar_key?: string | null;
+            /** Calendar Registered */
+            calendar_registered?: boolean | null;
+            /** Citation */
+            citation?: string | null;
+            /** Source */
+            source?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "covered" | "no_rules_loaded";
+        };
+        /** DossierOut */
+        DossierOut: {
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /**
+             * Property Id
+             * Format: uuid
+             */
+            property_id: string;
+            /** Steps */
+            steps: components["schemas"]["DossierStepOut"][];
+            /** Sweep */
+            sweep: {
+                [key: string]: unknown;
+            };
+        };
+        /** DossierStepOut */
+        DossierStepOut: {
+            /** Detail */
+            detail: string;
+            /** Name */
+            name: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "skipped" | "failed";
+        };
+        /** DossierView */
+        DossierView: {
+            /** City */
+            city: string;
+            /** Components */
+            components: components["schemas"]["ComponentOut"][];
+            /** County */
+            county: string | null;
+            /** Deadlines */
+            deadlines: components["schemas"]["DeadlineOut"][];
+            /** Defects */
+            defects: components["schemas"]["DefectOut"][];
+            /** Entity Id */
+            entity_id: string;
+            /** Hazards */
+            hazards: components["schemas"]["HazardOut"][];
+            /** Id */
+            id: string;
+            /** Jurisdiction Chain */
+            jurisdiction_chain: components["schemas"]["ChainLink"][];
+            /** Kind */
+            kind: string;
+            /** Label */
+            label: string;
+            /** Latitude */
+            latitude: number | null;
+            /** Longitude */
+            longitude: number | null;
+            /** Postal Code */
+            postal_code: string;
+            /** State */
+            state: string;
+            /** Street 1 */
+            street_1: string;
+            /** Year Built */
+            year_built: number | null;
+        };
+        /** EntityIn */
+        EntityIn: {
+            /** Formation State */
+            formation_state?: string | null;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "individual" | "joint" | "llc" | "series_llc_cell" | "limited_partnership" | "s_corporation" | "c_corporation" | "revocable_trust" | "irrevocable_trust" | "land_trust";
+            /** Name */
+            name: string;
+        };
+        /** EntityOut */
+        EntityOut: {
+            /** Formation State */
+            formation_state?: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "individual" | "joint" | "llc" | "series_llc_cell" | "limited_partnership" | "s_corporation" | "c_corporation" | "revocable_trust" | "irrevocable_trust" | "land_trust";
+            /** Name */
+            name: string;
+        };
+        /** ExcludedAmount */
+        ExcludedAmount: {
+            /** Amount */
+            amount: string;
+            /** Citation */
+            citation: string;
+            /** Label */
+            label: string;
+        };
+        /** FieldOut */
+        FieldOut: {
+            /** Accepted Value */
+            accepted_value: string | null;
+            /** Confidence */
+            confidence: string | null;
+            /**
+             * Datatype
+             * @enum {string}
+             */
+            datatype: "money" | "date" | "text";
+            /** Display Order */
+            display_order: number;
+            /** Effective Value */
+            effective_value: string | null;
+            /** Field Path */
+            field_path: string;
+            /** Label */
+            label: string;
+            /** Model Id */
+            model_id: string | null;
+            /** Needs Review */
+            needs_review: boolean;
+            /** Normalised Value */
+            normalised_value: string | null;
+            /** Page */
+            page: number | null;
+            /** Raw Value */
+            raw_value: string | null;
+            /** Required */
+            required: boolean;
+            /** Reviewed At */
+            reviewed_at: string | null;
+            /** Reviewed By */
+            reviewed_by: string | null;
+            /** Target Hint */
+            target_hint: string | null;
+        };
+        /** Financials */
+        Financials: {
+            /** Debts */
+            debts: components["schemas"]["DebtTerms"][];
+            /** Income 12Mo */
+            income_12mo: string;
+            /** Noi 12Mo */
+            noi_12mo: string;
+            /** Operating Expenses 12Mo */
+            operating_expenses_12mo: string;
+            /** Policies */
+            policies: components["schemas"]["PolicyOut"][];
+            /** Property Id */
+            property_id: string;
+            valuation: components["schemas"]["ValuationOut"] | null;
+        };
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components["schemas"]["ValidationError"][];
+        };
+        /** HazardOut */
+        HazardOut: {
+            /** Base Flood Elevation Ft */
+            base_flood_elevation_ft: number | null;
+            /** In Special Flood Hazard Area */
+            in_special_flood_hazard_area: boolean | null;
+            /** Kind */
+            kind: string;
+            /**
+             * Observed At
+             * Format: date-time
+             */
+            observed_at: string;
+            /** Zone */
+            zone: string | null;
+        };
+        /** Health */
+        Health: {
+            /**
+             * Status
+             * @constant
+             */
+            status: "alive";
+        };
+        /** ImportSummary */
+        ImportSummary: {
+            /** Batch Id */
+            batch_id: string;
+            /** Duplicates */
+            duplicates: number;
+            /** Format */
+            format: string;
+            /** Staged */
+            staged: number;
+            /** Suggested */
+            suggested: number;
+        };
+        /** LeaseDetail */
+        LeaseDetail: {
+            /** Balance Due */
+            balance_due: string;
+            /** Charges */
+            charges: components["schemas"]["ChargeOut"][];
+            /** Deposit Returned On */
+            deposit_returned_on: string | null;
+            /** Ends On */
+            ends_on: string | null;
+            /** Escalation */
+            escalation: string;
+            /** Escalation Value */
+            escalation_value: string | null;
+            /** Id */
+            id: string;
+            /** Open Credit */
+            open_credit: string;
+            /** Property Id */
+            property_id: string;
+            /** Property Label */
+            property_label: string;
+            /** Rent */
+            rent: string;
+            /** Rent Due Day */
+            rent_due_day: number;
+            /** Residents */
+            residents: string[];
+            /** Security Deposit */
+            security_deposit: string;
+            /**
+             * Starts On
+             * Format: date
+             */
+            starts_on: string;
+            /** Status */
+            status: string;
+            /** Unit Label */
+            unit_label: string;
+        };
+        /** LeaseIn */
+        LeaseIn: {
+            /** Ends On */
+            ends_on?: string | null;
+            /**
+             * Escalation
+             * @default none
+             * @enum {string}
+             */
+            escalation: "none" | "fixed_amount" | "fixed_percent";
+            /** Escalation Value */
+            escalation_value?: number | string | null;
+            /** Rent */
+            rent: number | string;
+            /**
+             * Rent Due Day
+             * @default 1
+             */
+            rent_due_day: number;
+            /**
+             * Resident Ids
+             * @default []
+             */
+            resident_ids: string[];
+            /**
+             * Security Deposit
+             * @default 0
+             */
+            security_deposit: number | string;
+            /**
+             * Starts On
+             * Format: date
+             */
+            starts_on: string;
+            /**
+             * Status
+             * @default active
+             * @enum {string}
+             */
+            status: "active" | "month_to_month" | "draft";
+            /** Unit Id */
+            unit_id: string;
+        };
+        /** LeaseSummary */
+        LeaseSummary: {
+            /** Balance Due */
+            balance_due: string;
+            /** Ends On */
+            ends_on: string | null;
+            /** Id */
+            id: string;
+            /** Open Credit */
+            open_credit: string;
+            /** Property Label */
+            property_label: string;
+            /** Rent */
+            rent: string;
+            /** Residents */
+            residents: string[];
+            /**
+             * Starts On
+             * Format: date
+             */
+            starts_on: string;
+            /** Status */
+            status: string;
+            /** Unit Label */
+            unit_label: string;
+        };
+        /** LedgerEntryIn */
+        LedgerEntryIn: {
+            /** Amount */
+            amount: number | string;
+            /** Capitalisation Rationale */
+            capitalisation_rationale?: string | null;
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "rent" | "other_income" | "late_fee" | "deposit_received" | "deposit_returned" | "mortgage_interest" | "mortgage_principal" | "property_tax" | "insurance" | "repairs" | "capital_improvement" | "utilities" | "management_fee" | "hoa" | "legal_professional" | "advertising" | "supplies" | "travel" | "acquisition_cost" | "disposition_cost" | "owner_contribution" | "owner_distribution";
+            /** Counterparty */
+            counterparty?: string | null;
+            /** Document Id */
+            document_id?: string | null;
+            /** Entity Id */
+            entity_id?: string | null;
+            /** Is Capital */
+            is_capital?: boolean | null;
+            /** Lease Id */
+            lease_id?: string | null;
+            /** Memo */
+            memo?: string | null;
+            /**
+             * Occurred On
+             * Format: date
+             */
+            occurred_on: string;
+            /** Property Id */
+            property_id?: string | null;
+            /** Unit Id */
+            unit_id?: string | null;
+        };
+        /** LedgerEventOut */
+        LedgerEventOut: {
+            /** Amount */
+            amount: string;
+            /** Capitalisation Rationale */
+            capitalisation_rationale: string | null;
+            /** Category */
+            category: string;
+            /** Counterparty */
+            counterparty: string | null;
+            /** Entity Id */
+            entity_id: string | null;
+            /** Event Uuid */
+            event_uuid: string;
+            /** Is Capital */
+            is_capital: boolean | null;
+            /** Lease Id */
+            lease_id: string | null;
+            /** Memo */
+            memo: string | null;
+            /**
+             * Occurred On
+             * Format: date
+             */
+            occurred_on: string;
+            /** Property Id */
+            property_id: string | null;
+            /**
+             * Recorded At
+             * Format: date-time
+             */
+            recorded_at: string;
+            /** Reversed */
+            reversed: boolean;
+            /** Reverses Event Uuid */
+            reverses_event_uuid: string | null;
+            /** Unit Id */
+            unit_id: string | null;
+        };
+        /** LedgerRegister */
+        LedgerRegister: {
+            /** Events */
+            events: components["schemas"]["LedgerEventOut"][];
+            /** Net */
+            net: string;
+            /** Total In */
+            total_in: string;
+            /** Total Out */
+            total_out: string;
+        };
+        /** MatchIn */
+        MatchIn: {
+            /**
+             * Event Uuid
+             * Format: uuid
+             */
+            event_uuid: string;
+        };
+        /** MonthlyFlow */
+        MonthlyFlow: {
+            /** Capital */
+            capital: string;
+            /** Debt Service */
+            debt_service: string;
+            /** Month */
+            month: number;
+            /** Net */
+            net: string;
+            /** Operating In */
+            operating_in: string;
+            /** Operating Out */
+            operating_out: string;
+            /** Owner Flows */
+            owner_flows: string;
+        };
+        /** NeedsClassification */
+        NeedsClassification: {
+            /** Amount */
+            amount: string;
+            /** Event Uuid */
+            event_uuid: string;
+            /** Memo */
+            memo: string | null;
+            /**
+             * Occurred On
+             * Format: date
+             */
+            occurred_on: string;
+            /** Reason */
+            reason: string;
+        };
+        /** PolicyIn */
+        PolicyIn: {
+            /** Annual Premium */
+            annual_premium?: number | string | null;
+            /** Carrier */
+            carrier?: string | null;
+            /** Coinsurance Percent */
+            coinsurance_percent?: number | string | null;
+            /**
+             * Coverages
+             * @default []
+             */
+            coverages: components["schemas"]["CoverageIn"][];
+            /**
+             * Effective From
+             * Format: date
+             */
+            effective_from: string;
+            /**
+             * Effective To
+             * Format: date
+             */
+            effective_to: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "dwelling_fire" | "landlord_package" | "homeowners" | "commercial_property" | "general_liability" | "umbrella" | "flood_nfip" | "flood_private" | "earthquake" | "builders_risk" | "rent_guarantee";
+            /**
+             * Property Id
+             * Format: uuid
+             */
+            property_id: string;
+        };
+        /** PolicyOut */
+        PolicyOut: {
+            /** Carrier */
+            carrier: string | null;
+            /** Coinsurance Percent */
+            coinsurance_percent: string | null;
+            /** Dwelling Limit */
+            dwelling_limit: string | null;
+            /**
+             * Effective To
+             * Format: date
+             */
+            effective_to: string;
+            /** Id */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Loss Of Rents Months */
+            loss_of_rents_months: number | null;
+        };
+        /** PropertyCoverage */
+        PropertyCoverage: {
+            /** Domains */
+            domains: {
+                [key: string]: components["schemas"]["DomainCoverage"];
+            };
+            /** Label */
+            label: string;
+            /** Property Id */
+            property_id: string;
+            resolution: components["schemas"]["Resolution"];
+            /** State */
+            state: string;
+        };
+        /** PropertyIn */
+        PropertyIn: {
+            /** City */
+            city: string;
+            /** County */
+            county?: string | null;
+            /**
+             * Entity Id
+             * Format: uuid
+             */
+            entity_id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "single_family" | "duplex" | "triplex" | "fourplex" | "small_multifamily" | "condominium" | "townhouse" | "manufactured" | "mixed_use" | "land";
+            /** Label */
+            label: string;
+            /** Postal Code */
+            postal_code: string;
+            /** State */
+            state: string;
+            /** Street 1 */
+            street_1: string;
+            /** Year Built */
+            year_built?: number | null;
+        };
+        /** PropertyOut */
+        PropertyOut: {
+            /** City */
+            city: string;
+            /** County */
+            county?: string | null;
+            /**
+             * Entity Id
+             * Format: uuid
+             */
+            entity_id: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Jurisdiction Id */
+            jurisdiction_id: string | null;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "single_family" | "duplex" | "triplex" | "fourplex" | "small_multifamily" | "condominium" | "townhouse" | "manufactured" | "mixed_use" | "land";
+            /** Label */
+            label: string;
+            /** Postal Code */
+            postal_code: string;
+            /** State */
+            state: string;
+            /** Street 1 */
+            street_1: string;
+            /** Year Built */
+            year_built?: number | null;
+        };
+        /** PropertySummary */
+        PropertySummary: {
+            /** City */
+            city: string;
+            /** Component Count */
+            component_count: number;
+            /** Defect Count */
+            defect_count: number;
+            /** Id */
+            id: string;
+            /** Jurisdiction */
+            jurisdiction: string | null;
+            /** Kind */
+            kind: string;
+            /** Label */
+            label: string;
+            /** Next Deadline On */
+            next_deadline_on: string | null;
+            /** Postal Code */
+            postal_code: string;
+            /** State */
+            state: string;
+            /** Street 1 */
+            street_1: string;
+            /** Year Built */
+            year_built: number | null;
+        };
+        /** Readiness */
+        Readiness: {
+            /** Migrations */
+            migrations: number;
+            /**
+             * Status
+             * @constant
+             */
+            status: "ready";
+        };
+        /** ReceiptIn */
+        ReceiptIn: {
+            /** Amount */
+            amount: number | string;
+            /**
+             * Category
+             * @default rent
+             * @enum {string}
+             */
+            category: "rent" | "late_fee" | "deposit_received";
+            /** Memo */
+            memo?: string | null;
+            /**
+             * Occurred On
+             * Format: date
+             */
+            occurred_on: string;
+        };
+        /** ReceiptOut */
+        ReceiptOut: {
+            /** Allocations */
+            allocations: {
+                [key: string]: string;
+            }[];
+            /** Event Uuid */
+            event_uuid: string;
+            /** Unallocated */
+            unallocated: string;
+        };
+        /** RenewalContextOut */
+        RenewalContextOut: {
+            /** Assumptions Source */
+            assumptions_source: string;
+            /** Current Rent */
+            current_rent: string;
+            /** Ends On */
+            ends_on: string | null;
+            /** Lease Id */
+            lease_id: string;
+            /** Market Rent */
+            market_rent: string | null;
+            /** Market Rent Source */
+            market_rent_source: string | null;
+            /** Turn Cost */
+            turn_cost: string;
+            /** Vacancy Days */
+            vacancy_days: number;
+        };
+        /** RenewalOfferIn */
+        RenewalOfferIn: {
+            /**
+             * Offered On
+             * Format: date
+             */
+            offered_on: string;
+            /** Offered Rent */
+            offered_rent: number | string;
+        };
+        /** RentRollRow */
+        RentRollRow: {
+            /** Ends On */
+            ends_on: string | null;
+            /** Property Label */
+            property_label: string;
+            /** Rent */
+            rent: string;
+            /** Residents */
+            residents: string[];
+            /**
+             * Starts On
+             * Format: date
+             */
+            starts_on: string;
+            /** Status */
+            status: string;
+            /** Unit Label */
+            unit_label: string;
+        };
+        /** RentSweepResult */
+        RentSweepResult: {
+            /** Charges Created */
+            charges_created: number;
+            /** Gaps */
+            gaps: {
+                [key: string]: string;
+            }[];
+        };
+        /** ReplacementIn */
+        ReplacementIn: {
+            /** Component Type Id */
+            component_type_id?: string | null;
+            /** Expected Life Years */
+            expected_life_years?: number | string | null;
+            /** Installed On */
+            installed_on?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Quantity */
+            quantity?: number | string | null;
+            /** Replacement Cost */
+            replacement_cost?: number | string | null;
+            /** Warranty Expires On */
+            warranty_expires_on?: string | null;
+        };
+        /** ResidentIn */
+        ResidentIn: {
+            /** Email */
+            email?: string | null;
+            /** Full Name */
+            full_name: string;
+            /** Phone */
+            phone?: string | null;
+        };
+        /** Resolution */
+        Resolution: {
+            /** Chain */
+            chain: string[];
+            /** Level */
+            level: string;
+        };
+        /** ReversalIn */
+        ReversalIn: {
+            corrected?: components["schemas"]["LedgerEntryIn"] | null;
+            /** Memo */
+            memo?: string | null;
+        };
+        /** ReversalOut */
+        ReversalOut: {
+            corrected: components["schemas"]["LedgerEventOut"] | null;
+            reversal: components["schemas"]["LedgerEventOut"];
+        };
+        /** ReviewIn */
+        ReviewIn: {
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "accept" | "correct" | "reject";
+            /** Field Path */
+            field_path: string;
+            /** Value */
+            value?: string | null;
+        };
+        /** ScheduleELine */
+        ScheduleELine: {
+            /** Amount */
+            amount: string;
+            /** Citation */
+            citation: string;
+            /** Label */
+            label: string;
+            /** Line No */
+            line_no: number;
+        };
+        /** ScheduleEReport */
+        ScheduleEReport: {
+            /** Caveat */
+            caveat: string;
+            /** Depreciation Citation */
+            depreciation_citation: string;
+            /** Depreciation Line 18 */
+            depreciation_line_18: string;
+            /** Excluded */
+            excluded: components["schemas"]["ExcludedAmount"][];
+            /** Expense Lines */
+            expense_lines: components["schemas"]["ScheduleELine"][];
+            /** Income Lines */
+            income_lines: components["schemas"]["ScheduleELine"][];
+            /** Needs Classification */
+            needs_classification: components["schemas"]["NeedsClassification"][];
+            /** Net */
+            net: string;
+            /** Property Id */
+            property_id: string;
+            signoff: components["schemas"]["Signoff"] | null;
+            /** Tax Year */
+            tax_year: number;
+            /** Total Expenses */
+            total_expenses: string;
+            /** Total Income */
+            total_income: string;
+        };
+        /** Signoff */
+        Signoff: {
+            /**
+             * Confirmed At
+             * Format: date-time
+             */
+            confirmed_at: string;
+            /** Confirmed By */
+            confirmed_by: string;
+            /** Note */
+            note: string | null;
+            /** Stale */
+            stale: boolean;
+        };
+        /** SignoffIn */
+        SignoffIn: {
+            /** Confirmed By */
+            confirmed_by: string;
+            /** Note */
+            note?: string | null;
+            /**
+             * Property Id
+             * Format: uuid
+             */
+            property_id: string;
+            /**
+             * Report Kind
+             * @enum {string}
+             */
+            report_kind: "schedule_e" | "p_and_l" | "cash_flow";
+            /** Tax Year */
+            tax_year: number;
+        };
+        /** SplitIn */
+        SplitIn: {
+            /** Amount */
+            amount: number | string;
+            /** Capitalisation Rationale */
+            capitalisation_rationale?: string | null;
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "rent" | "other_income" | "late_fee" | "deposit_received" | "deposit_returned" | "mortgage_interest" | "mortgage_principal" | "property_tax" | "insurance" | "repairs" | "capital_improvement" | "utilities" | "management_fee" | "hoa" | "legal_professional" | "advertising" | "supplies" | "travel" | "acquisition_cost" | "disposition_cost" | "owner_contribution" | "owner_distribution";
+            /** Is Capital */
+            is_capital?: boolean | null;
+            /** Memo */
+            memo?: string | null;
+        };
+        /** StagedTransaction */
+        StagedTransaction: {
+            /** Amount */
+            amount: string;
+            /** Description */
+            description: string;
+            /** Disposition */
+            disposition: string;
+            /** Id */
+            id: string;
+            /** Needs Review */
+            needs_review: boolean;
+            /**
+             * Posted On
+             * Format: date
+             */
+            posted_on: string;
+            /** Suggested Category */
+            suggested_category: string | null;
+            /** Suggested Is Capital */
+            suggested_is_capital: boolean | null;
+            /** Suggested Property Id */
+            suggested_property_id: string | null;
+            /** Suggestion Confidence */
+            suggestion_confidence: number | null;
+        };
+        /** SweepGapOut */
+        SweepGapOut: {
+            /** Detail */
+            detail: string;
+            /** Domain */
+            domain: string;
+            /**
+             * Property Id
+             * Format: uuid
+             */
+            property_id: string;
+            /**
+             * Reason
+             * @enum {string}
+             */
+            reason: "no_state_jurisdiction" | "no_rule_for_domain" | "calendar_key_unregistered";
+            /** State */
+            state: string;
+        };
+        /** SweepOut */
+        SweepOut: {
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** Coverage Gaps */
+            coverage_gaps: components["schemas"]["SweepGapOut"][];
+            /** Inserted */
+            inserted: {
+                [key: string]: number;
+            };
+            /** Total */
+            total: number;
+        };
+        /** TransitionIn */
+        TransitionIn: {
+            /** Cancelled Reason */
+            cancelled_reason?: string | null;
+            /** Scheduled For */
+            scheduled_for?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "triaged" | "scheduled" | "in_progress" | "cancelled";
+            /** Vendor Id */
+            vendor_id?: string | null;
+        };
+        /** UnitIn */
+        UnitIn: {
+            /** Label */
+            label: string;
+            /** Market Rent */
+            market_rent?: number | string | null;
+            /** Property Id */
+            property_id: string;
+        };
+        /** ValidationError */
+        ValidationError: {
+            /** Context */
+            ctx?: Record<string, never>;
+            /** Input */
+            input?: unknown;
+            /** Location */
+            loc: (string | number)[];
+            /** Message */
+            msg: string;
+            /** Error Type */
+            type: string;
+        };
+        /** ValuationIn */
+        ValuationIn: {
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /**
+             * Property Id
+             * Format: uuid
+             */
+            property_id: string;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "avm" | "appraisal" | "broker_opinion" | "assessor" | "purchase_price" | "comparable_sales" | "owner_estimate" | "replacement_cost_estimate";
+            /** Value */
+            value: number | string;
+        };
+        /** ValuationOut */
+        ValuationOut: {
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** Source */
+            source: string;
+            /** Value */
+            value: string;
+        };
+        /** VendorIn */
+        VendorIn: {
+            /** Email */
+            email?: string | null;
+            /** Entity Id */
+            entity_id: string;
+            /** Insurer */
+            insurer?: string | null;
+            /**
+             * Is 1099 Reportable
+             * @default true
+             */
+            is_1099_reportable: boolean;
+            /** Liability Expires On */
+            liability_expires_on?: string | null;
+            /** License Expires On */
+            license_expires_on?: string | null;
+            /** License Number */
+            license_number?: string | null;
+            /** Name */
+            name: string;
+            /** Notes */
+            notes?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /**
+             * Trade
+             * @enum {string}
+             */
+            trade: "plumbing" | "hvac" | "electrical" | "roofing" | "appliance" | "general_contractor" | "handyman" | "landscaping" | "pest_control" | "cleaning" | "flooring" | "painting" | "restoration" | "inspection" | "other";
+            /**
+             * W9 On File
+             * @default false
+             */
+            w9_on_file: boolean;
+            /** Workers Comp Expires On */
+            workers_comp_expires_on?: string | null;
+        };
+        /** VendorOut */
+        VendorOut: {
+            /** Also Registered Under */
+            also_registered_under: number;
+            /**
+             * Coverage State
+             * @enum {string}
+             */
+            coverage_state: "current" | "expiring" | "expired" | "unknown";
+            /** Earliest Expiry */
+            earliest_expiry: string | null;
+            /** Email */
+            email: string | null;
+            /** Entity Id */
+            entity_id: string;
+            /** Entity Name */
+            entity_name: string;
+            /** Id */
+            id: string;
+            /** Insurer */
+            insurer: string | null;
+            /** Is 1099 Reportable */
+            is_1099_reportable: boolean;
+            /** Liability Expires On */
+            liability_expires_on: string | null;
+            /** License Expires On */
+            license_expires_on: string | null;
+            /** License Number */
+            license_number: string | null;
+            /** Name */
+            name: string;
+            /** Notes */
+            notes: string | null;
+            /** Open Work Orders */
+            open_work_orders: number;
+            /** Phone */
+            phone: string | null;
+            /** Retired On */
+            retired_on: string | null;
+            /**
+             * Trade
+             * @enum {string}
+             */
+            trade: "plumbing" | "hvac" | "electrical" | "roofing" | "appliance" | "general_contractor" | "handyman" | "landscaping" | "pest_control" | "cleaning" | "flooring" | "painting" | "restoration" | "inspection" | "other";
+            /** W9 On File */
+            w9_on_file: boolean;
+            /** Workers Comp Expires On */
+            workers_comp_expires_on: string | null;
+        };
+        /** WaiveIn */
+        WaiveIn: {
+            /** Reason */
+            reason: string;
+        };
+        /** WorkOrderIn */
+        WorkOrderIn: {
+            /** Component Id */
+            component_id?: string | null;
+            /** Detail */
+            detail?: string | null;
+            /**
+             * Priority
+             * @default routine
+             * @enum {string}
+             */
+            priority: "emergency" | "urgent" | "routine" | "planned";
+            /** Property Id */
+            property_id: string;
+            /**
+             * Reported By
+             * @default owner
+             * @enum {string}
+             */
+            reported_by: "resident" | "owner" | "inspection" | "vendor";
+            /** Reported On */
+            reported_on?: string | null;
+            /** Summary */
+            summary: string;
+            /** Unit Id */
+            unit_id?: string | null;
+            /** Vendor Id */
+            vendor_id?: string | null;
+        };
+        /** WorkOrderOut */
+        WorkOrderOut: {
+            /** Cancelled Reason */
+            cancelled_reason: string | null;
+            /** Completed On */
+            completed_on: string | null;
+            /** Component Id */
+            component_id: string | null;
+            /** Component Label */
+            component_label: string | null;
+            /** Costs */
+            costs: components["schemas"]["CostOut"][];
+            /** Detail */
+            detail: string | null;
+            /** Id */
+            id: string;
+            /** Legal Transitions */
+            legal_transitions: ("reported" | "triaged" | "scheduled" | "in_progress" | "completed" | "cancelled")[];
+            /** Net Cost */
+            net_cost: string;
+            /**
+             * Priority
+             * @enum {string}
+             */
+            priority: "emergency" | "urgent" | "routine" | "planned";
+            /** Property Id */
+            property_id: string;
+            /** Property Label */
+            property_label: string;
+            /** Replacement Component Id */
+            replacement_component_id: string | null;
+            /**
+             * Reported By
+             * @enum {string}
+             */
+            reported_by: "resident" | "owner" | "inspection" | "vendor";
+            /**
+             * Reported On
+             * Format: date
+             */
+            reported_on: string;
+            /** Resolution */
+            resolution: ("repaired" | "replaced" | "no_action") | null;
+            /** Resolution Note */
+            resolution_note: string | null;
+            /** Scheduled For */
+            scheduled_for: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "reported" | "triaged" | "scheduled" | "in_progress" | "completed" | "cancelled";
+            /** Summary */
+            summary: string;
+            /** Unit Id */
+            unit_id: string | null;
+            /** Unit Label */
+            unit_label: string | null;
+            /** Vendor Id */
+            vendor_id: string | null;
+            /** Vendor Name */
+            vendor_name: string | null;
+        };
+    };
+    responses: never;
+    parameters: never;
+    requestBodies: never;
+    headers: never;
+    pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
-  list_bank_accounts_bank_accounts_get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['BankAccountOut'][];
-        };
-      };
-    };
-  };
-  create_bank_account_bank_accounts_post: {
-    parameters: {
-      query?: never;
-      header?: {
-        'x-actor'?: string;
-      };
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['BankAccountIn'];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['BankAccountOut'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  import_bank_statement_bank_accounts__account_id__imports_post: {
-    parameters: {
-      query?: never;
-      header?: {
-        'x-actor'?: string;
-      };
-      path: {
-        account_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'multipart/form-data': components['schemas']['Body_import_bank_statement_bank_accounts__account_id__imports_post'];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ImportSummary'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  bank_review_queue_bank_imports__batch_id__transactions_get: {
-    parameters: {
-      query?: {
-        disposition?:
-          | ('pending' | 'accepted' | 'excluded' | 'duplicate' | 'matched_existing')
-          | null;
-      };
-      header?: never;
-      path: {
-        batch_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['StagedTransaction'][];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  accept_bank_transaction_bank_transactions__txn_id__accept_post: {
-    parameters: {
-      query?: never;
-      header?: {
-        'x-actor'?: string;
-      };
-      path: {
-        txn_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['AcceptIn'];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['LedgerEventOut'][];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  exclude_bank_transaction_bank_transactions__txn_id__exclude_post: {
-    parameters: {
-      query?: never;
-      header?: {
-        'x-actor'?: string;
-      };
-      path: {
-        txn_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      204: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  match_bank_transaction_bank_transactions__txn_id__match_post: {
-    parameters: {
-      query?: never;
-      header?: {
-        'x-actor'?: string;
-      };
-      path: {
-        txn_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['MatchIn'];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      204: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  coverage_jurisdictions_coverage_jurisdictions_get: {
-    parameters: {
-      query?: {
-        as_of?: string | null;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['CoverageReport'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  list_deadlines_deadlines_get: {
-    parameters: {
-      query?: {
-        due_before?: string | null;
-        limit?: number;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['DeadlineOut'][];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  list_documents_documents_get: {
-    parameters: {
-      query?: {
-        status?:
-          | ('pending' | 'extracted' | 'needs_review' | 'confirmed' | 'rejected' | 'applied')
-          | null;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['DocumentSummary'][];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  upload_document_documents_post: {
-    parameters: {
-      query?: never;
-      header?: {
-        'x-actor'?: string;
-      };
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'multipart/form-data': components['schemas']['Body_upload_document_documents_post'];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['DocumentDetail'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  document_detail_documents__document_id__get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        document_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['DocumentDetail'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  apply_document_documents__document_id__apply_post: {
-    parameters: {
-      query?: never;
-      header?: {
-        'x-actor'?: string;
-      };
-      path: {
-        document_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ApplyIn'];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApplyResult'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  document_content_documents__document_id__content_get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        document_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': unknown;
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  re_extract_document_documents__document_id__extract_post: {
-    parameters: {
-      query?: never;
-      header?: {
-        'x-actor'?: string;
-      };
-      path: {
-        document_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['DocumentDetail'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  review_document_field_documents__document_id__review_post: {
-    parameters: {
-      query?: never;
-      header?: {
-        'x-actor'?: string;
-      };
-      path: {
-        document_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ReviewIn'];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['DocumentDetail'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  list_entities_entities_get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['EntityOut'][];
-        };
-      };
-    };
-  };
-  create_entity_entities_post: {
-    parameters: {
-      query?: never;
-      header?: {
-        'x-actor'?: string;
-      };
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['EntityIn'];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['EntityOut'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  healthz_healthz_get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['Health'];
-        };
-      };
-    };
-  };
-  list_leases_leases_get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['LeaseSummary'][];
-        };
-      };
-    };
-  };
-  create_lease_leases_post: {
-    parameters: {
-      query?: never;
-      header?: {
-        'x-actor'?: string;
-      };
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['LeaseIn'];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            [key: string]: string;
-          };
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  lease_detail_leases__lease_id__get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        lease_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['LeaseDetail'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  collect_rent_leases__lease_id__collect_post: {
-    parameters: {
-      query?: never;
-      header?: {
-        'x-actor'?: string;
-      };
-      path: {
-        lease_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CollectIn'];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['CollectOut'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  record_receipt_leases__lease_id__receipts_post: {
-    parameters: {
-      query?: never;
-      header?: {
-        'x-actor'?: string;
-      };
-      path: {
-        lease_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ReceiptIn'];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ReceiptOut'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  renewal_context_leases__lease_id__renewal_context_get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        lease_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['RenewalContextOut'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  record_renewal_leases__lease_id__renewals_post: {
-    parameters: {
-      query?: never;
-      header?: {
-        'x-actor'?: string;
-      };
-      path: {
-        lease_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['RenewalOfferIn'];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            [key: string]: string;
-          };
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  ledger_register_ledger_get: {
-    parameters: {
-      query?: {
-        property_id?: string | null;
-        category?:
-          | (
-              | 'rent'
-              | 'other_income'
-              | 'late_fee'
-              | 'deposit_received'
-              | 'deposit_returned'
-              | 'mortgage_interest'
-              | 'mortgage_principal'
-              | 'property_tax'
-              | 'insurance'
-              | 'repairs'
-              | 'capital_improvement'
-              | 'utilities'
-              | 'management_fee'
-              | 'hoa'
-              | 'legal_professional'
-              | 'advertising'
-              | 'supplies'
-              | 'travel'
-              | 'acquisition_cost'
-              | 'disposition_cost'
-              | 'owner_contribution'
-              | 'owner_distribution'
-            )
-          | null;
-        occurred_from?: string | null;
-        occurred_to?: string | null;
-        limit?: number;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['LedgerRegister'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  append_ledger_event_ledger_post: {
-    parameters: {
-      query?: never;
-      header?: {
-        'x-actor'?: string;
-      };
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['LedgerEntryIn'];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['LedgerEventOut'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  reverse_ledger_event_ledger__event_uuid__reverse_post: {
-    parameters: {
-      query?: never;
-      header?: {
-        'x-actor'?: string;
-      };
-      path: {
-        event_uuid: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ReversalIn'];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ReversalOut'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  stripe_webhook_payments_stripe_webhook_post: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            [key: string]: string;
-          };
-        };
-      };
-    };
-  };
-  create_policy_policies_post: {
-    parameters: {
-      query?: never;
-      header?: {
-        'x-actor'?: string;
-      };
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['PolicyIn'];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            [key: string]: string;
-          };
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  list_properties_properties_get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['PropertySummary'][];
-        };
-      };
-    };
-  };
-  create_property_properties_post: {
-    parameters: {
-      query?: never;
-      header?: {
-        'x-actor'?: string;
-      };
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['PropertyIn'];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['PropertyOut'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  get_property_properties__property_id__get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        property_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['PropertyOut'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  property_capex_forecast_properties__property_id__capex_forecast_get: {
-    parameters: {
-      query?: {
-        horizon_years?: number;
-        as_of?: string | null;
-      };
-      header?: never;
-      path: {
-        property_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['CapexForecastOut'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  read_dossier_properties__property_id__dossier_get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        property_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['DossierView'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  assemble_dossier_properties__property_id__dossier_post: {
-    parameters: {
-      query?: {
-        as_of?: string | null;
-      };
-      header?: {
-        'x-actor'?: string;
-      };
-      path: {
-        property_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['DossierOut'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  property_financials_properties__property_id__financials_get: {
-    parameters: {
-      query?: {
-        as_of?: string | null;
-      };
-      header?: never;
-      path: {
-        property_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['Financials'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  cash_flow_report_properties__property_id__reports_cash_flow_get: {
-    parameters: {
-      query: {
-        year: number;
-      };
-      header?: never;
-      path: {
-        property_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['CashFlowReport'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  schedule_e_report_properties__property_id__reports_schedule_e_get: {
-    parameters: {
-      query: {
-        tax_year: number;
-      };
-      header?: never;
-      path: {
-        property_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ScheduleEReport'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  readyz_readyz_get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['Readiness'];
-        };
-      };
-    };
-  };
-  waive_charge_rent_charges__charge_id__waive_post: {
-    parameters: {
-      query?: never;
-      header?: {
-        'x-actor'?: string;
-      };
-      path: {
-        charge_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['WaiveIn'];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      204: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  rent_roll_report_reports_rent_roll_get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['RentRollRow'][];
-        };
-      };
-    };
-  };
-  signoff_report_reports_signoff_post: {
-    parameters: {
-      query?: never;
-      header?: {
-        'x-actor'?: string;
-      };
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['SignoffIn'];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            [key: string]: string;
-          };
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  create_resident_residents_post: {
-    parameters: {
-      query?: never;
-      header?: {
-        'x-actor'?: string;
-      };
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ResidentIn'];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            [key: string]: string;
-          };
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  sweep_deadlines_sweep_deadlines_post: {
-    parameters: {
-      query?: {
-        as_of?: string | null;
-      };
-      header?: {
-        'x-actor'?: string;
-      };
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['SweepOut'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  sweep_late_fees_sweep_late_fees_post: {
-    parameters: {
-      query?: {
-        as_of?: string | null;
-      };
-      header?: {
-        'x-actor'?: string;
-      };
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['RentSweepResult'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  sweep_rent_charges_sweep_rent_charges_post: {
-    parameters: {
-      query?: {
-        as_of?: string | null;
-      };
-      header?: {
-        'x-actor'?: string;
-      };
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['RentSweepResult'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  create_unit_units_post: {
-    parameters: {
-      query?: never;
-      header?: {
-        'x-actor'?: string;
-      };
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['UnitIn'];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            [key: string]: string;
-          };
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  create_valuation_valuations_post: {
-    parameters: {
-      query?: never;
-      header?: {
-        'x-actor'?: string;
-      };
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ValuationIn'];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            [key: string]: string;
-          };
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  list_vendors_vendors_get: {
-    parameters: {
-      query?: {
-        entity_id?: string | null;
-        include_retired?: boolean;
-        as_of?: string | null;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['VendorOut'][];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  create_vendor_vendors_post: {
-    parameters: {
-      query?: never;
-      header?: {
-        'x-actor'?: string;
-      };
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['VendorIn'];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['VendorOut'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  read_vendor_vendors__vendor_id__get: {
-    parameters: {
-      query?: {
-        as_of?: string | null;
-      };
-      header?: never;
-      path: {
-        vendor_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['VendorOut'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  list_work_orders_work_orders_get: {
-    parameters: {
-      query?: {
-        property_id?: string | null;
-        status?:
-          | ('reported' | 'triaged' | 'scheduled' | 'in_progress' | 'completed' | 'cancelled')
-          | null;
-        open_only?: boolean;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['WorkOrderOut'][];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  create_work_order_work_orders_post: {
-    parameters: {
-      query?: never;
-      header?: {
-        'x-actor'?: string;
-      };
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['WorkOrderIn'];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['WorkOrderOut'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  read_work_order_work_orders__work_order_id__get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        work_order_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['WorkOrderOut'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  complete_work_order_work_orders__work_order_id__complete_post: {
-    parameters: {
-      query?: never;
-      header?: {
-        'x-actor'?: string;
-      };
-      path: {
-        work_order_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CompletionIn'];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['CompletionOut'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  add_work_order_cost_work_orders__work_order_id__costs_post: {
-    parameters: {
-      query?: never;
-      header?: {
-        'x-actor'?: string;
-      };
-      path: {
-        work_order_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CostLinkIn'];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['WorkOrderOut'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  transition_work_order_work_orders__work_order_id__transitions_post: {
-    parameters: {
-      query?: never;
-      header?: {
-        'x-actor'?: string;
-      };
-      path: {
-        work_order_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['TransitionIn'];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['WorkOrderOut'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
+    list_bank_accounts_bank_accounts_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankAccountOut"][];
+                };
+            };
+        };
+    };
+    create_bank_account_bank_accounts_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BankAccountIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankAccountOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_bank_statement_bank_accounts__account_id__imports_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_import_bank_statement_bank_accounts__account_id__imports_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    bank_review_queue_bank_imports__batch_id__transactions_get: {
+        parameters: {
+            query?: {
+                disposition?: ("pending" | "accepted" | "excluded" | "duplicate" | "matched_existing") | null;
+            };
+            header?: never;
+            path: {
+                batch_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StagedTransaction"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    accept_bank_transaction_bank_transactions__txn_id__accept_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path: {
+                txn_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerEventOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    exclude_bank_transaction_bank_transactions__txn_id__exclude_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path: {
+                txn_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    match_bank_transaction_bank_transactions__txn_id__match_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path: {
+                txn_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MatchIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    coverage_jurisdictions_coverage_jurisdictions_get: {
+        parameters: {
+            query?: {
+                as_of?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CoverageReport"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_deadlines_deadlines_get: {
+        parameters: {
+            query?: {
+                due_before?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeadlineOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_documents_documents_get: {
+        parameters: {
+            query?: {
+                status?: ("pending" | "extracted" | "needs_review" | "confirmed" | "rejected" | "applied") | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_document_documents_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_document_documents_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    document_detail_documents__document_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    apply_document_documents__document_id__apply_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplyResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    document_content_documents__document_id__content_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    re_extract_document_documents__document_id__extract_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    review_document_field_documents__document_id__review_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_entities_entities_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntityOut"][];
+                };
+            };
+        };
+    };
+    create_entity_entities_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EntityIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntityOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    healthz_healthz_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Health"];
+                };
+            };
+        };
+    };
+    list_leases_leases_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeaseSummary"][];
+                };
+            };
+        };
+    };
+    create_lease_leases_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeaseIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    lease_detail_leases__lease_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lease_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeaseDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    collect_rent_leases__lease_id__collect_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path: {
+                lease_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CollectIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    record_receipt_leases__lease_id__receipts_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path: {
+                lease_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReceiptIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceiptOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    renewal_context_leases__lease_id__renewal_context_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lease_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RenewalContextOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    record_renewal_leases__lease_id__renewals_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path: {
+                lease_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RenewalOfferIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ledger_register_ledger_get: {
+        parameters: {
+            query?: {
+                property_id?: string | null;
+                category?: ("rent" | "other_income" | "late_fee" | "deposit_received" | "deposit_returned" | "mortgage_interest" | "mortgage_principal" | "property_tax" | "insurance" | "repairs" | "capital_improvement" | "utilities" | "management_fee" | "hoa" | "legal_professional" | "advertising" | "supplies" | "travel" | "acquisition_cost" | "disposition_cost" | "owner_contribution" | "owner_distribution") | null;
+                occurred_from?: string | null;
+                occurred_to?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerRegister"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    append_ledger_event_ledger_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LedgerEntryIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerEventOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reverse_ledger_event_ledger__event_uuid__reverse_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path: {
+                event_uuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReversalIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReversalOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stripe_webhook_payments_stripe_webhook_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+        };
+    };
+    create_policy_policies_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PolicyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_properties_properties_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PropertySummary"][];
+                };
+            };
+        };
+    };
+    create_property_properties_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PropertyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PropertyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_property_properties__property_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                property_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PropertyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    property_capex_forecast_properties__property_id__capex_forecast_get: {
+        parameters: {
+            query?: {
+                horizon_years?: number;
+                as_of?: string | null;
+            };
+            header?: never;
+            path: {
+                property_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CapexForecastOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_dossier_properties__property_id__dossier_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                property_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DossierView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    assemble_dossier_properties__property_id__dossier_post: {
+        parameters: {
+            query?: {
+                as_of?: string | null;
+            };
+            header?: {
+                "x-actor"?: string;
+            };
+            path: {
+                property_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DossierOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    property_financials_properties__property_id__financials_get: {
+        parameters: {
+            query?: {
+                as_of?: string | null;
+            };
+            header?: never;
+            path: {
+                property_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Financials"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cash_flow_report_properties__property_id__reports_cash_flow_get: {
+        parameters: {
+            query: {
+                year: number;
+            };
+            header?: never;
+            path: {
+                property_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashFlowReport"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    schedule_e_report_properties__property_id__reports_schedule_e_get: {
+        parameters: {
+            query: {
+                tax_year: number;
+            };
+            header?: never;
+            path: {
+                property_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleEReport"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    readyz_readyz_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Readiness"];
+                };
+            };
+        };
+    };
+    waive_charge_rent_charges__charge_id__waive_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path: {
+                charge_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WaiveIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rent_roll_report_reports_rent_roll_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RentRollRow"][];
+                };
+            };
+        };
+    };
+    signoff_report_reports_signoff_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SignoffIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_resident_residents_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResidentIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sweep_deadlines_sweep_deadlines_post: {
+        parameters: {
+            query?: {
+                as_of?: string | null;
+            };
+            header?: {
+                "x-actor"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SweepOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sweep_late_fees_sweep_late_fees_post: {
+        parameters: {
+            query?: {
+                as_of?: string | null;
+            };
+            header?: {
+                "x-actor"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RentSweepResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sweep_rent_charges_sweep_rent_charges_post: {
+        parameters: {
+            query?: {
+                as_of?: string | null;
+            };
+            header?: {
+                "x-actor"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RentSweepResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_unit_units_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UnitIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_valuation_valuations_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ValuationIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_vendors_vendors_get: {
+        parameters: {
+            query?: {
+                entity_id?: string | null;
+                include_retired?: boolean;
+                as_of?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_vendor_vendors_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VendorIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_vendor_vendors__vendor_id__get: {
+        parameters: {
+            query?: {
+                as_of?: string | null;
+            };
+            header?: never;
+            path: {
+                vendor_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_work_orders_work_orders_get: {
+        parameters: {
+            query?: {
+                property_id?: string | null;
+                status?: ("reported" | "triaged" | "scheduled" | "in_progress" | "completed" | "cancelled") | null;
+                open_only?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkOrderOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_work_order_work_orders_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkOrderIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkOrderOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_work_order_work_orders__work_order_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                work_order_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkOrderOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    complete_work_order_work_orders__work_order_id__complete_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path: {
+                work_order_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompletionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompletionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_work_order_cost_work_orders__work_order_id__costs_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path: {
+                work_order_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CostLinkIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkOrderOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    transition_work_order_work_orders__work_order_id__transitions_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path: {
+                work_order_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TransitionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkOrderOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
 }

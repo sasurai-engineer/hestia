@@ -135,7 +135,9 @@
             "title": "Personal Property"
           }
         },
-        "required": ["land_value"],
+        "required": [
+          "land_value"
+        ],
         "title": "ApplyIn",
         "type": "object"
       },
@@ -287,7 +289,12 @@
             "type": "boolean"
           },
           "kind": {
-            "enum": ["checking", "savings", "credit_card", "escrow"],
+            "enum": [
+              "checking",
+              "savings",
+              "credit_card",
+              "escrow"
+            ],
             "title": "Kind",
             "type": "string"
           },
@@ -310,7 +317,11 @@
             "title": "Property Id"
           }
         },
-        "required": ["entity_id", "nickname", "kind"],
+        "required": [
+          "entity_id",
+          "nickname",
+          "kind"
+        ],
         "title": "BankAccountIn",
         "type": "object"
       },
@@ -358,7 +369,12 @@
             "type": "boolean"
           },
           "kind": {
-            "enum": ["checking", "savings", "credit_card", "escrow"],
+            "enum": [
+              "checking",
+              "savings",
+              "credit_card",
+              "escrow"
+            ],
             "title": "Kind",
             "type": "string"
           },
@@ -381,7 +397,13 @@
             "title": "Property Id"
           }
         },
-        "required": ["entity_id", "nickname", "kind", "id", "is_active"],
+        "required": [
+          "entity_id",
+          "nickname",
+          "kind",
+          "id",
+          "is_active"
+        ],
         "title": "BankAccountOut",
         "type": "object"
       },
@@ -393,7 +415,9 @@
             "type": "string"
           }
         },
-        "required": ["file"],
+        "required": [
+          "file"
+        ],
         "title": "Body_import_bank_statement_bank_accounts__account_id__imports_post",
         "type": "object"
       },
@@ -445,7 +469,11 @@
             "type": "string"
           }
         },
-        "required": ["file", "kind", "property_id"],
+        "required": [
+          "file",
+          "kind",
+          "property_id"
+        ],
         "title": "Body_upload_document_documents_post",
         "type": "object"
       },
@@ -476,7 +504,13 @@
             "type": "integer"
           }
         },
-        "required": ["year", "expected", "p10", "p50", "p90"],
+        "required": [
+          "year",
+          "expected",
+          "p10",
+          "p50",
+          "p90"
+        ],
         "title": "CapexBand",
         "type": "object"
       },
@@ -548,7 +582,12 @@
             "type": "integer"
           }
         },
-        "required": ["property_id", "year", "months", "total_net"],
+        "required": [
+          "property_id",
+          "year",
+          "months",
+          "total_net"
+        ],
         "title": "CashFlowReport",
         "type": "object"
       },
@@ -563,7 +602,10 @@
             "type": "string"
           }
         },
-        "required": ["name", "level"],
+        "required": [
+          "name",
+          "level"
+        ],
         "title": "ChainLink",
         "type": "object"
       },
@@ -697,7 +739,13 @@
             "type": "string"
           }
         },
-        "required": ["payment_request_id", "provider_ref", "client_secret", "amount", "status"],
+        "required": [
+          "payment_request_id",
+          "provider_ref",
+          "client_secret",
+          "amount",
+          "status"
+        ],
         "title": "CollectOut",
         "type": "object"
       },
@@ -729,7 +777,11 @@
             ]
           },
           "resolution": {
-            "enum": ["repaired", "replaced", "no_action"],
+            "enum": [
+              "repaired",
+              "replaced",
+              "no_action"
+            ],
             "title": "Resolution",
             "type": "string"
           },
@@ -745,7 +797,10 @@
             "title": "Resolution Note"
           }
         },
-        "required": ["completed_on", "resolution"],
+        "required": [
+          "completed_on",
+          "resolution"
+        ],
         "title": "CompletionIn",
         "type": "object"
       },
@@ -1004,7 +1059,9 @@
             "type": "string"
           }
         },
-        "required": ["amount"],
+        "required": [
+          "amount"
+        ],
         "title": "CostIn",
         "type": "object"
       },
@@ -1133,7 +1190,13 @@
             "type": "string"
           }
         },
-        "required": ["property_id", "state", "domain", "reason", "message"],
+        "required": [
+          "property_id",
+          "state",
+          "domain",
+          "reason",
+          "message"
+        ],
         "title": "CoverageGapOut",
         "type": "object"
       },
@@ -1175,7 +1238,9 @@
             "type": "string"
           }
         },
-        "required": ["description"],
+        "required": [
+          "description"
+        ],
         "title": "CoverageIn",
         "type": "object"
       },
@@ -1201,7 +1266,11 @@
             "type": "array"
           }
         },
-        "required": ["as_of", "properties", "gaps"],
+        "required": [
+          "as_of",
+          "properties",
+          "gaps"
+        ],
         "title": "CoverageReport",
         "type": "object"
       },
@@ -1643,12 +1712,17 @@
             "title": "Source"
           },
           "status": {
-            "enum": ["covered", "no_rules_loaded"],
+            "enum": [
+              "covered",
+              "no_rules_loaded"
+            ],
             "title": "Status",
             "type": "string"
           }
         },
-        "required": ["status"],
+        "required": [
+          "status"
+        ],
         "title": "DomainCoverage",
         "type": "object"
       },
@@ -1677,7 +1751,12 @@
             "type": "object"
           }
         },
-        "required": ["property_id", "as_of", "steps", "sweep"],
+        "required": [
+          "property_id",
+          "as_of",
+          "steps",
+          "sweep"
+        ],
         "title": "DossierOut",
         "type": "object"
       },
@@ -1692,12 +1771,20 @@
             "type": "string"
           },
           "status": {
-            "enum": ["ok", "skipped", "failed"],
+            "enum": [
+              "ok",
+              "skipped",
+              "failed"
+            ],
             "title": "Status",
             "type": "string"
           }
         },
-        "required": ["name", "status", "detail"],
+        "required": [
+          "name",
+          "status",
+          "detail"
+        ],
         "title": "DossierStepOut",
         "type": "object"
       },
@@ -1874,7 +1961,10 @@
             "type": "string"
           }
         },
-        "required": ["name", "kind"],
+        "required": [
+          "name",
+          "kind"
+        ],
         "title": "EntityIn",
         "type": "object"
       },
@@ -1920,7 +2010,11 @@
             "type": "string"
           }
         },
-        "required": ["name", "kind", "id"],
+        "required": [
+          "name",
+          "kind",
+          "id"
+        ],
         "title": "EntityOut",
         "type": "object"
       },
@@ -1940,7 +2034,11 @@
             "type": "string"
           }
         },
-        "required": ["label", "citation", "amount"],
+        "required": [
+          "label",
+          "citation",
+          "amount"
+        ],
         "title": "ExcludedAmount",
         "type": "object"
       },
@@ -1970,7 +2068,11 @@
             "title": "Confidence"
           },
           "datatype": {
-            "enum": ["money", "date", "text"],
+            "enum": [
+              "money",
+              "date",
+              "text"
+            ],
             "title": "Datatype",
             "type": "string"
           },
@@ -2239,7 +2341,9 @@
             "type": "string"
           }
         },
-        "required": ["status"],
+        "required": [
+          "status"
+        ],
         "title": "Health",
         "type": "object"
       },
@@ -2266,7 +2370,13 @@
             "type": "integer"
           }
         },
-        "required": ["batch_id", "format", "staged", "duplicates", "suggested"],
+        "required": [
+          "batch_id",
+          "format",
+          "staged",
+          "duplicates",
+          "suggested"
+        ],
         "title": "ImportSummary",
         "type": "object"
       },
@@ -2414,7 +2524,11 @@
           },
           "escalation": {
             "default": "none",
-            "enum": ["none", "fixed_amount", "fixed_percent"],
+            "enum": [
+              "none",
+              "fixed_amount",
+              "fixed_percent"
+            ],
             "title": "Escalation",
             "type": "string"
           },
@@ -2482,7 +2596,11 @@
           },
           "status": {
             "default": "active",
-            "enum": ["active", "month_to_month", "draft"],
+            "enum": [
+              "active",
+              "month_to_month",
+              "draft"
+            ],
             "title": "Status",
             "type": "string"
           },
@@ -2491,7 +2609,11 @@
             "type": "string"
           }
         },
-        "required": ["unit_id", "starts_on", "rent"],
+        "required": [
+          "unit_id",
+          "starts_on",
+          "rent"
+        ],
         "title": "LeaseIn",
         "type": "object"
       },
@@ -2715,7 +2837,11 @@
             "title": "Unit Id"
           }
         },
-        "required": ["occurred_on", "category", "amount"],
+        "required": [
+          "occurred_on",
+          "category",
+          "amount"
+        ],
         "title": "LedgerEntryIn",
         "type": "object"
       },
@@ -2893,7 +3019,12 @@
             "type": "string"
           }
         },
-        "required": ["events", "total_in", "total_out", "net"],
+        "required": [
+          "events",
+          "total_in",
+          "total_out",
+          "net"
+        ],
         "title": "LedgerRegister",
         "type": "object"
       },
@@ -2905,7 +3036,9 @@
             "type": "string"
           }
         },
-        "required": ["event_uuid"],
+        "required": [
+          "event_uuid"
+        ],
         "title": "MatchIn",
         "type": "object"
       },
@@ -2990,7 +3123,13 @@
             "type": "string"
           }
         },
-        "required": ["event_uuid", "occurred_on", "memo", "amount", "reason"],
+        "required": [
+          "event_uuid",
+          "occurred_on",
+          "memo",
+          "amount",
+          "reason"
+        ],
         "title": "NeedsClassification",
         "type": "object"
       },
@@ -3080,7 +3219,12 @@
             "type": "string"
           }
         },
-        "required": ["property_id", "kind", "effective_from", "effective_to"],
+        "required": [
+          "property_id",
+          "kind",
+          "effective_from",
+          "effective_to"
+        ],
         "title": "PolicyIn",
         "type": "object"
       },
@@ -3183,7 +3327,13 @@
             "type": "string"
           }
         },
-        "required": ["property_id", "label", "state", "resolution", "domains"],
+        "required": [
+          "property_id",
+          "label",
+          "state",
+          "resolution",
+          "domains"
+        ],
         "title": "PropertyCoverage",
         "type": "object"
       },
@@ -3263,7 +3413,15 @@
             "title": "Year Built"
           }
         },
-        "required": ["entity_id", "label", "street_1", "city", "state", "postal_code", "kind"],
+        "required": [
+          "entity_id",
+          "label",
+          "street_1",
+          "city",
+          "state",
+          "postal_code",
+          "kind"
+        ],
         "title": "PropertyIn",
         "type": "object"
       },
@@ -3476,7 +3634,10 @@
             "type": "string"
           }
         },
-        "required": ["status", "migrations"],
+        "required": [
+          "status",
+          "migrations"
+        ],
         "title": "Readiness",
         "type": "object"
       },
@@ -3497,7 +3658,11 @@
           },
           "category": {
             "default": "rent",
-            "enum": ["rent", "late_fee", "deposit_received"],
+            "enum": [
+              "rent",
+              "late_fee",
+              "deposit_received"
+            ],
             "title": "Category",
             "type": "string"
           },
@@ -3518,7 +3683,10 @@
             "type": "string"
           }
         },
-        "required": ["occurred_on", "amount"],
+        "required": [
+          "occurred_on",
+          "amount"
+        ],
         "title": "ReceiptIn",
         "type": "object"
       },
@@ -3544,7 +3712,11 @@
             "type": "string"
           }
         },
-        "required": ["event_uuid", "allocations", "unallocated"],
+        "required": [
+          "event_uuid",
+          "allocations",
+          "unallocated"
+        ],
         "title": "ReceiptOut",
         "type": "object"
       },
@@ -3642,7 +3814,10 @@
             "title": "Offered Rent"
           }
         },
-        "required": ["offered_on", "offered_rent"],
+        "required": [
+          "offered_on",
+          "offered_rent"
+        ],
         "title": "RenewalOfferIn",
         "type": "object"
       },
@@ -3719,7 +3894,10 @@
             "type": "array"
           }
         },
-        "required": ["charges_created", "gaps"],
+        "required": [
+          "charges_created",
+          "gaps"
+        ],
         "title": "RentSweepResult",
         "type": "object"
       },
@@ -3851,7 +4029,9 @@
             "title": "Phone"
           }
         },
-        "required": ["full_name"],
+        "required": [
+          "full_name"
+        ],
         "title": "ResidentIn",
         "type": "object"
       },
@@ -3869,7 +4049,10 @@
             "type": "string"
           }
         },
-        "required": ["level", "chain"],
+        "required": [
+          "level",
+          "chain"
+        ],
         "title": "Resolution",
         "type": "object"
       },
@@ -3916,14 +4099,21 @@
             "$ref": "#/components/schemas/LedgerEventOut"
           }
         },
-        "required": ["reversal", "corrected"],
+        "required": [
+          "reversal",
+          "corrected"
+        ],
         "title": "ReversalOut",
         "type": "object"
       },
       "ReviewIn": {
         "properties": {
           "action": {
-            "enum": ["accept", "correct", "reject"],
+            "enum": [
+              "accept",
+              "correct",
+              "reject"
+            ],
             "title": "Action",
             "type": "string"
           },
@@ -3943,7 +4133,10 @@
             "title": "Value"
           }
         },
-        "required": ["action", "field_path"],
+        "required": [
+          "action",
+          "field_path"
+        ],
         "title": "ReviewIn",
         "type": "object"
       },
@@ -3967,7 +4160,12 @@
             "type": "integer"
           }
         },
-        "required": ["line_no", "label", "citation", "amount"],
+        "required": [
+          "line_no",
+          "label",
+          "citation",
+          "amount"
+        ],
         "title": "ScheduleELine",
         "type": "object"
       },
@@ -4093,7 +4291,12 @@
             "type": "boolean"
           }
         },
-        "required": ["confirmed_by", "confirmed_at", "note", "stale"],
+        "required": [
+          "confirmed_by",
+          "confirmed_at",
+          "note",
+          "stale"
+        ],
         "title": "Signoff",
         "type": "object"
       },
@@ -4120,7 +4323,11 @@
             "type": "string"
           },
           "report_kind": {
-            "enum": ["schedule_e", "p_and_l", "cash_flow"],
+            "enum": [
+              "schedule_e",
+              "p_and_l",
+              "cash_flow"
+            ],
             "title": "Report Kind",
             "type": "string"
           },
@@ -4129,7 +4336,12 @@
             "type": "integer"
           }
         },
-        "required": ["property_id", "tax_year", "report_kind", "confirmed_by"],
+        "required": [
+          "property_id",
+          "tax_year",
+          "report_kind",
+          "confirmed_by"
+        ],
         "title": "SignoffIn",
         "type": "object"
       },
@@ -4209,7 +4421,10 @@
             "title": "Memo"
           }
         },
-        "required": ["category", "amount"],
+        "required": [
+          "category",
+          "amount"
+        ],
         "title": "SplitIn",
         "type": "object"
       },
@@ -4317,7 +4532,11 @@
             "type": "string"
           },
           "reason": {
-            "enum": ["no_state_jurisdiction", "no_rule_for_domain", "calendar_key_unregistered"],
+            "enum": [
+              "no_state_jurisdiction",
+              "no_rule_for_domain",
+              "calendar_key_unregistered"
+            ],
             "title": "Reason",
             "type": "string"
           },
@@ -4326,7 +4545,13 @@
             "type": "string"
           }
         },
-        "required": ["property_id", "state", "domain", "reason", "detail"],
+        "required": [
+          "property_id",
+          "state",
+          "domain",
+          "reason",
+          "detail"
+        ],
         "title": "SweepGapOut",
         "type": "object"
       },
@@ -4356,7 +4581,12 @@
             "type": "integer"
           }
         },
-        "required": ["as_of", "inserted", "total", "coverage_gaps"],
+        "required": [
+          "as_of",
+          "inserted",
+          "total",
+          "coverage_gaps"
+        ],
         "title": "SweepOut",
         "type": "object"
       },
@@ -4386,7 +4616,12 @@
             "title": "Scheduled For"
           },
           "status": {
-            "enum": ["triaged", "scheduled", "in_progress", "cancelled"],
+            "enum": [
+              "triaged",
+              "scheduled",
+              "in_progress",
+              "cancelled"
+            ],
             "title": "Status",
             "type": "string"
           },
@@ -4402,7 +4637,9 @@
             "title": "Vendor Id"
           }
         },
-        "required": ["status"],
+        "required": [
+          "status"
+        ],
         "title": "TransitionIn",
         "type": "object"
       },
@@ -4435,7 +4672,10 @@
             "type": "string"
           }
         },
-        "required": ["property_id", "label"],
+        "required": [
+          "property_id",
+          "label"
+        ],
         "title": "UnitIn",
         "type": "object"
       },
@@ -4471,7 +4711,11 @@
             "type": "string"
           }
         },
-        "required": ["loc", "msg", "type"],
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
         "title": "ValidationError",
         "type": "object"
       },
@@ -4515,7 +4759,12 @@
             "title": "Value"
           }
         },
-        "required": ["property_id", "value", "source", "as_of"],
+        "required": [
+          "property_id",
+          "value",
+          "source",
+          "as_of"
+        ],
         "title": "ValuationIn",
         "type": "object"
       },
@@ -4536,7 +4785,11 @@
             "type": "string"
           }
         },
-        "required": ["value", "source", "as_of"],
+        "required": [
+          "value",
+          "source",
+          "as_of"
+        ],
         "title": "ValuationOut",
         "type": "object"
       },
@@ -4675,7 +4928,11 @@
             "title": "Workers Comp Expires On"
           }
         },
-        "required": ["entity_id", "name", "trade"],
+        "required": [
+          "entity_id",
+          "name",
+          "trade"
+        ],
         "title": "VendorIn",
         "type": "object"
       },
@@ -4686,7 +4943,12 @@
             "type": "integer"
           },
           "coverage_state": {
-            "enum": ["current", "expiring", "expired", "unknown"],
+            "enum": [
+              "current",
+              "expiring",
+              "expired",
+              "unknown"
+            ],
             "title": "Coverage State",
             "type": "string"
           },
@@ -4888,7 +5150,9 @@
             "type": "string"
           }
         },
-        "required": ["reason"],
+        "required": [
+          "reason"
+        ],
         "title": "WaiveIn",
         "type": "object"
       },
@@ -4918,7 +5182,12 @@
           },
           "priority": {
             "default": "routine",
-            "enum": ["emergency", "urgent", "routine", "planned"],
+            "enum": [
+              "emergency",
+              "urgent",
+              "routine",
+              "planned"
+            ],
             "title": "Priority",
             "type": "string"
           },
@@ -4928,7 +5197,12 @@
           },
           "reported_by": {
             "default": "owner",
-            "enum": ["resident", "owner", "inspection", "vendor"],
+            "enum": [
+              "resident",
+              "owner",
+              "inspection",
+              "vendor"
+            ],
             "title": "Reported By",
             "type": "string"
           },
@@ -4973,7 +5247,10 @@
             "title": "Vendor Id"
           }
         },
-        "required": ["property_id", "summary"],
+        "required": [
+          "property_id",
+          "summary"
+        ],
         "title": "WorkOrderIn",
         "type": "object"
       },
@@ -5048,7 +5325,14 @@
           },
           "legal_transitions": {
             "items": {
-              "enum": ["reported", "triaged", "scheduled", "in_progress", "completed", "cancelled"],
+              "enum": [
+                "reported",
+                "triaged",
+                "scheduled",
+                "in_progress",
+                "completed",
+                "cancelled"
+              ],
               "type": "string"
             },
             "title": "Legal Transitions",
@@ -5060,7 +5344,12 @@
             "type": "string"
           },
           "priority": {
-            "enum": ["emergency", "urgent", "routine", "planned"],
+            "enum": [
+              "emergency",
+              "urgent",
+              "routine",
+              "planned"
+            ],
             "title": "Priority",
             "type": "string"
           },
@@ -5084,7 +5373,12 @@
             "title": "Replacement Component Id"
           },
           "reported_by": {
-            "enum": ["resident", "owner", "inspection", "vendor"],
+            "enum": [
+              "resident",
+              "owner",
+              "inspection",
+              "vendor"
+            ],
             "title": "Reported By",
             "type": "string"
           },
@@ -5096,7 +5390,11 @@
           "resolution": {
             "anyOf": [
               {
-                "enum": ["repaired", "replaced", "no_action"],
+                "enum": [
+                  "repaired",
+                  "replaced",
+                  "no_action"
+                ],
                 "type": "string"
               },
               {
@@ -5129,7 +5427,14 @@
             "title": "Scheduled For"
           },
           "status": {
-            "enum": ["reported", "triaged", "scheduled", "in_progress", "completed", "cancelled"],
+            "enum": [
+              "reported",
+              "triaged",
+              "scheduled",
+              "in_progress",
+              "completed",
+              "cancelled"
+            ],
             "title": "Status",
             "type": "string"
           },
@@ -5371,7 +5676,13 @@
             "schema": {
               "anyOf": [
                 {
-                  "enum": ["pending", "accepted", "excluded", "duplicate", "matched_existing"],
+                  "enum": [
+                    "pending",
+                    "accepted",
+                    "excluded",
+                    "duplicate",
+                    "matched_existing"
+                  ],
                   "type": "string"
                 },
                 {
