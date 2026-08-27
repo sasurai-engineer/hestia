@@ -16,3 +16,11 @@ allowBuilds:
 # version exists. Pinning a package to a release published today will not
 # install, and that is the policy working rather than failing.
 minimumReleaseAge: 1440
+
+# Security floors for transitive dependencies with published advisories —
+# floors, never pins, so they keep rising on their own (issue #64 records
+# the advisories; `pnpm audit` at zero findings is the proof they hold).
+overrides:
+  postcss: ">=8.5.23"
+  qs: ">=6.15.2"
+  sharp: ">=0.35.0"
