@@ -1,0 +1,62 @@
+/* The Field Book — chart ink (contributes to the primitives layer).
+
+   The stroke-style law: facts are solid, projections are dashed —
+   everywhere, always. Series order is ember, fern, graphite, umber;
+   survey-blue never appears in a chart, and past four series the answer
+   is hatching, never a new hue. */
+
+@layer primitives {
+  .chart {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .chart__band {
+    fill: rgb(178 74 23 / 18%);
+    stroke: none;
+  }
+
+  .chart__line {
+    fill: none;
+    stroke: var(--ember);
+    stroke-width: 2;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+
+  .chart__line--series-2 {
+    stroke: var(--fern);
+  }
+
+  .chart__line--series-3 {
+    stroke: var(--graphite);
+  }
+
+  .chart__line--series-4 {
+    stroke: var(--umber);
+  }
+
+  .chart__line--projected {
+    stroke-dasharray: 4 3;
+  }
+
+  .chart__grid {
+    stroke: var(--line-soft);
+    stroke-width: 1;
+  }
+
+  .chart__axis {
+    fill: var(--ink-dim);
+    font-family: var(--mono);
+    font-size: 9px;
+  }
+
+  .chart__spark {
+    fill: none;
+    stroke: var(--ember);
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+}

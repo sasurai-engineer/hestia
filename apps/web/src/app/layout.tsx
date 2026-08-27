@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import '@hestia/design/css/tokens.css';
 import '@hestia/design/css/base.css';
 import '@hestia/design/css/primitives.css';
+import '@hestia/design/css/charts.css';
 import '@hestia/design/css/motion.css';
 import './globals.css';
 

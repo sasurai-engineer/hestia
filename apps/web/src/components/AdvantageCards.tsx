@@ -1,5 +1,6 @@
 'use client';
 
+import { FanChart } from '@hestia/design';
 import { useState } from 'react';
 import { holdSellView, insuranceView } from '../lib/advantage';
 import type { CapexForecastOut, Financials } from '../lib/api';
@@ -119,11 +120,8 @@ export function InsuranceCard({ financials }: { financials: Financials }) {
   );
 }
 
-const CHART_W = 560;
-const CHART_H = 150;
-
-/** The Weibull capex forecast as an SVG fan: p10–p90 band, p50 line,
- * expected markers. No chart library — one polygon and one polyline. */
+/** The Weibull capex forecast as the package fan: p10–p90 band, traced p50
+ * line. The geometry lives in @hestia/design, tested like the engines. */
 export function CapexFanChart({ forecast }: { forecast: CapexForecastOut }) {
   if (forecast.components_simulated === 0) {
     return (
@@ -133,46 +131,24 @@ export function CapexFanChart({ forecast }: { forecast: CapexForecastOut }) {
       </div>
     );
   }
-  const peak = Math.max(...forecast.bands.map((band) => Number(band.p90)), 1);
-  const x = (index: number) =>
-    30 + (index * (CHART_W - 50)) / Math.max(forecast.bands.length - 1, 1);
-  const y = (value: number) => CHART_H - 24 - (value / peak) * (CHART_H - 40);
-  const upper = forecast.bands.map((band, i) => `${x(i)},${y(Number(band.p90))}`);
-  const lower = [...forecast.bands]
-    .reverse()
-    .map((band, i) => `${x(forecast.bands.length - 1 - i)},${y(Number(band.p10))}`);
-  const median = forecast.bands.map((band, i) => `${x(i)},${y(Number(band.p50))}`).join(' ');
+  const bands = forecast.bands.map((band) => ({
+    label: String(band.year),
+    low: Number(band.p10),
+    mid: Number(band.p50),
+    high: Number(band.p90),
+  }));
   return (
     <div className="card">
       <strong>Capital forecast</strong>{' '}
       <span className="pill">
         {formatMoney(forecast.total_expected)} expected / {forecast.horizon_years} yrs
       </span>
-      <svg
-        viewBox={`0 0 ${CHART_W} ${CHART_H}`}
-        role="img"
-        aria-label={`Expected capital spend over ${forecast.horizon_years} years with confidence bands`}
-        style={{ width: '100%', height: 'auto', marginTop: 8 }}
-      >
-        <polygon
-          points={[...upper, ...lower].join(' ')}
-          fill="rgb(178 74 23 / 18%)"
-          stroke="none"
+      <div style={{ marginTop: 8 }}>
+        <FanChart
+          bands={bands}
+          label={`Expected capital spend over ${forecast.horizon_years} years with confidence bands`}
         />
-        <polyline points={median} fill="none" stroke="#b24a17" strokeWidth={2} />
-        {forecast.bands.map((band, i) => (
-          <text
-            key={band.year}
-            x={x(i)}
-            y={CHART_H - 8}
-            fontSize={9}
-            fill="#6b6257"
-            textAnchor="middle"
-          >
-            {band.year}
-          </text>
-        ))}
-      </svg>
+      </div>
       <p className="faint">
         Weibull Monte Carlo over the live component inventory ({forecast.components_simulated}{' '}
         components); band is p10–p90, line is the median.
