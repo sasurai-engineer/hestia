@@ -40,6 +40,31 @@ describe('the css holds to the token contract', () => {
     expect(allCss).toMatch(/--sans:[^;]*IBM Plex Sans/);
     expect(allCss).toMatch(/--mono:[^;]*IBM Plex Mono/);
   });
+
+  it('binds the roles where the law says', () => {
+    const primitives = readFileSync(join(CSS_DIR, 'primitives.css'), 'utf8');
+    expect(primitives).toMatch(/\.citation\s*\{[^}]*var\(--survey-blue\)/);
+    expect(primitives).toMatch(/\.citation-chip\s*\{[^}]*var\(--survey-blue\)/);
+    expect(primitives).toMatch(/\.citation-chip\s*\{[^}]*var\(--survey-wash\)/);
+    expect(primitives).toMatch(/\.button\s*\{[^}]*var\(--ember\)/);
+    // Ink on ember-wash is ember-deep, never ember — the AA contract pair.
+    expect(primitives).toMatch(/\.pill--flag\s*\{[^}]*var\(--ember-deep\)/);
+  });
+
+  it('spends survey-blue on authority alone', () => {
+    for (const [name, content] of cssFiles) {
+      const outsideCitations = stripped(content).replaceAll(
+        /\.citation(?:-chip)?[^{]*\{[^}]*\}/g,
+        '',
+      );
+      const allowed = name === 'tokens.css' ? /--survey-blue: #33628c;/ : /$^/;
+      const mentions = outsideCitations
+        .split('\n')
+        .filter((line) => line.includes('survey-blue'))
+        .filter((line) => !allowed.test(line.trim()));
+      expect(mentions, `survey-blue spent outside authority in ${name}`).toEqual([]);
+    }
+  });
 });
 
 describe('light is the law, and motion speaks in tokens', () => {
@@ -53,8 +78,11 @@ describe('light is the law, and motion speaks in tokens', () => {
     for (const [name, content] of cssFiles) {
       const offenders = stripped(content)
         .split(';')
+        // A chunk carries block structure ahead of its declaration; the
+        // declaration proper starts after the last brace.
+        .map((chunk) => (chunk.split(/[{}]/).pop() ?? '').trim())
         .filter((declaration) => /\b\d+(?:\.\d+)?m?s\b/.test(declaration))
-        .filter((declaration) => !/^--dur-\d+:/.test(declaration.trim()));
+        .filter((declaration) => !/^--dur-/.test(declaration));
       expect(offenders, `raw duration in ${name}`).toEqual([]);
     }
   });

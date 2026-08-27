@@ -230,6 +230,10 @@
     "$value": "600ms",
     "$description": "The draftsman's trace — once per mount, never on data updates."
   },
+  "dur-stagger": {
+    "$value": "24ms",
+    "$description": "Per-row delay when entries settle onto the page; cap the count at eight."
+  },
   "ease-out": {
     "$value": "cubic-bezier(0.2, 0, 0, 1)",
     "$description": "Deceleration: things arriving."
