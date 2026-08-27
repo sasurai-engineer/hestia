@@ -1471,6 +1471,53 @@
         "title": "DebtTerms",
         "type": "object"
       },
+      "DecisionIn": {
+        "properties": {
+          "based_on_consumer_report": {
+            "default": false,
+            "title": "Based On Consumer Report",
+            "type": "boolean"
+          },
+          "decided_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided On"
+          },
+          "decision": {
+            "enum": [
+              "approved",
+              "conditional",
+              "denied",
+              "withdrawn"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "decision_basis": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision Basis"
+          }
+        },
+        "required": [
+          "decision"
+        ],
+        "title": "DecisionIn",
+        "type": "object"
+      },
       "DefectOut": {
         "properties": {
           "affects_financing": {
@@ -3217,6 +3264,24 @@
         "title": "NeedsClassification",
         "type": "object"
       },
+      "NoticeIn": {
+        "properties": {
+          "sent_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent On"
+          }
+        },
+        "title": "NoticeIn",
+        "type": "object"
+      },
       "PolicyIn": {
         "properties": {
           "annual_premium": {
@@ -4350,6 +4415,224 @@
           "caveat"
         ],
         "title": "ScheduleEReport",
+        "type": "object"
+      },
+      "ScreeningIn": {
+        "properties": {
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "property_id": {
+            "format": "uuid",
+            "title": "Property Id",
+            "type": "string"
+          },
+          "provider": {
+            "default": "manual",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Provider",
+            "type": "string"
+          },
+          "requested_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requested On"
+          },
+          "resident_id": {
+            "format": "uuid",
+            "title": "Resident Id",
+            "type": "string"
+          },
+          "unit_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Id"
+          }
+        },
+        "required": [
+          "resident_id",
+          "property_id"
+        ],
+        "title": "ScreeningIn",
+        "type": "object"
+      },
+      "ScreeningOut": {
+        "properties": {
+          "adverse_action_required": {
+            "title": "Adverse Action Required",
+            "type": "boolean"
+          },
+          "adverse_action_sent_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Adverse Action Sent On"
+          },
+          "based_on_consumer_report": {
+            "title": "Based On Consumer Report",
+            "type": "boolean"
+          },
+          "citation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Citation"
+          },
+          "decided_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided On"
+          },
+          "decision": {
+            "title": "Decision",
+            "type": "string"
+          },
+          "decision_basis": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision Basis"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "notice_contents": {
+            "items": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "title": "Notice Contents",
+            "type": "array"
+          },
+          "property_id": {
+            "title": "Property Id",
+            "type": "string"
+          },
+          "property_label": {
+            "title": "Property Label",
+            "type": "string"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "requested_on": {
+            "format": "date",
+            "title": "Requested On",
+            "type": "string"
+          },
+          "resident_id": {
+            "title": "Resident Id",
+            "type": "string"
+          },
+          "resident_name": {
+            "title": "Resident Name",
+            "type": "string"
+          },
+          "unit_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Id"
+          },
+          "unit_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Label"
+          }
+        },
+        "required": [
+          "id",
+          "resident_id",
+          "resident_name",
+          "property_id",
+          "property_label",
+          "unit_id",
+          "unit_label",
+          "requested_on",
+          "provider",
+          "decision",
+          "decided_on",
+          "decision_basis",
+          "based_on_consumer_report",
+          "adverse_action_required",
+          "adverse_action_sent_on",
+          "notes",
+          "notice_contents",
+          "citation"
+        ],
+        "title": "ScreeningOut",
         "type": "object"
       },
       "Signoff": {
@@ -7825,6 +8108,292 @@
           }
         },
         "summary": "Create Resident"
+      }
+    },
+    "/screening": {
+      "get": {
+        "operationId": "list_screening_screening_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "resident_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Resident Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "property_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Property Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "notice_owed",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Notice Owed",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ScreeningOut"
+                  },
+                  "title": "Response List Screening Screening Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Screening"
+      },
+      "post": {
+        "operationId": "open_screening_screening_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScreeningIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreeningOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Open Screening"
+      }
+    },
+    "/screening/{screening_id}": {
+      "get": {
+        "operationId": "read_screening_screening__screening_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "screening_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Screening Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreeningOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Screening"
+      }
+    },
+    "/screening/{screening_id}/adverse-action": {
+      "post": {
+        "operationId": "record_adverse_action_screening__screening_id__adverse_action_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "screening_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Screening Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoticeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreeningOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Record Adverse Action"
+      }
+    },
+    "/screening/{screening_id}/decision": {
+      "post": {
+        "operationId": "decide_screening_screening__screening_id__decision_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "screening_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Screening Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreeningOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Decide Screening"
       }
     },
     "/sweep/deadlines": {

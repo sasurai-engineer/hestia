@@ -22,18 +22,21 @@ from typing import Any
 import psycopg
 
 from hestia_api import calendar
+from hestia_api.screening import ADVERSE_ACTION_CITATION
 
 Conn = psycopg.Connection[dict[str, Any]]
 
 INSERT = """
 INSERT INTO deadlines
   (kind, due_on, window_opens_on, property_id, entity_id, lease_id,
-   policy_id, debt_id, exchange_id, vendor_id, citation, note)
+   policy_id, debt_id, exchange_id, vendor_id, screening_request_id,
+   citation, note)
 VALUES (%(kind)s, %(due_on)s, %(window_opens_on)s, %(property_id)s, %(entity_id)s,
         %(lease_id)s, %(policy_id)s, %(debt_id)s, %(exchange_id)s, %(vendor_id)s,
-        %(citation)s, %(note)s)
+        %(screening_request_id)s, %(citation)s, %(note)s)
 ON CONFLICT (kind, due_on, property_id, entity_id, lease_id,
-             policy_id, debt_id, exchange_id, appeal_id, vendor_id)
+             policy_id, debt_id, exchange_id, appeal_id, vendor_id,
+             screening_request_id)
 DO NOTHING
 """
 
@@ -71,6 +74,7 @@ def _row(kind: str, due_on: dt.date, citation: str, **anchors: Any) -> dict[str,
         "debt_id": None,
         "exchange_id": None,
         "vendor_id": None,
+        "screening_request_id": None,
         "citation": citation,
         "note": None,
     }
@@ -342,6 +346,37 @@ def _vendor_credentials(conn: Conn, as_of: dt.date) -> list[dict[str, Any]]:
     return out
 
 
+def _adverse_action_notices(conn: Conn, as_of: dt.date) -> list[dict[str, Any]]:
+    """A denial a consumer report drove owes the applicant a notice.
+
+    FCRA s.615(a) sets no day count, so none is invented: the duty is dated to
+    the decision, which is when it attaches. Anchored on the request, so two
+    applicants refused on one day at one property are two notices (module 018
+    added the anchor for exactly that).
+    """
+    rows = conn.execute(
+        """
+        SELECT s.id, s.property_id, s.decided_on, s.decision::text AS decision,
+               r.full_name
+        FROM screening_requests s JOIN residents r ON r.id = s.resident_id
+        WHERE s.adverse_action_required
+          AND s.adverse_action_sent_on IS NULL
+          AND s.decided_on IS NOT NULL
+        """,
+    ).fetchall()
+    return [
+        _row(
+            "adverse_action_notice",
+            record["decided_on"],
+            ADVERSE_ACTION_CITATION,
+            property_id=record["property_id"],
+            screening_request_id=record["id"],
+            note=f"{record['full_name']} — {record['decision']}",
+        )
+        for record in rows
+    ]
+
+
 GENERATORS = (
     _lease_expirations,
     _policy_expirations,
@@ -349,6 +384,7 @@ GENERATORS = (
     _exchange_clocks,
     _entity_tax_dates,
     _vendor_credentials,
+    _adverse_action_notices,
 )
 
 
