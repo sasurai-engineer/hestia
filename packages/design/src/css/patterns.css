@@ -142,4 +142,55 @@
   .spine__detail-head .button {
     margin-left: auto;
   }
+
+  /* ---- the exit instrument ---- */
+
+  .exit__head {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+  }
+
+  .exit__head .stat__value {
+    color: var(--ember);
+  }
+
+  .exit__head > :last-child {
+    margin-left: auto;
+    text-align: right;
+  }
+
+  .exit__surface {
+    position: relative;
+    margin-top: var(--space-3);
+    cursor: ew-resize;
+    touch-action: pan-y;
+  }
+
+  .exit__grip {
+    position: absolute;
+    top: 4%;
+    width: 24px;
+    height: 88%;
+    transform: translateX(-50%);
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: ew-resize;
+  }
+
+  .exit__grip:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  .exit__readout {
+    margin-top: var(--space-2);
+  }
+
+  .exit__knobs {
+    margin-top: var(--space-4);
+  }
 }

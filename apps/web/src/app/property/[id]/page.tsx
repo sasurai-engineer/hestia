@@ -5,6 +5,7 @@ import { CapexFanChart, HoldSellCard, InsuranceCard } from '../../../components/
 import { ComponentsTable } from '../../../components/ComponentsTable';
 import { DeadlineList } from '../../../components/DeadlineList';
 import { DefectRegister } from '../../../components/DefectRegister';
+import { ExitTimeline } from '../../../components/ExitTimeline';
 import { HazardCard } from '../../../components/HazardCard';
 import { JurisdictionChain } from '../../../components/JurisdictionChain';
 import { StatusPill } from '../../../components/StatusPill';
@@ -102,6 +103,13 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
           ariaLabel={`${view.label} — ledger and horizon`}
         />
       </section>
+
+      {financials === null ? null : (
+        <section className="section">
+          <h2 className="section__title">The exit</h2>
+          <ExitTimeline financials={financials} today={today} />
+        </section>
+      )}
 
       <button
         className="button"
