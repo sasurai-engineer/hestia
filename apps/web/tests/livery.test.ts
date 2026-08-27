@@ -26,11 +26,12 @@ describe('the app spends the livery lawfully', () => {
     expect(declarations).not.toMatch(/#000\b|#000000\b|(?<!-)\bblack\b/i);
   });
 
-  it('draws every color through a token: no raw hex in app stylesheets', () => {
-    for (const file of walk(SRC).filter((path) => path.endsWith('.css'))) {
-      const declarations = readFileSync(file, 'utf8').replaceAll(/\/\*[\s\S]*?\*\//g, '');
-      expect(declarations, `raw hex in ${file.slice(SRC.length + 1)}`).not.toMatch(
-        /#[0-9a-f]{3,8}\b/i,
+  it('draws every color through a token: no raw hex anywhere in app source', () => {
+    for (const file of walk(SRC)) {
+      if (file.endsWith('api-schema.d.ts') || file.endsWith('openapi.json')) continue;
+      const content = readFileSync(file, 'utf8').replaceAll(/\/\*[\s\S]*?\*\//g, '');
+      expect(content, `raw hex in ${file.slice(SRC.length + 1)}`).not.toMatch(
+        /#[0-9a-f]{6}\b|#[0-9a-f]{3}\b(?![0-9a-f])/i,
       );
     }
   });

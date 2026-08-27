@@ -1,3 +1,11 @@
+export { BalanceCurve, type CurvePoint } from './charts/BalanceCurve.js';
+export { ChartFrame } from './charts/ChartFrame.js';
+export { type FanBand, FanChart } from './charts/FanChart.js';
+export { type HatchKind, type HatchTile, hatchTile } from './charts/hatch.js';
+export { areaPath, linePath, type Point, stepPath } from './charts/path.js';
+export { Sparkline } from './charts/Sparkline.js';
+export { linearScale, type Scale } from './charts/scale.js';
+export { niceTicks } from './charts/ticks.js';
 export { contrastRatio, relativeLuminance } from './contrast.js';
 export { cx } from './cx.js';
 export { fuzzyMatch } from './fuzzy.js';

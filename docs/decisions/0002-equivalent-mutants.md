@@ -81,3 +81,17 @@ equivalent by argument:
   threshold: the boundary would need a channel of exactly `0.04045 × 255 =
   10.31475`, and 8-bit channels are integers, so no representable color can
   distinguish the two comparisons.
+
+## @hestia/design charts — 97.92% (five survivors, all argued)
+
+The chart geometry joins the engines' bar. Its survivors:
+
+- `ticks` — the three `niceNum` round-mode boundaries (`fraction < 1.5`,
+  `< 3`, `< 7` vs `<=`): the rounding pass receives a nice span (1, 2, or
+  5 × 10^k) divided by an integer tick count, and no such quotient's
+  mantissa can land exactly on 1.5, 3, or 7 — the boundaries are
+  unreachable through the public API.
+- `ticks` — the half-step loop tolerance (`<=` vs `<` against
+  `last + step/2`): accumulated tick values approximate multiples of the
+  step; exact equality with a half-step offset cannot occur.
+- `contrast` — the sRGB linearization threshold, documented above.
