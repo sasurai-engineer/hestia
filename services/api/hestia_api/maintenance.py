@@ -34,6 +34,16 @@ RESTORATION_CITATION = (
     "of property is a restoration; the building system is its own unit of "
     "property under 1.263(a)-3(e)(2)(ii)"
 )
+# The umbrella. Capitalisation has THREE routes — betterment, adaptation,
+# restoration — and this system only ever learns which one applies when the
+# job says it REPLACED something. Citing the restoration paragraph for a
+# repair the owner capitalised asserts a major component was replaced when
+# nobody said one was; the umbrella asserts only what the money did.
+IMPROVEMENT_CITATION = (
+    "Treas. Reg. 1.263(a)-3(d) — an amount paid to improve a unit of property is "
+    "capitalised; an improvement is a betterment (1.263(a)-3(j)), a restoration "
+    "(1.263(a)-3(k)), or an adaptation to a new or different use (1.263(a)-3(l))"
+)
 # DE_MINIMIS_CENTS is misnamed in reports.py — the value is DOLLARS
 # (Decimal("2500.00")). Imported rather than re-declared so this module and
 # the Schedule E classification flag can never disagree about the line.
@@ -58,6 +68,19 @@ LEGAL_TRANSITIONS: dict[str, frozenset[str]] = {
 }
 COMPLETABLE_FROM = frozenset({"reported", "triaged", "scheduled", "in_progress"})
 
+# WHICH rule said no, in the owner's words. One message covering every CHECK on
+# the table told an operator to supply a date when the DATE was the thing that
+# was wrong; only the constraint name knows which line was crossed.
+TRANSITION_REFUSALS: dict[str, str] = {
+    "scheduled_orders_carry_a_date": "a scheduled visit needs a date",
+    "cancelled_orders_say_why": "a cancellation needs a reason",
+    "scheduled_after_reported": "a visit cannot be scheduled before the job was reported",
+}
+# The inventory's own rules, for the completion that writes to it.
+COMPLETION_REFUSALS: dict[str, str] = {
+    "retired_after_installed": "a component cannot retire before it was installed",
+}
+
 
 class UnknownVendor(Exception):
     pass
@@ -73,6 +96,10 @@ class UnknownEntity(Exception):
 
 class UnknownProperty(Exception):
     pass
+
+
+class UnknownDocument(Exception):
+    """A cost may cite the receipt behind it, but only one that exists."""
 
 
 class DuplicateVendor(Exception):
@@ -417,9 +444,13 @@ class CompletionOut(BaseModel):
     capitalisation_citation: str | None
 
 
-def _bar_citation(is_capital: bool | None, amount: Decimal) -> str | None:
+def _bar_citation(is_capital: bool | None, amount: Decimal, resolution: Resolution) -> str | None:
     if is_capital is True:
-        return RESTORATION_CITATION
+        # Only a REPLACEMENT is a fact this system holds about a major
+        # component. A repair the owner capitalises may be a betterment or an
+        # adaptation; citing the restoration paragraph for it would assert
+        # something nobody said.
+        return RESTORATION_CITATION if resolution == "replaced" else IMPROVEMENT_CITATION
     if is_capital is False:
         # Treas. Reg. 1.263(a)-1(f)(1)(ii)(D) reads "does not exceed", so the
         # threshold itself is INSIDE the harbour. (Schedule E's
@@ -554,6 +585,14 @@ def transition(conn: Conn, work_order_id: str, body: TransitionIn) -> WorkOrderO
         raise UnknownWorkOrder(work_order_id)
     if body.status not in LEGAL_TRANSITIONS[current["status"]]:
         raise IllegalTransition(current["status"], body.status)
+    # A vendor assigned on the way through is a reference, and an unknown
+    # reference is a 404 -- not a foreign key violation reaching the client.
+    if body.vendor_id is not None:
+        vendor = conn.execute(
+            "SELECT id::text FROM vendors WHERE id = %s", (body.vendor_id,)
+        ).fetchone()
+        if vendor is None:
+            raise UnknownVendor(body.vendor_id)
     conn.execute(
         """
         UPDATE work_orders
@@ -577,6 +616,27 @@ INFLOW_CATEGORIES: dict[str, str] = {
     "warranty_credit": "repairs",  # a credit against the repair it refunds
 }
 
+# Only money that MEASURES the thing may become the thing's recorded value.
+# A deposit is a part payment, a chargeback and a credit are money coming
+# back, and 'other' says nothing at all — none of them is what the component
+# cost.
+INVOICE_LIKE_RELATIONS = frozenset({"invoice", "materials"})
+
+
+def _component_value(cost: CostIn | None) -> Decimal | None:
+    """What the installed component is worth, from the money on the completion.
+
+    components.replacement_cost is read by the capital forecast, so writing a
+    deposit there would tell every future projection the water heater cost
+    $400. When the money on the job does not measure the component, the column
+    is left unstated — which the forecast handles — rather than stated wrongly,
+    which it cannot. An explicit replacement.replacement_cost always wins over
+    this inference.
+    """
+    if cost is None or cost.relation not in INVOICE_LIKE_RELATIONS:
+        return None
+    return cost.amount
+
 
 def _post_cost(
     conn: Conn,
@@ -589,7 +649,18 @@ def _post_cost(
     """One ledger event, one association. The BAR answer is demanded before
     the money can be called capital."""
     if cost.is_capital is True and not (cost.capitalisation_rationale or "").strip():
-        raise CapitalNeedsRationale(RESTORATION_CITATION)
+        raise CapitalNeedsRationale(IMPROVEMENT_CITATION)
+    # The receipt behind the money has to exist, and it has to arrive as the
+    # TEXT the ledger's model declares: a bare UUID died in pydantic before the
+    # foreign key could even refuse it, and either way the client saw a 500.
+    document_id: str | None = None
+    if cost.document_id is not None:
+        document = conn.execute(
+            "SELECT id::text FROM source_documents WHERE id = %s", (cost.document_id,)
+        ).fetchone()
+        if document is None:
+            raise UnknownDocument(cost.document_id)
+        document_id = document["id"]
     inflow_category = INFLOW_CATEGORIES.get(cost.relation)
     if inflow_category is not None:
         # A credit is money coming back; it is definitionally not a capital
@@ -615,7 +686,7 @@ def _post_cost(
             capitalisation_rationale=rationale,
             property_id=work_order["property_id"],
             unit_id=work_order["unit_id"],
-            document_id=cost.document_id,
+            document_id=document_id,
         ),
     )
     conn.execute(
@@ -700,7 +771,7 @@ def complete(conn: Conn, work_order_id: str, body: CompletionIn, actor: str) -> 
                 spec.expected_life_years,
                 spec.replacement_cost
                 if spec.replacement_cost is not None
-                else (body.cost.amount if body.cost else None),
+                else _component_value(body.cost),
                 spec.notes,
             ),
         ).fetchone()
@@ -737,7 +808,7 @@ def complete(conn: Conn, work_order_id: str, body: CompletionIn, actor: str) -> 
             occurred_on=body.cost.occurred_on or body.completed_on,
             linked_by=actor,
         )
-        citation = _bar_citation(body.cost.is_capital, body.cost.amount)
+        citation = _bar_citation(body.cost.is_capital, body.cost.amount, body.resolution)
     return CompletionOut(
         work_order=read_work_order(conn, work_order_id),
         retired_component_id=retired_id,

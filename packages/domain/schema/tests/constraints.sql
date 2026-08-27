@@ -869,6 +869,12 @@ SELECT assert_rejected(
             'completed', '2026-08-01', 'repaired')$$,
   'completed_after_reported',
   'work completed before it was reported');
+SELECT assert_rejected(
+  $$INSERT INTO work_orders (property_id, summary, reported_on, status, scheduled_for)
+    VALUES ('33333333-3333-3333-3333-333333333333', 'No hot water', '2026-08-27',
+            'scheduled', '2026-08-01')$$,
+  'scheduled_after_reported',
+  'a visit scheduled before the job was reported');
 -- A unit of another property cannot be named by this property's work order.
 INSERT INTO properties (id, entity_id, label, street_1, city, state, postal_code, kind)
   VALUES ('88888888-8888-4888-8888-888888888803', '11111111-1111-1111-1111-111111111111',

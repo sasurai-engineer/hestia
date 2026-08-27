@@ -164,11 +164,11 @@ class TestVendors:
 
         # "does not exceed $2,500" — the threshold itself is INSIDE the harbour.
         assert "1.263(a)-1(f)" in maintenance._bar_citation(
-            False, DE_MINIMIS_CENTS - Decimal("0.01")
+            False, DE_MINIMIS_CENTS - Decimal("0.01"), "repaired"
         )
-        assert "1.263(a)-1(f)" in maintenance._bar_citation(False, DE_MINIMIS_CENTS)
+        assert "1.263(a)-1(f)" in maintenance._bar_citation(False, DE_MINIMIS_CENTS, "repaired")
         assert "1.263(a)-3(i)" in maintenance._bar_citation(
-            False, DE_MINIMIS_CENTS + Decimal("0.01")
+            False, DE_MINIMIS_CENTS + Decimal("0.01"), "repaired"
         )
 
     def test_one_vendor_name_per_owner_list(
@@ -313,6 +313,27 @@ class TestLifecycle:
             == 409
         )
 
+    def test_a_transition_cannot_name_a_vendor_that_does_not_exist(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        """Handing the job to a vendor id that names nothing is an unknown
+        reference, not a foreign key violation escaping as a 500."""
+        order = open_order(client, world, vendor_id=None)
+        ghost = client.post(
+            f"/work-orders/{order['id']}/transitions",
+            json={"status": "triaged", "vendor_id": "00000000-0000-4000-8000-000000000000"},
+        )
+        assert ghost.status_code == 404
+        assert ghost.json()["detail"] == "vendor not found"
+        # The refusal rolled back: the job never moved.
+        assert client.get(f"/work-orders/{order['id']}").json()["status"] == "reported"
+        assigned = client.post(
+            f"/work-orders/{order['id']}/transitions",
+            json={"status": "triaged", "vendor_id": world["vendor"]},
+        )
+        assert assigned.status_code == 200
+        assert assigned.json()["vendor_name"] == "Licking Valley Plumbing"
+
     def test_a_work_order_cannot_borrow_another_property_s_unit(
         self, world: dict[str, str], client: TestClient
     ) -> None:
@@ -339,6 +360,30 @@ class TestLifecycle:
             },
         )
         assert response.status_code == 422
+
+    def test_a_refused_transition_names_the_rule_that_fired(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        """One message for three different CHECKs told the operator to add a
+        date when the date was exactly what was wrong."""
+        order = open_order(client, world)  # reported_on 2026-08-01
+        no_date = client.post(
+            f"/work-orders/{order['id']}/transitions", json={"status": "scheduled"}
+        )
+        assert no_date.status_code == 422
+        assert no_date.json()["detail"] == "a scheduled visit needs a date"
+        no_reason = client.post(
+            f"/work-orders/{order['id']}/transitions", json={"status": "cancelled"}
+        )
+        assert no_reason.status_code == 422
+        assert no_reason.json()["detail"] == "a cancellation needs a reason"
+        backdated = client.post(
+            f"/work-orders/{order['id']}/transitions",
+            json={"status": "scheduled", "scheduled_for": "2026-07-15"},
+        )
+        assert backdated.status_code == 422
+        detail = backdated.json()["detail"]
+        assert detail == "a visit cannot be scheduled before the job was reported"
 
     def test_listing_and_reading_guards(self, world: dict[str, str], client: TestClient) -> None:
         order = open_order(client, world)
@@ -552,7 +597,10 @@ class TestCompletion:
             },
         )
         assert response.status_code == 422
-        assert "1.263(a)-3(k)" in response.json()["detail"]
+        # The umbrella rule, not the restoration paragraph: nothing in this
+        # request says a major component was replaced.
+        assert "1.263(a)-3(d)" in response.json()["detail"]
+        assert "1.263(a)-3(k)(1)(vi)" not in response.json()["detail"]
         # The refusal rolled the whole completion back.
         assert client.get(f"/work-orders/{order['id']}").json()["status"] == "reported"
 
@@ -711,6 +759,74 @@ class TestCosts:
             ).status_code
             == 422
         )
+
+    def test_a_cost_may_cite_only_a_receipt_that_exists(
+        self, world: dict[str, str], client: TestClient, conn: psycopg.Connection[Any]
+    ) -> None:
+        """The document behind the money is attached at INSERT, because the
+        ledger refuses UPDATE forever after. A document_id naming nothing is a
+        404 -- not a psycopg error at the client, and not a pydantic one
+        either: the ledger's model wants text and a bare UUID never reached it."""
+        document = conn.execute(
+            """
+            INSERT INTO source_documents (kind, filename, content_hash, status)
+            VALUES ('invoice', 'licking-valley-8842.pdf', %s, 'confirmed')
+            RETURNING id::text
+            """,
+            ("d" * 64,),
+        ).fetchone()
+        conn.commit()
+        order = open_order(client, world)
+        ghost = client.post(
+            f"/work-orders/{order['id']}/costs",
+            json={
+                "cost": {
+                    "amount": "300.00",
+                    "is_capital": False,
+                    "document_id": "00000000-0000-4000-8000-000000000000",
+                },
+            },
+        )
+        assert ghost.status_code == 404
+        assert ghost.json()["detail"] == "document not found"
+        assert client.get(f"/work-orders/{order['id']}").json()["costs"] == []
+
+        posted = client.post(
+            f"/work-orders/{order['id']}/costs",
+            json={
+                "cost": {
+                    "amount": "300.00",
+                    "is_capital": False,
+                    "document_id": document["id"],
+                },
+            },
+        )
+        assert posted.status_code == 201, posted.text
+        event_uuid = posted.json()["costs"][0]["ledger_event_uuid"]
+        stored = conn.execute(
+            "SELECT document_id::text FROM ledger_events WHERE event_uuid = %s",
+            (event_uuid,),
+        ).fetchone()
+        assert stored["document_id"] == document["id"]
+
+        # The completion door posts its money through the same helper.
+        second = open_order(client, world)
+        refused = client.post(
+            f"/work-orders/{second['id']}/complete",
+            json={
+                "completed_on": "2026-08-27",
+                "resolution": "repaired",
+                "cost": {
+                    "amount": "300.00",
+                    "is_capital": False,
+                    "document_id": "00000000-0000-4000-8000-000000000000",
+                },
+            },
+        )
+        assert refused.status_code == 404
+        assert refused.json()["detail"] == "document not found"
+        # The refusal rolled the half-written completion back with it.
+        assert client.get(f"/work-orders/{second['id']}").json()["status"] == "reported"
 
 
 class TestEdgeValidation:
