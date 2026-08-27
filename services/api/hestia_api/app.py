@@ -1481,6 +1481,34 @@ def read_vendor(
         raise HTTPException(status_code=404, detail="vendor not found") from error
 
 
+@app.post("/vendors/{vendor_id}/credentials", response_model=maintenance.VendorOut)
+def renew_vendor_credentials(
+    vendor_id: uuid.UUID,
+    body: maintenance.CredentialsIn,
+    conn: Conn,
+    request: Request,
+    actor: Actor = "system",
+) -> maintenance.VendorOut:
+    try:
+        vendor = maintenance.renew_credentials(conn, str(vendor_id), body, as_of=dt.date.today())
+    except maintenance.UnknownVendor as error:
+        raise HTTPException(status_code=404, detail="vendor not found") from error
+    except maintenance.NothingToRenew as error:
+        raise HTTPException(
+            status_code=422, detail="a renewal has to name what was renewed"
+        ) from error
+    db.record_audit(
+        conn,
+        actor=actor,
+        action="vendors.renew_credentials",
+        request_id=request.state.request_id,
+        table_name="vendors",
+        record_id=str(vendor_id),
+        after_value={"coverage_state": vendor.coverage_state},
+    )
+    return vendor
+
+
 @app.post("/work-orders", response_model=maintenance.WorkOrderOut, status_code=201)
 def create_work_order(
     body: maintenance.WorkOrderIn, conn: Conn, request: Request, actor: Actor = "system"
@@ -1603,6 +1631,17 @@ def complete_work_order(
         ) from error
     except maintenance.IllegalTransition as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
+    except psycopg.errors.CheckViolation as error:
+        # The completion writes to the inventory, so the inventory's own rules
+        # can refuse it — a replacement dated before the component it retires
+        # trips retired_after_installed. Name the rule that bit.
+        raise HTTPException(
+            status_code=422,
+            detail=maintenance.COMPLETION_REFUSALS.get(
+                error.diag.constraint_name or "",
+                f"the inventory refused this completion: {error.diag.constraint_name}",
+            ),
+        ) from error
     db.record_audit(
         conn,
         actor=actor,

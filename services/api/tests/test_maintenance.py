@@ -889,6 +889,87 @@ class TestEdgeValidation:
         assert client.get(f"/work-orders/{order['id']}").json()["status"] == "reported"
 
 
+class TestRenewalAndRefusals:
+    def test_a_certificate_can_be_renewed_without_inventing_a_second_vendor(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        """Certificates expire yearly. Without this there was no door: the
+        unique name per entity made re-adding the vendor impossible."""
+        lapsed = client.post(
+            "/vendors",
+            json={
+                "entity_id": world["entity"],
+                "name": "Lapsed Then Renewed",
+                "trade": "roofing",
+                "liability_expires_on": "2026-01-31",
+            },
+        ).json()
+        assert lapsed["coverage_state"] == "expired"
+        renewed = client.post(
+            f"/vendors/{lapsed['id']}/credentials",
+            json={"liability_expires_on": "2028-01-31", "insurer": "Second Carrier"},
+        )
+        assert renewed.status_code == 200, renewed.text
+        body = renewed.json()
+        assert body["coverage_state"] == "current"
+        assert body["insurer"] == "Second Carrier"
+        # Untouched fields stay put: a renewal names what was renewed.
+        assert body["name"] == "Lapsed Then Renewed"
+        assert body["trade"] == "roofing"
+
+    def test_renewal_guards(self, world: dict[str, str], client: TestClient) -> None:
+        assert (
+            client.post(
+                "/vendors/00000000-0000-4000-8000-000000000000/credentials",
+                json={"insurer": "Nobody"},
+            ).status_code
+            == 404
+        )
+        assert client.post(f"/vendors/{world['vendor']}/credentials", json={}).status_code == 422
+
+    def test_a_cost_body_may_not_carry_two_relations(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        """The outer relation describes a LINK to an existing event; a posted
+        cost carries its own. Setting both said two things about one row and
+        silently kept one."""
+        order = open_order(client, world)
+        response = client.post(
+            f"/work-orders/{order['id']}/costs",
+            json={
+                "cost": {"amount": "50.00", "relation": "materials"},
+                "relation": "invoice",
+            },
+        )
+        assert response.status_code == 422
+        # Either one alone is fine.
+        assert (
+            client.post(
+                f"/work-orders/{order['id']}/costs",
+                json={"cost": {"amount": "50.00", "relation": "materials"}},
+            ).status_code
+            == 201
+        )
+
+    def test_the_inventory_refuses_a_completion_by_name(
+        self, world: dict[str, str], client: TestClient, conn: psycopg.Connection[Any]
+    ) -> None:
+        """A replacement dated before the component it retires trips
+        retired_after_installed, which used to escape as a 500."""
+        conn.execute(
+            "UPDATE components SET installed_on = '2026-09-01' WHERE id = %s",
+            (world["component"],),
+        )
+        conn.commit()
+        order = open_order(client, world)
+        response = client.post(
+            f"/work-orders/{order['id']}/complete",
+            json={"completed_on": "2026-08-27", "resolution": "replaced"},
+        )
+        assert response.status_code == 422
+        assert "cannot retire before it was installed" in response.json()["detail"]
+
+
 class TestCredits:
     def test_a_tenant_chargeback_is_income_and_reduces_what_the_job_cost(
         self, world: dict[str, str], client: TestClient
