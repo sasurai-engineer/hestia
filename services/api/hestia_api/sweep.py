@@ -377,6 +377,101 @@ def _adverse_action_notices(conn: Conn, as_of: dt.date) -> list[dict[str, Any]]:
     ]
 
 
+def _deposit_itemizations(conn: Conn, as_of: dt.date) -> list[dict[str, Any]]:
+    """A tenancy that ended owes the deposit back inside the period the
+    jurisdiction sets. Where the chain sets none, the sweep says so as a gap
+    rather than inventing a period — a made-up deadline looks like law.
+    """
+    rows = conn.execute(
+        """
+        WITH lease_anchor AS (
+          SELECT l.id AS lease_id, u.property_id, p.state,
+                 l.moved_out_on,
+                 COALESCE(p.jurisdiction_id, s.id) AS start_id
+          FROM leases l
+          JOIN units u ON u.id = l.unit_id
+          JOIN properties p ON p.id = u.property_id
+          LEFT JOIN jurisdictions s ON s.level = 'state' AND s.state = p.state
+          WHERE l.moved_out_on IS NOT NULL AND l.deposit_returned_on IS NULL
+        ),
+        resolved AS (
+          SELECT DISTINCT ON (a.lease_id)
+                 a.lease_id, r.value_numeric AS return_days, r.citation
+          FROM lease_anchor a
+          CROSS JOIN LATERAL jurisdiction_chain(a.start_id) c
+          JOIN jurisdiction_rules r ON r.jurisdiction_id = c.jurisdiction_id
+          WHERE r.domain = 'security_deposit'
+            AND r.code = 'deposit.return_days'
+            AND r.superseded_by IS NULL
+            AND r.effective_from <= %(as_of)s
+            AND (r.effective_to IS NULL OR r.effective_to > %(as_of)s)
+          ORDER BY a.lease_id, c.depth ASC, r.effective_from DESC
+        )
+        SELECT a.lease_id, a.property_id, a.state, a.moved_out_on,
+               resolved.return_days, resolved.citation
+        FROM lease_anchor a LEFT JOIN resolved ON resolved.lease_id = a.lease_id
+        """,
+        {"as_of": as_of},
+    ).fetchall()
+    out: list[dict[str, Any]] = []
+    for record in rows:
+        if record["return_days"] is None:
+            continue  # reported as a coverage gap by run_sweep, never defaulted
+        out.append(
+            _row(
+                "deposit_itemization",
+                record["moved_out_on"] + dt.timedelta(days=int(record["return_days"])),
+                record["citation"],
+                property_id=record["property_id"],
+                lease_id=record["lease_id"],
+                window_opens_on=record["moved_out_on"],
+                note=f"deposit itemisation and return, {record['return_days']} days from move-out",
+            )
+        )
+    return out
+
+
+def _deposit_gaps(conn: Conn, as_of: dt.date) -> list[CoverageGap]:
+    """Ended tenancies whose chain sets no return period."""
+    rows = conn.execute(
+        """
+        WITH lease_anchor AS (
+          SELECT l.id AS lease_id, u.property_id, p.state,
+                 COALESCE(p.jurisdiction_id, s.id) AS start_id
+          FROM leases l
+          JOIN units u ON u.id = l.unit_id
+          JOIN properties p ON p.id = u.property_id
+          LEFT JOIN jurisdictions s ON s.level = 'state' AND s.state = p.state
+          WHERE l.moved_out_on IS NOT NULL AND l.deposit_returned_on IS NULL
+        )
+        SELECT a.lease_id::text, a.property_id::text, a.state
+        FROM lease_anchor a
+        WHERE NOT EXISTS (
+          SELECT 1 FROM jurisdiction_chain(a.start_id) c
+          JOIN jurisdiction_rules r ON r.jurisdiction_id = c.jurisdiction_id
+          WHERE r.domain = 'security_deposit' AND r.code = 'deposit.return_days'
+            AND r.superseded_by IS NULL
+            AND r.effective_from <= %(as_of)s
+            AND (r.effective_to IS NULL OR r.effective_to > %(as_of)s)
+        )
+        """,
+        {"as_of": as_of},
+    ).fetchall()
+    return [
+        CoverageGap(
+            property_id=record["property_id"],
+            state=record["state"],
+            domain="security_deposit",
+            reason="no_rule_for_domain",
+            detail=(
+                f"lease {record['lease_id']} has ended with the deposit unsettled and "
+                f"no deposit.return_days rule resolves for {record['state']}"
+            ),
+        )
+        for record in rows
+    ]
+
+
 GENERATORS = (
     _lease_expirations,
     _policy_expirations,
@@ -385,6 +480,7 @@ GENERATORS = (
     _entity_tax_dates,
     _vendor_credentials,
     _adverse_action_notices,
+    _deposit_itemizations,
 )
 
 
@@ -392,6 +488,7 @@ def run_sweep(conn: Conn, as_of: dt.date) -> SweepResult:
     inserted: dict[str, int] = {}
     appeal_rows, gaps = _appeal_windows(conn, as_of)
     rows = appeal_rows + [row for generator in GENERATORS for row in generator(conn, as_of)]
+    gaps = gaps + _deposit_gaps(conn, as_of)
     for row in rows:
         result = conn.execute(INSERT, row)
         if result.rowcount == 1:
