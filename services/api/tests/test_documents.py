@@ -11,6 +11,7 @@ from __future__ import annotations
 import datetime as dt
 import threading
 import time
+import zlib
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
@@ -447,11 +448,19 @@ class TestReviewFindings:
     """One pin per defect the adversarial review of this increment confirmed."""
 
     def test_applied_is_terminal_even_under_a_concurrent_review(
-        self, newport_property: str, client: TestClient, conn: psycopg.Connection[Any]
+        self, newport_property: str, client: TestClient, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """A review that read the document BEFORE an apply committed must not
         write its status back — that would let one purchase apply twice into
-        an append-only ledger."""
+        an append-only ledger.
+
+        The stale read is staged the way the upload race is: the row review
+        locks comes back with its PRE-apply status, so review_field's own
+        guard waves the request through and the endpoint runs the real
+        _refresh_status against a document that is already applied. Nothing
+        here restates the guard, so deleting `AND status::text <> 'applied'`
+        from documents.py demotes the record to 'confirmed' and fails this.
+        """
         detail = upload(client, newport_property, pdf_variant("terminal-state"))
         doc_id = detail["id"]
         ratify(client, doc_id)
@@ -459,13 +468,28 @@ class TestReviewFindings:
             client.post(f"/documents/{doc_id}/apply", json={"land_value": "0.00"}).status_code
             == 201
         )
-        # The stale write the racing review would have issued, verbatim.
-        conn.execute(
-            "UPDATE source_documents SET status = 'confirmed'"
-            " WHERE id = %s AND status::text <> 'applied'",
-            (doc_id,),
+        real_execute = psycopg.Connection.execute
+        locked_read = "FROM source_documents WHERE id = %s FOR UPDATE"
+
+        def stale_before_the_apply(self: Any, query: Any, *args: Any, **kwargs: Any) -> Any:
+            if isinstance(query, str) and locked_read in query:
+                return real_execute(
+                    self,
+                    "SELECT %s::text AS id, 'settlement_statement'::text AS kind,"
+                    " 'confirmed'::text AS status",
+                    (doc_id,),
+                )
+            return real_execute(self, query, *args, **kwargs)
+
+        monkeypatch.setattr(psycopg.Connection, "execute", stale_before_the_apply)
+        response = client.post(
+            f"/documents/{doc_id}/review",
+            json={"field_path": "settlement.sale_price", "action": "accept"},
         )
-        conn.commit()
+        # The racing review ran to completion and still could not demote it.
+        assert response.status_code == 200, response.text
+        assert response.json()["status"] == "applied"
+        monkeypatch.setattr(psycopg.Connection, "execute", real_execute)
         assert client.get(f"/documents/{doc_id}").json()["status"] == "applied"
         assert (
             client.post(f"/documents/{doc_id}/apply", json={"land_value": "0.00"}).status_code
@@ -657,19 +681,31 @@ class TestReviewFindings:
 class TestExtractionBudgets:
     """The upload cap bounds compressed bytes; these bound the WORK."""
 
-    def build_pdf(self, pages: list[bytes]) -> bytes:
-        """A minimal valid PDF with the given raw content streams."""
+    def build_pdf(self, pages: list[bytes], *, compressed: bool = False) -> bytes:
+        """A minimal valid PDF with the given content streams — stored raw, or
+        deflated the way every real producer writes them."""
         objects: list[bytes] = []
 
         def add(body: bytes) -> int:
             objects.append(body)
             return len(objects)
 
+        def content_stream(data: bytes) -> bytes:
+            filters = b""
+            if compressed:
+                data = zlib.compress(data, 9)
+                filters = b" /Filter /FlateDecode"
+            return (
+                b"<< /Length "
+                + str(len(data)).encode()
+                + filters
+                + b" >>\nstream\n"
+                + data
+                + b"\nendstream"
+            )
+
         font = add(b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>")
-        streams = [
-            add(b"<< /Length " + str(len(data)).encode() + b" >>\nstream\n" + data + b"\nendstream")
-            for data in pages
-        ]
+        streams = [add(content_stream(data)) for data in pages]
         page_numbers = []
         for stream in streams:
             parent = len(objects) + (len(streams) + 1 - len(page_numbers))
@@ -710,11 +746,21 @@ class TestExtractionBudgets:
             extraction_parse.extract_lines(pdf)
 
     def test_a_decompression_bomb_is_refused_by_budget(self) -> None:
-        """A compressed upload well under the byte cap can decompress into
-        work that pins a worker; the budget is measured after inflation."""
+        """A genuinely FlateDecode-compressed stream, because that is the only
+        shape this attack has. An UNCOMPRESSED page over the budget is refused
+        by its own size and says nothing about inflation — it passes even if
+        the budget is measured before decoding. Here the bytes on the wire are
+        a few kilobytes, well under both caps, and only the inflated stream is
+        over 8MB: the refusal can come from nowhere but the decoded length.
+        """
         fat = b"BT /F1 10 Tf (" + b"x" * (extraction_parse.MAX_CONTENT_BYTES + 1) + b") Tj ET"
+        pdf = self.build_pdf([fat], compressed=True)
+        # Nothing about the upload itself is suspicious: it clears the byte cap
+        # and the extraction budget by three orders of magnitude.
+        assert len(pdf) < documents.MAX_BYTES
+        assert len(pdf) < extraction_parse.MAX_CONTENT_BYTES // 100
         with pytest.raises(extraction_parse.UnreadableDocument, match="extraction budget"):
-            extraction_parse.extract_lines(self.build_pdf([fat]))
+            extraction_parse.extract_lines(pdf)
 
     def test_a_pdf_of_endless_lines_is_refused_too(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """The page and decompressed-byte budgets do not bound the LINE list,
@@ -743,11 +789,28 @@ class TestExtractionBudgets:
         assert extraction_parse.match_money_line("Total   $5.00") == ("Total", "5.00")
 
     def test_a_hostile_line_does_not_burn_the_worker(self) -> None:
-        """The old label-first regex re-scanned the column gap at every start
-        offset — quadratic, and reachable from any upload."""
+        """Straight at match_money_line, NOT through parse_settlement.
+
+        The parser truncates every line to MAX_LINE_CHARS before matching, so
+        a test that goes through it finishes in ten milliseconds even with the
+        old label-first pattern restored: it pins the truncation and says
+        nothing about the matcher. The adversarial shape is a long run of
+        spaces ending in a '$' that is not an amount — anchored at the amount,
+        the pattern finds the single '$', fails once and stops; label-first,
+        it re-scans the whole column gap from every start offset and takes
+        about four seconds at this length.
+        """
+        hostile = "Label" + " " * 40_000 + "$not-an-amount"
         started = time.monotonic()
-        extraction_parse.parse_settlement([(1, "Label" + " " * 50_000 + "$not-an-amount")])
-        assert time.monotonic() - started < 1.0
+        assert extraction_parse.match_money_line(hostile) is None
+        elapsed = time.monotonic() - started
+        assert elapsed < 0.5, f"{elapsed:.2f}s to reject one line; the matcher is not anchored"
+        # A line of the same length that IS a charge line still reads, so the
+        # bound cannot be met by refusing to look at long lines.
+        assert extraction_parse.match_money_line("Sale Price" + " " * 40_000 + "$187,500.00") == (
+            "Sale Price",
+            "187,500.00",
+        )
 
 
 class TestDomainGuards:

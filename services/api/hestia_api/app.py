@@ -1542,12 +1542,19 @@ def transition_work_order(
         work_order = maintenance.transition(conn, str(work_order_id), body)
     except maintenance.UnknownWorkOrder as error:
         raise HTTPException(status_code=404, detail="work order not found") from error
+    except maintenance.UnknownVendor as error:
+        raise HTTPException(status_code=404, detail="vendor not found") from error
     except maintenance.IllegalTransition as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
     except psycopg.errors.CheckViolation as error:
+        # Name the rule that actually fired: three constraints reach this UPDATE
+        # and one message for all of them hid which line the request crossed.
         raise HTTPException(
             status_code=422,
-            detail="a scheduled visit needs a date and a cancellation needs a reason",
+            detail=maintenance.TRANSITION_REFUSALS.get(
+                error.diag.constraint_name or "",
+                "a work-order rule refused that transition",
+            ),
         ) from error
     db.record_audit(
         conn,
@@ -1588,6 +1595,8 @@ def complete_work_order(
             status_code=422,
             detail="a replacement must name the component it replaced",
         ) from error
+    except maintenance.UnknownDocument as error:
+        raise HTTPException(status_code=404, detail="document not found") from error
     except maintenance.CapitalNeedsRationale as error:
         raise HTTPException(
             status_code=422, detail=f"capital spending explains itself: {error}"
@@ -1624,6 +1633,8 @@ def add_work_order_cost(
         raise HTTPException(status_code=404, detail="work order not found") from error
     except ledger.UnknownEvent as error:
         raise HTTPException(status_code=404, detail="ledger event not found") from error
+    except maintenance.UnknownDocument as error:
+        raise HTTPException(status_code=404, detail="document not found") from error
     except maintenance.WrongProperty as error:
         raise HTTPException(
             status_code=422, detail="that ledger event belongs to another property"
