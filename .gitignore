@@ -19,6 +19,11 @@ stryker.log
 test-results/
 playwright-report/
 blob-report/
+# The two patterns above are tool-output names that also happen to be app
+# routes. Without these negations, git silently swallows the route source —
+# /reports and /coverage 404'd on every fresh checkout while passing locally.
+!apps/web/src/app/coverage/
+!apps/web/src/app/reports/
 
 # python
 __pycache__/
