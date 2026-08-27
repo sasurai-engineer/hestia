@@ -1,0 +1,264 @@
+{
+  "$description": "The Field Book — Hestia's livery as a contract. Nine tinctures are committed and untouchable; every later color is a tint or shade of one of them. The parity test fails any commit where src/css drifts from this file, and the contrast test recomputes every recorded ratio arithmetically.",
+  "hearth-white": {
+    "$value": "#faf7f2",
+    "$description": "The ground: warm plaster. Pure white is never used."
+  },
+  "parchment": {
+    "$value": "#f1ebe1",
+    "$description": "The raised surface: paper on the drafting table."
+  },
+  "char": {
+    "$value": "#221e19",
+    "$description": "The ink. Pure black is never used."
+  },
+  "umber": {
+    "$value": "#6b6257",
+    "$description": "Dimmed ink and money-out — an expense is not an error."
+  },
+  "ember": {
+    "$value": "#b24a17",
+    "$description": "Kiln-fired clay: actions and the one number that matters. A tenth of any view, no more."
+  },
+  "ember-wash": {
+    "$value": "#f3ddd0",
+    "$description": "Ember's paper. Ink on this wash is ember-deep, never ember — ember on it is 4.14:1 and fails AA."
+  },
+  "fern": {
+    "$value": "#3e6b4f",
+    "$description": "Growth and money-in. A signal, not a theme."
+  },
+  "madder": {
+    "$value": "#8f2d3c",
+    "$description": "Failure only. An expense is umber; a failure is madder."
+  },
+  "survey-blue": {
+    "$value": "#33628c",
+    "$description": "Statutory authority and citations alone. Never decoration, never a chart series."
+  },
+  "graphite": {
+    "$value": "#4a443c",
+    "$description": "The second ink: axis lines, secondary series, borders that mean something. Sits between char and umber on the same warm axis."
+  },
+  "sandstone": {
+    "$value": "#d9cfbe",
+    "$description": "Deep paper: table stripes, skeleton base, pressed surfaces. A shade of parchment, not a new hue. Body text on it is char."
+  },
+  "ember-deep": {
+    "$value": "#8f3a10",
+    "$description": "Pressed and active ember; the sanctioned ink on ember-wash. Clears 7:1 on the ground."
+  },
+  "fern-wash": {
+    "$value": "#e3ece6",
+    "$description": "Positive ground: money-in confirmations, a hold verdict's field."
+  },
+  "madder-wash": {
+    "$value": "#f6e3e5",
+    "$description": "Error ground. Reserved for failure, like its ink."
+  },
+  "survey-wash": {
+    "$value": "#e6edf4",
+    "$description": "The stamp's paper: citation chips only."
+  },
+  "ground": {
+    "$value": "var(--hearth-white)",
+    "$description": "Role: the page."
+  },
+  "surface": {
+    "$value": "var(--parchment)",
+    "$description": "Role: raised paper."
+  },
+  "surface-2": {
+    "$value": "var(--sandstone)",
+    "$description": "Role: deep paper — stripes, skeletons, pressed fills."
+  },
+  "ink": {
+    "$value": "var(--char)",
+    "$description": "Role: primary text."
+  },
+  "ink-2": {
+    "$value": "var(--graphite)",
+    "$description": "Role: the second ink — still AAA on both grounds."
+  },
+  "ink-dim": {
+    "$value": "var(--umber)",
+    "$description": "Role: secondary text. AA, not AAA — never below 13px without char."
+  },
+  "ink-faint": {
+    "$value": "rgb(34 30 25 / 45%)",
+    "$description": "Role: tertiary text, large sizes only."
+  },
+  "line": {
+    "$value": "rgb(34 30 25 / 12%)",
+    "$description": "Role: the drawn edge. Elevation is drawn, not filled."
+  },
+  "line-soft": {
+    "$value": "rgb(34 30 25 / 7%)",
+    "$description": "Role: the faint rule — table rows, ruled paper."
+  },
+  "money-in": {
+    "$value": "var(--fern)",
+    "$description": "Role law: income is fern."
+  },
+  "money-out": {
+    "$value": "var(--umber)",
+    "$description": "Role law: an expense is umber, never madder."
+  },
+  "serif": {
+    "$value": "var(--font-display, \"Bitter\"), \"Rockwell\", Cambria, serif",
+    "$description": "Bitter — the hearth's voice. The fallbacks share nothing with the consultancy's stacks."
+  },
+  "sans": {
+    "$value": "var(--font-ui, \"IBM Plex Sans\"), \"Helvetica Neue\", Arial, sans-serif",
+    "$description": "IBM Plex Sans — dense UI text."
+  },
+  "mono": {
+    "$value": "var(--font-mono, \"IBM Plex Mono\"), \"Courier New\", monospace",
+    "$description": "IBM Plex Mono — every figure is tabular ink."
+  },
+  "type-display": {
+    "$value": "38px",
+    "$description": "The largest voice on any page."
+  },
+  "type-title": {
+    "$value": "30px",
+    "$description": "Page titles (the current .page-title)."
+  },
+  "type-heading": {
+    "$value": "25px",
+    "$description": "The wordmark's size; card group heads."
+  },
+  "type-sub": {
+    "$value": "20px",
+    "$description": "Sub-heads and dispatch-card names."
+  },
+  "type-lead": {
+    "$value": "17px",
+    "$description": "Lead paragraphs; the floor for emergency surfaces."
+  },
+  "type-body": {
+    "$value": "15px",
+    "$description": "Body. The default voice."
+  },
+  "type-small": {
+    "$value": "13px",
+    "$description": "Dense supporting text."
+  },
+  "type-label": {
+    "$value": "12px",
+    "$description": "Tracked labels and section titles."
+  },
+  "type-micro": {
+    "$value": "11px",
+    "$description": "Pills and table headers. The smallest legal size."
+  },
+  "type-stat": {
+    "$value": "28px",
+    "$description": "The instrument readout: mono, tabular, slashed zero."
+  },
+  "track-label": {
+    "$value": "0.09em",
+    "$description": "Label tracking."
+  },
+  "track-section": {
+    "$value": "0.15em",
+    "$description": "Section-title tracking — the wide-set surveyor's stamp."
+  },
+  "space-1": { "$value": "4px", "$description": "The grid unit." },
+  "space-2": { "$value": "8px", "$description": "" },
+  "space-3": { "$value": "12px", "$description": "" },
+  "space-4": { "$value": "16px", "$description": "" },
+  "space-5": { "$value": "20px", "$description": "" },
+  "space-6": { "$value": "24px", "$description": "" },
+  "space-7": { "$value": "32px", "$description": "" },
+  "space-8": { "$value": "40px", "$description": "" },
+  "space-9": { "$value": "48px", "$description": "" },
+  "space-10": { "$value": "64px", "$description": "" },
+  "measure-page": {
+    "$value": "1080px",
+    "$description": "The shell's measure."
+  },
+  "measure-wide": {
+    "$value": "1360px",
+    "$description": "Timeline surfaces."
+  },
+  "measure-prose": {
+    "$value": "62ch",
+    "$description": "Reading width."
+  },
+  "radius-sm": { "$value": "6px", "$description": "" },
+  "radius-md": { "$value": "8px", "$description": "" },
+  "radius-lg": { "$value": "10px", "$description": "" },
+  "radius-full": { "$value": "999px", "$description": "Pills." },
+  "shadow-1": {
+    "$value": "0 1px 2px rgb(34 30 25 / 6%)",
+    "$description": "Resting paper. Every shadow keeps its drawn hairline edge."
+  },
+  "shadow-2": {
+    "$value": "0 2px 8px rgb(34 30 25 / 9%)",
+    "$description": "Raised: an open disclosure, a held marker."
+  },
+  "shadow-3": {
+    "$value": "0 6px 24px rgb(34 30 25 / 13%)",
+    "$description": "Overlay: dialog, palette."
+  },
+  "shadow-press": {
+    "$value": "inset 0 1px 2px rgb(34 30 25 / 12%)",
+    "$description": "Pressed into the paper."
+  },
+  "focus-outline": {
+    "$value": "2px solid var(--ember)",
+    "$description": "One focus ring, everywhere."
+  },
+  "layer-base": { "$value": "0", "$description": "" },
+  "layer-sticky": { "$value": "10", "$description": "" },
+  "layer-overlay": { "$value": "100", "$description": "" },
+  "layer-toast": { "$value": "200", "$description": "" },
+  "dur-1": {
+    "$value": "90ms",
+    "$description": "State flips: verdict, stamp."
+  },
+  "dur-2": {
+    "$value": "180ms",
+    "$description": "Hover and settles."
+  },
+  "dur-3": {
+    "$value": "320ms",
+    "$description": "Disclosure and overlays."
+  },
+  "dur-4": {
+    "$value": "600ms",
+    "$description": "The draftsman's trace — once per mount, never on data updates."
+  },
+  "ease-out": {
+    "$value": "cubic-bezier(0.2, 0, 0, 1)",
+    "$description": "Deceleration: things arriving."
+  },
+  "ease-settle": {
+    "$value": "cubic-bezier(0.34, 1.4, 0.64, 1)",
+    "$description": "A slight overshoot: things landing on the page."
+  },
+  "$contrast": {
+    "$description": "WCAG 2.1 ratios, recorded here and recomputed by the contrast test on every run. Floors: 7 = AAA text, 4.5 = AA text, 3 = non-text UI.",
+    "pairs": [
+      { "fg": "char", "bg": "hearth-white", "ratio": 15.5, "floor": 7 },
+      { "fg": "char", "bg": "parchment", "ratio": 13.97, "floor": 7 },
+      { "fg": "char", "bg": "sandstone", "ratio": 10.74, "floor": 7 },
+      { "fg": "graphite", "bg": "hearth-white", "ratio": 9.0, "floor": 7 },
+      { "fg": "graphite", "bg": "parchment", "ratio": 8.11, "floor": 7 },
+      { "fg": "graphite", "bg": "sandstone", "ratio": 6.24, "floor": 4.5 },
+      { "fg": "umber", "bg": "hearth-white", "ratio": 5.6, "floor": 4.5 },
+      { "fg": "umber", "bg": "parchment", "ratio": 5.05, "floor": 4.5 },
+      { "fg": "ember", "bg": "hearth-white", "ratio": 5.06, "floor": 4.5 },
+      { "fg": "ember-deep", "bg": "hearth-white", "ratio": 7.07, "floor": 7 },
+      { "fg": "ember-deep", "bg": "ember-wash", "ratio": 5.78, "floor": 4.5 },
+      { "fg": "survey-blue", "bg": "hearth-white", "ratio": 6.02, "floor": 4.5 },
+      { "fg": "survey-blue", "bg": "parchment", "ratio": 5.42, "floor": 4.5 },
+      { "fg": "survey-blue", "bg": "survey-wash", "ratio": 5.44, "floor": 4.5 },
+      { "fg": "madder", "bg": "hearth-white", "ratio": 7.53, "floor": 7 },
+      { "fg": "madder", "bg": "madder-wash", "ratio": 6.53, "floor": 4.5 },
+      { "fg": "fern", "bg": "hearth-white", "ratio": 5.74, "floor": 4.5 },
+      { "fg": "fern", "bg": "fern-wash", "ratio": 5.09, "floor": 4.5 }
+    ]
+  }
+}

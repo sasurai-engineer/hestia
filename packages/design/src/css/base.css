@@ -1,0 +1,73 @@
+/* The Field Book — base layer.
+
+   The paper itself: reset, ground, and the typographic voice. Light-first
+   and committed — daylight paper is the brand, and the livery test holds
+   `color-scheme: light` as a law, not a habit. Component classes live in
+   the primitives layer; page-local rules stay in the app layer. */
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+  }
+
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: var(--type-body);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  button {
+    font: inherit;
+  }
+
+  /* ---- the voice ---- */
+
+  .page-title {
+    font-family: var(--serif);
+    font-size: var(--type-title);
+    font-weight: 600;
+    letter-spacing: 0.005em;
+    margin-bottom: 6px;
+  }
+
+  .page-subtitle {
+    color: var(--ink-dim);
+    margin-bottom: var(--space-7);
+    max-width: var(--measure-prose);
+  }
+
+  .section {
+    margin: var(--space-8) 0;
+  }
+
+  .section__title {
+    font-size: var(--type-label);
+    letter-spacing: var(--track-section);
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    border-bottom: 1px solid var(--line);
+    padding-bottom: var(--space-2);
+    margin-bottom: var(--space-4);
+  }
+
+  .muted {
+    color: var(--ink-dim);
+  }
+
+  .faint {
+    color: var(--ink-faint);
+  }
+}

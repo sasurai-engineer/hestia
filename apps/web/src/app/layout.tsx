@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { Bitter, IBM_Plex_Mono, IBM_Plex_Sans } from 'next/font/google';
 import type { ReactNode } from 'react';
+import '@hestia/design/css/tokens.css';
+import '@hestia/design/css/base.css';
 import './globals.css';
 
 // Hestia's own voices — the consultancy's typefaces may not appear in this
