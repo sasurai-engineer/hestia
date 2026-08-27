@@ -141,6 +141,92 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/debts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Debts */
+        get: operations["list_debts_debts_get"];
+        put?: never;
+        /** Create Debt */
+        post: operations["create_debt_debts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/debts/{debt_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Debt */
+        get: operations["read_debt_debts__debt_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/debts/{debt_id}/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record Debt Payment */
+        post: operations["record_debt_payment_debts__debt_id__payments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/debts/{debt_id}/payoff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pay Off Debt */
+        post: operations["pay_off_debt_debts__debt_id__payoff_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/debts/{debt_id}/schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Debt Schedule */
+        get: operations["read_debt_schedule_debts__debt_id__schedule_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/documents": {
         parameters: {
             query?: never;
@@ -1392,6 +1478,156 @@ export interface components {
             /** Window Opens On */
             window_opens_on: string | null;
         };
+        /** DebtIn */
+        DebtIn: {
+            /**
+             * Amortization
+             * @default fully_amortizing
+             * @enum {string}
+             */
+            amortization: "fully_amortizing" | "interest_only" | "balloon" | "arm" | "negative_amortizing";
+            /** Amortization Months */
+            amortization_months?: number | null;
+            /** Document Id */
+            document_id?: string | null;
+            /** Entity Id */
+            entity_id?: string | null;
+            /**
+             * Escrows Insurance
+             * @default false
+             */
+            escrows_insurance: boolean;
+            /**
+             * Escrows Taxes
+             * @default false
+             */
+            escrows_taxes: boolean;
+            /** First Payment On */
+            first_payment_on?: string | null;
+            /**
+             * Has Due On Sale
+             * @default true
+             */
+            has_due_on_sale: boolean;
+            /** Interest Rate */
+            interest_rate: number | string;
+            /**
+             * Is Recourse
+             * @default true
+             */
+            is_recourse: boolean;
+            /**
+             * Kind
+             * @default conventional_mortgage
+             * @enum {string}
+             */
+            kind: "conventional_mortgage" | "portfolio_loan" | "dscr_loan" | "agency_multifamily" | "bridge" | "hard_money" | "heloc" | "seller_financing" | "private_note";
+            /** Lender */
+            lender?: string | null;
+            /**
+             * Lien Position
+             * @default 1
+             */
+            lien_position: number;
+            /** Matures On */
+            matures_on?: string | null;
+            /** Original Principal */
+            original_principal: number | string;
+            /**
+             * Originated On
+             * Format: date
+             */
+            originated_on: string;
+            /**
+             * Prepayment
+             * @default none
+             * @enum {string}
+             */
+            prepayment: "none" | "step_down" | "flat_percent" | "yield_maintenance" | "defeasance" | "lockout";
+            /** Prepayment Terms */
+            prepayment_terms?: string | null;
+            /**
+             * Property Id
+             * Format: uuid
+             */
+            property_id: string;
+            /** Rate Adjusts On */
+            rate_adjusts_on?: string | null;
+            /** Rate Cap Lifetime */
+            rate_cap_lifetime?: number | string | null;
+            /** Rate Cap Periodic */
+            rate_cap_periodic?: number | string | null;
+            /** Rate Index */
+            rate_index?: string | null;
+            /** Rate Margin */
+            rate_margin?: number | string | null;
+            /** Term Months */
+            term_months: number;
+        };
+        /** DebtOut */
+        DebtOut: {
+            /** Amortization */
+            amortization: string;
+            /** Amortization Months */
+            amortization_months: number | null;
+            /** Document Id */
+            document_id: string | null;
+            /** Entity Id */
+            entity_id: string | null;
+            /** Escrows Insurance */
+            escrows_insurance: boolean;
+            /** Escrows Taxes */
+            escrows_taxes: boolean;
+            /** First Payment On */
+            first_payment_on: string | null;
+            /** Has Due On Sale */
+            has_due_on_sale: boolean;
+            /** Id */
+            id: string;
+            /** Interest Paid */
+            interest_paid: string;
+            /** Interest Rate */
+            interest_rate: string;
+            /** Is Recourse */
+            is_recourse: boolean;
+            /** Kind */
+            kind: string;
+            /** Lender */
+            lender: string | null;
+            /** Lien Position */
+            lien_position: number;
+            /** Matures On */
+            matures_on: string | null;
+            /** Original Principal */
+            original_principal: string;
+            /**
+             * Originated On
+             * Format: date
+             */
+            originated_on: string;
+            /** Paid Off On */
+            paid_off_on: string | null;
+            /** Payments Recorded */
+            payments_recorded: number;
+            /** Prepayment */
+            prepayment: string;
+            /** Prepayment Terms */
+            prepayment_terms: string | null;
+            /** Principal Paid */
+            principal_paid: string;
+            /** Property Id */
+            property_id: string;
+            /** Property Label */
+            property_label: string;
+            /** Rate Adjusts On */
+            rate_adjusts_on: string | null;
+            /** Rate Index */
+            rate_index: string | null;
+            /** Scheduled Payment */
+            scheduled_payment: string | null;
+            /** Term Months */
+            term_months: number;
+        };
         /** DebtTerms */
         DebtTerms: {
             /** Annual Rate */
@@ -1962,6 +2198,65 @@ export interface components {
             /** Sent On */
             sent_on?: string | null;
         };
+        /** PaymentIn */
+        PaymentIn: {
+            /**
+             * Escrow
+             * @default 0
+             */
+            escrow: number | string;
+            /**
+             * Extra Principal
+             * @default 0
+             */
+            extra_principal: number | string;
+            /** Interest */
+            interest?: number | string | null;
+            /**
+             * Paid On
+             * Format: date
+             */
+            paid_on: string;
+            /**
+             * Post To Ledger
+             * @default true
+             */
+            post_to_ledger: boolean;
+            /** Principal */
+            principal?: number | string | null;
+        };
+        /** PaymentOut */
+        PaymentOut: {
+            /** Balance After */
+            balance_after: string | null;
+            /** Debt Id */
+            debt_id: string;
+            /** Escrow */
+            escrow: string;
+            /** Extra Principal */
+            extra_principal: string;
+            /** From Schedule Month */
+            from_schedule_month: number | null;
+            /** Interest */
+            interest: string;
+            /** Ledger Event Uuids */
+            ledger_event_uuids: string[];
+            /**
+             * Paid On
+             * Format: date
+             */
+            paid_on: string;
+            /** Principal */
+            principal: string;
+        };
+        /** PayoffIn */
+        PayoffIn: {
+            /**
+             * Paid Off On
+             * Format: date
+             */
+            paid_off_on: string;
+        };
         /** PolicyIn */
         PolicyIn: {
             /** Annual Premium */
@@ -2309,6 +2604,38 @@ export interface components {
             total_expenses: string;
             /** Total Income */
             total_income: string;
+        };
+        /** ScheduleOut */
+        ScheduleOut: {
+            /** Citation */
+            citation: string;
+            /** Debt Id */
+            debt_id: string;
+            /** Next Interest */
+            next_interest: string | null;
+            /** Next Month */
+            next_month: number | null;
+            /** Next Principal */
+            next_principal: string | null;
+            /** Rows */
+            rows: components["schemas"]["ScheduleRow"][];
+            /** Scheduled Payment */
+            scheduled_payment: string;
+            /** Total Interest */
+            total_interest: string;
+        };
+        /** ScheduleRow */
+        ScheduleRow: {
+            /** Balance */
+            balance: string;
+            /** Interest */
+            interest: string;
+            /** Month */
+            month: number;
+            /** Payment */
+            payment: string;
+            /** Principal */
+            principal: string;
         };
         /** ScreeningIn */
         ScreeningIn: {
@@ -3033,6 +3360,211 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DeadlineOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_debts_debts_get: {
+        parameters: {
+            query?: {
+                property_id?: string | null;
+                include_paid_off?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DebtOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_debt_debts_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DebtIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DebtOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_debt_debts__debt_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                debt_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DebtOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    record_debt_payment_debts__debt_id__payments_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path: {
+                debt_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PaymentIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pay_off_debt_debts__debt_id__payoff_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path: {
+                debt_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayoffIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DebtOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_debt_schedule_debts__debt_id__schedule_get: {
+        parameters: {
+            query?: {
+                as_of?: string | null;
+            };
+            header?: never;
+            path: {
+                debt_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleOut"];
                 };
             };
             /** @description Validation Error */

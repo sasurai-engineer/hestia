@@ -36,6 +36,7 @@ from hestia_api import (
     config,
     coverage,
     db,
+    debt,
     documents,
     dossier,
     jurisdiction,
@@ -1824,3 +1825,146 @@ def record_adverse_action(
         after_value={"sent_on": str(result.adverse_action_sent_on)},
     )
     return result
+
+
+# ---------------------------------------------------------------------------
+# Debt: the note, its schedule, and the payment it demands
+# ---------------------------------------------------------------------------
+
+
+@app.post("/debts", response_model=debt.DebtOut, status_code=201)
+def create_debt(
+    body: debt.DebtIn, conn: Conn, request: Request, actor: Actor = "system"
+) -> debt.DebtOut:
+    try:
+        note = debt.create(conn, body)
+    except debt.UnknownProperty as error:
+        raise HTTPException(status_code=404, detail="property not found") from error
+    except psycopg.errors.CheckViolation as error:
+        raise HTTPException(
+            status_code=422,
+            detail=debt.DEBT_REFUSALS.get(
+                error.diag.constraint_name or "",
+                f"the note refused these terms: {error.diag.constraint_name}",
+            ),
+        ) from error
+    except psycopg.errors.ForeignKeyViolation as error:
+        raise HTTPException(
+            status_code=404, detail="that entity or document does not exist"
+        ) from error
+    db.record_audit(
+        conn,
+        actor=actor,
+        action="debts.create",
+        request_id=request.state.request_id,
+        table_name="debt_instruments",
+        record_id=note.id,
+        after_value={"lender": note.lender, "principal": str(note.original_principal)},
+    )
+    return note
+
+
+@app.get("/debts", response_model=list[debt.DebtOut])
+def list_debts(
+    conn: Conn,
+    property_id: Annotated[uuid.UUID | None, Query()] = None,
+    include_paid_off: Annotated[bool, Query()] = False,
+) -> list[debt.DebtOut]:
+    return debt.list_debts(
+        conn,
+        property_id=str(property_id) if property_id else None,
+        include_paid_off=include_paid_off,
+    )
+
+
+@app.get("/debts/{debt_id}", response_model=debt.DebtOut)
+def read_debt(debt_id: uuid.UUID, conn: Conn) -> debt.DebtOut:
+    try:
+        return debt.read(conn, str(debt_id))
+    except debt.UnknownDebt as error:
+        raise HTTPException(status_code=404, detail="note not found") from error
+
+
+@app.get("/debts/{debt_id}/schedule", response_model=debt.ScheduleOut)
+def read_debt_schedule(
+    debt_id: uuid.UUID, conn: Conn, as_of: Annotated[dt.date | None, Query()] = None
+) -> debt.ScheduleOut:
+    try:
+        return debt.schedule(conn, str(debt_id), as_of=as_of or dt.date.today())
+    except debt.UnknownDebt as error:
+        raise HTTPException(status_code=404, detail="note not found") from error
+    except debt.ScheduleUnavailable as error:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                f"no level-payment schedule for a {error} note; the engine "
+                "amortizes fully amortizing, balloon and ARM terms"
+            ),
+        ) from error
+
+
+@app.post("/debts/{debt_id}/payments", response_model=debt.PaymentOut, status_code=201)
+def record_debt_payment(
+    debt_id: uuid.UUID,
+    body: debt.PaymentIn,
+    conn: Conn,
+    request: Request,
+    actor: Actor = "system",
+) -> debt.PaymentOut:
+    try:
+        payment = debt.record_payment(conn, str(debt_id), body)
+    except debt.UnknownDebt as error:
+        raise HTTPException(status_code=404, detail="note not found") from error
+    except debt.AlreadyPaidOff as error:
+        raise HTTPException(status_code=409, detail=f"this note was paid off on {error}") from error
+    except debt.DuplicatePayment as error:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                f"a payment on {error} is already recorded; the ledger corrects "
+                "by reversal, never by overwrite"
+            ),
+        ) from error
+    except debt.ScheduleUnavailable as error:
+        raise HTTPException(
+            status_code=422,
+            detail=f"the engine cannot supply a split here ({error}); state it explicitly",
+        ) from error
+    db.record_audit(
+        conn,
+        actor=actor,
+        action="debts.payment",
+        request_id=request.state.request_id,
+        table_name="debt_payments",
+        record_id=str(debt_id),
+        after_value=payment.model_dump(mode="json"),
+    )
+    return payment
+
+
+@app.post("/debts/{debt_id}/payoff", response_model=debt.DebtOut)
+def pay_off_debt(
+    debt_id: uuid.UUID,
+    body: debt.PayoffIn,
+    conn: Conn,
+    request: Request,
+    actor: Actor = "system",
+) -> debt.DebtOut:
+    try:
+        note = debt.pay_off(conn, str(debt_id), body.paid_off_on)
+    except debt.UnknownDebt as error:
+        raise HTTPException(status_code=404, detail="note not found") from error
+    except debt.AlreadyPaidOff as error:
+        raise HTTPException(
+            status_code=409, detail=f"this note was already paid off on {error}"
+        ) from error
+    db.record_audit(
+        conn,
+        actor=actor,
+        action="debts.payoff",
+        request_id=request.state.request_id,
+        table_name="debt_instruments",
+        record_id=str(debt_id),
+        after_value={"paid_off_on": str(note.paid_off_on)},
+    )
+    return note
