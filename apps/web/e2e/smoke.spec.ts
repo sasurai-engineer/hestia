@@ -64,6 +64,9 @@ test('the calendar and coverage pages answer', async ({ page }) => {
   await expect(
     page.getByText(/authority that creates it|Nothing on the calendar/).first(),
   ).toBeVisible();
+  // The spine: the portfolio as one navigable time axis, datum at today.
+  await expect(page.getByRole('application').first()).toBeVisible();
+  await expect(page.getByText('TODAY').first()).toBeVisible();
   await page.goto('/coverage');
   await expect(page.getByRole('heading', { name: 'Jurisdiction coverage' })).toBeVisible();
 });

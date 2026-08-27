@@ -95,3 +95,9 @@ The chart geometry joins the engines' bar. Its survivors:
   `last + step/2`): accumulated tick values approximate multiples of the
   step; exact equality with a half-step offset cannot occur.
 - `contrast` — the sRGB linearization threshold, documented above.
+
+The time-axis day arithmetic (`days.ts`) joined at 100% after two redundant
+guards were removed rather than documented: the round-trip month check (a
+month-only drift cannot occur — month overflow rolls the year, day overflow
+rolls the day) and the January label slot (a January tick is major and says
+its year, so the month name was unreachable).

@@ -21,8 +21,8 @@ export default function CoveragePage() {
     <>
       <h1 className="page-title">Jurisdiction coverage</h1>
       <p className="page-subtitle">
-        What the platform knows for each property, rule domain by rule domain —
-        and, just as loudly, what it does not.
+        What the platform knows for each property, rule domain by rule domain — and, just as loudly,
+        what it does not.
       </p>
       {error ? <p className="error-note">{error}</p> : null}
       {report?.gaps.map((gap) => (

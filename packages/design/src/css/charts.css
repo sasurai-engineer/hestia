@@ -52,6 +52,85 @@
     font-size: 9px;
   }
 
+  .chart__axis--major {
+    fill: var(--ink);
+    font-weight: 600;
+  }
+
+  /* ---- the time surface: axis, datum, marks ---- */
+
+  .chart__axis-line {
+    stroke: var(--graphite);
+    stroke-width: 1.5;
+  }
+
+  .chart__tick {
+    stroke: var(--line);
+    stroke-width: 1;
+  }
+
+  .chart__datum {
+    stroke: var(--ember);
+    stroke-width: 2;
+  }
+
+  .chart__plumb {
+    fill: var(--ember);
+  }
+
+  .chart__datum-label {
+    fill: var(--ember);
+    font-family: var(--mono);
+    font-size: 8px;
+    letter-spacing: var(--track-label);
+  }
+
+  /* Stems hang a mark from the axis; a projected stem is dashed —
+     the stroke-style law again. */
+  .chart__stem {
+    stroke: var(--line);
+    stroke-width: 1;
+  }
+
+  .chart__stem--projected {
+    stroke-dasharray: 3 3;
+  }
+
+  /* Marks: past facts in ink; the future wears its kind. */
+  .chart__mark {
+    fill: var(--ink);
+  }
+
+  .chart__mark--deadline {
+    fill: var(--ember);
+  }
+
+  .chart__mark--lease {
+    fill: var(--fern);
+  }
+
+  .chart__mark--capex {
+    fill: none;
+    stroke: var(--graphite);
+    stroke-width: 1.5;
+  }
+
+  .chart__mark--debt {
+    fill: var(--umber);
+  }
+
+  .chart__mark--faint {
+    opacity: 0.4;
+  }
+
+  /* A deadline's open window: the span you can aim at, drawn dashed. */
+  .chart__span {
+    stroke: var(--ember);
+    stroke-width: 3;
+    stroke-dasharray: 5 4;
+    opacity: 0.5;
+  }
+
   .chart__spark {
     fill: none;
     stroke: var(--ember);
