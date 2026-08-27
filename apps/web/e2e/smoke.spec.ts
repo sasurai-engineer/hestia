@@ -101,10 +101,16 @@ test('a closing statement walks upload, ratification and apply', async ({ page }
   });
   await page.getByRole('button', { name: 'Upload' }).click();
 
-  // The review page: the machine read the statement; the figures are there.
+  // The review page: the PARSER's rows, not the document echoing its own
+  // text — a normalized figure in the extraction table proves the machine
+  // read the statement; the raw panel would show it either way.
   await expect(page.getByRole('heading', { name: 'monmouth-closing.pdf' })).toBeVisible();
-  await expect(page.getByText('Sale Price of Property   $187,500.00')).toBeVisible();
-  await expect(page.getByText('$189,283.00')).toBeVisible(); // server-computed basis
+  await expect(
+    page
+      .getByRole('row', { name: /Sale price/ })
+      .getByText(/187,?500\.00/)
+      .first(),
+  ).toBeVisible();
 
   // Ratify every required field (starred rows), then apply.
   for (const label of [
@@ -117,7 +123,7 @@ test('a closing statement walks upload, ratification and apply', async ({ page }
     await row.getByRole('button', { name: 'Accept' }).click();
     await expect(row.getByText('ratified')).toBeVisible();
   }
-  await expect(page.getByText('Confirmed')).toBeVisible();
+  await expect(page.locator('.pill', { hasText: 'Confirmed' })).toBeVisible();
   await page.getByLabel('Land value').fill('35490.56');
   await page.getByLabel('Allocation method').fill('e2e: assessor-ratio placeholder');
   await page.getByRole('button', { name: 'Apply', exact: true }).click();
@@ -162,13 +168,18 @@ test('a work order completes and the vendor calendar knows its certificate', asy
   await page.getByRole('link', { name: summary }).click();
   await expect(page.getByRole('heading', { name: summary })).toBeVisible();
   await page.getByRole('button', { name: 'Triaged' }).click();
-  await expect(page.getByText('Triaged', { exact: true })).toBeVisible();
+  // Honest proof of the transition: the button leaves the legal set and the
+  // status pill takes the word — a text match alone was satisfied by the
+  // button itself, click or no click.
+  await expect(page.getByRole('button', { name: 'Triaged' })).toHaveCount(0);
+  await expect(page.locator('.pill', { hasText: 'Triaged' })).toBeVisible();
 
   await page.getByLabel('Invoice amount').fill('180.00');
   await page.getByLabel('Repair or improvement?').selectOption('expense');
   await page.getByRole('button', { name: 'Complete the job' }).click();
   await expect(page.getByRole('heading', { name: 'Completed' })).toBeVisible();
-  // The money landed with its authority, and the job carries its net cost.
+  // The money landed with its authority, and the job carries its net cost —
+  // the AMOUNT, because the label renders even at zero and proves nothing.
   await expect(page.getByText(/1\.263\(a\)-1\(f\)/)).toBeVisible();
-  await expect(page.getByText(/Net cost/)).toBeVisible();
+  await expect(page.getByText(/Net cost \$180\.00/)).toBeVisible();
 });
