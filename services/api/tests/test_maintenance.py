@@ -126,6 +126,19 @@ class TestVendors:
         ).json()
         assert bare["coverage_state"] == "unknown"
         assert bare["earliest_expiry"] is None
+        # A trade licence is a qualification, not coverage: a vendor carrying
+        # one and no certificate has NOT been shown to be insured.
+        licensed = client.post(
+            "/vendors",
+            json={
+                "entity_id": world["entity"],
+                "name": "Licensed But Bare",
+                "trade": "electrical",
+                "license_expires_on": "2030-01-01",
+            },
+        ).json()
+        assert licensed["coverage_state"] == "unknown"
+        assert licensed["earliest_expiry"] == "2030-01-01"
 
     def test_the_same_trade_under_two_entities_says_so(
         self, world: dict[str, str], client: TestClient
@@ -149,10 +162,14 @@ class TestVendors:
         flag can never disagree about where $2,500 is."""
         from hestia_api.reports import DE_MINIMIS_CENTS
 
+        # "does not exceed $2,500" — the threshold itself is INSIDE the harbour.
         assert "1.263(a)-1(f)" in maintenance._bar_citation(
             False, DE_MINIMIS_CENTS - Decimal("0.01")
         )
-        assert "1.263(a)-3(i)" in maintenance._bar_citation(False, DE_MINIMIS_CENTS)
+        assert "1.263(a)-1(f)" in maintenance._bar_citation(False, DE_MINIMIS_CENTS)
+        assert "1.263(a)-3(i)" in maintenance._bar_citation(
+            False, DE_MINIMIS_CENTS + Decimal("0.01")
+        )
 
     def test_one_vendor_name_per_owner_list(
         self, world: dict[str, str], client: TestClient
@@ -603,12 +620,15 @@ class TestCosts:
             json={"cost": {"amount": "300.00", "relation": "invoice", "is_capital": False}},
         ).json()
         assert Decimal(detail["net_cost"]) == Decimal("420.00")
-        # A mis-posted invoice is corrected by a reversal PAIR, and the job's
-        # cost becomes the net — with the reversal visible, not hidden.
+        # A mis-posted invoice is corrected by a reversal PAIR. The reversal is
+        # its own ledger event and is NOT associated with the job, so the net
+        # has to reach for it — otherwise the page reports money the job never
+        # cost. The reversed row stays visible; only the total moves.
         client.post(f"/ledger/{detail['costs'][1]['ledger_event_uuid']}/reverse", json={})
         after = client.get(f"/work-orders/{order['id']}").json()
         assert any(cost["reversed"] for cost in after["costs"])
-        assert Decimal(after["net_cost"]) == Decimal("420.00")
+        assert len(after["costs"]) == 2  # the pair is not hidden
+        assert Decimal(after["net_cost"]) == Decimal("120.00")
 
     def test_an_existing_ledger_event_can_join_the_job(
         self, world: dict[str, str], client: TestClient
@@ -691,6 +711,63 @@ class TestCosts:
             ).status_code
             == 422
         )
+
+
+class TestCredits:
+    def test_a_tenant_chargeback_is_income_and_reduces_what_the_job_cost(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        """A resident reimbursing damage is money coming IN. Posting it as an
+        outflow would overstate the job and understate rental income."""
+        order = open_order(client, world)
+        client.post(
+            f"/work-orders/{order['id']}/costs",
+            json={"cost": {"amount": "400.00", "relation": "invoice", "is_capital": False}},
+        )
+        detail = client.post(
+            f"/work-orders/{order['id']}/costs",
+            json={"cost": {"amount": "150.00", "relation": "tenant_chargeback"}},
+        ).json()
+        assert Decimal(detail["net_cost"]) == Decimal("250.00")
+        chargeback = next(
+            cost for cost in detail["costs"] if cost["relation"] == "tenant_chargeback"
+        )
+        assert Decimal(chargeback["amount"]) == Decimal("150.00")  # positive: money in
+        assert chargeback["category"] == "other_income"
+
+    def test_a_warranty_credit_comes_back_against_the_repair(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        order = open_order(client, world)
+        client.post(
+            f"/work-orders/{order['id']}/costs",
+            json={"cost": {"amount": "900.00", "relation": "invoice", "is_capital": False}},
+        )
+        detail = client.post(
+            f"/work-orders/{order['id']}/costs",
+            json={"cost": {"amount": "300.00", "relation": "warranty_credit"}},
+        ).json()
+        assert Decimal(detail["net_cost"]) == Decimal("600.00")
+        credit = next(cost for cost in detail["costs"] if cost["relation"] == "warranty_credit")
+        assert credit["category"] == "repairs"  # a negative expense, honestly signed
+        assert credit["is_capital"] is False
+
+    def test_a_credit_is_never_a_capital_election_however_it_is_asked_for(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        order = open_order(client, world)
+        detail = client.post(
+            f"/work-orders/{order['id']}/costs",
+            json={
+                "cost": {
+                    "amount": "300.00",
+                    "relation": "warranty_credit",
+                    "is_capital": True,
+                    "capitalisation_rationale": "nonsense",
+                }
+            },
+        ).json()
+        assert detail["costs"][0]["is_capital"] is False
 
 
 class TestPureHelpers:

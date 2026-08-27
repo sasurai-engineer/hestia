@@ -183,13 +183,19 @@ def _coverage_state(row: dict[str, Any], as_of: dt.date) -> tuple[str, dt.date |
     has not been shown to carry insurance, and saying otherwise would be the
     kind of quiet reassurance this system exists to refuse.
     """
-    dates = [
+    # INSURANCE decides the standing. A vendor with a trade licence and no
+    # certificate has shown a qualification, not coverage, and reporting that
+    # as 'current' is precisely the quiet reassurance this refuses to give.
+    insurance = [
         row[column]
-        for column in ("liability_expires_on", "workers_comp_expires_on", "license_expires_on")
+        for column in ("liability_expires_on", "workers_comp_expires_on")
         if row[column] is not None
     ]
-    if not dates:
-        return "unknown", None
+    if not insurance:
+        return "unknown", row["license_expires_on"]
+    dates = insurance + (
+        [row["license_expires_on"]] if row["license_expires_on"] is not None else []
+    )
     earliest = min(dates)
     if earliest < as_of:
         return "expired", earliest
@@ -410,7 +416,11 @@ def _bar_citation(is_capital: bool | None, amount: Decimal) -> str | None:
     if is_capital is True:
         return RESTORATION_CITATION
     if is_capital is False:
-        return DE_MINIMIS_CITATION if amount < DE_MINIMIS_CENTS else ROUTINE_MAINTENANCE_CITATION
+        # Treas. Reg. 1.263(a)-1(f)(1)(ii)(D) reads "does not exceed", so the
+        # threshold itself is INSIDE the harbour. (Schedule E's
+        # needs_classification flag fires at >= the same number on purpose:
+        # asking a human at the boundary is caution, not a contradiction.)
+        return DE_MINIMIS_CITATION if amount <= DE_MINIMIS_CENTS else ROUTINE_MAINTENANCE_CITATION
     return None
 
 
@@ -420,7 +430,15 @@ def _costs_for(conn: Conn, work_order_id: str) -> tuple[list[CostOut], Decimal]:
         SELECT e.event_uuid::text AS ledger_event_uuid, e.occurred_on, e.amount,
                e.category::text AS category, l.relation::text AS relation, e.is_capital,
                EXISTS (SELECT 1 FROM ledger_events r WHERE r.reverses_event_id = e.id)
-                 AS reversed
+                 AS reversed,
+               -- The reversal half of a correction pair is a SEPARATE event and
+               -- is not itself associated with the job, so the net has to reach
+               -- for it explicitly. Without this a mis-posted invoice that was
+               -- properly reversed still shows as money the job cost.
+               e.amount + coalesce(
+                 (SELECT sum(r.amount) FROM ledger_events r WHERE r.reverses_event_id = e.id),
+                 0
+               ) AS effective_amount
         FROM work_order_ledger_events l
         JOIN ledger_events e ON e.id = l.ledger_event_id
         WHERE l.work_order_id = %s
@@ -428,10 +446,10 @@ def _costs_for(conn: Conn, work_order_id: str) -> tuple[list[CostOut], Decimal]:
         """,
         (work_order_id,),
     ).fetchall()
-    costs = [CostOut(**row) for row in rows]
-    # Money OUT is negative in the ledger; a job's cost is the magnitude of the
-    # net outflow, and a reversal or credit legitimately reduces it.
-    net = -sum((cost.amount for cost in costs), Decimal("0"))
+    costs = [CostOut(**{key: row[key] for key in CostOut.model_fields}) for row in rows]
+    # Money OUT is negative in the ledger, so a job's cost is the magnitude of
+    # the net outflow: reversals cancel, and a credit genuinely reduces it.
+    net = -sum((row["effective_amount"] for row in rows), Decimal("0"))
     return costs, net
 
 
@@ -545,6 +563,16 @@ def transition(conn: Conn, work_order_id: str, body: TransitionIn) -> WorkOrderO
     return read_work_order(conn, work_order_id)
 
 
+# Not every dollar on a job flows the same way. A tenant reimbursing damage is
+# rental income; a warranty credit is money back against the repair. Posting
+# either as an outflow would overstate what the job cost AND misreport the
+# income on Schedule E.
+INFLOW_CATEGORIES: dict[str, str] = {
+    "tenant_chargeback": "other_income",
+    "warranty_credit": "repairs",  # a credit against the repair it refunds
+}
+
+
 def _post_cost(
     conn: Conn,
     *,
@@ -557,17 +585,29 @@ def _post_cost(
     the money can be called capital."""
     if cost.is_capital is True and not (cost.capitalisation_rationale or "").strip():
         raise CapitalNeedsRationale(RESTORATION_CITATION)
-    category = "capital_improvement" if cost.is_capital else "repairs"
+    inflow_category = INFLOW_CATEGORIES.get(cost.relation)
+    if inflow_category is not None:
+        # A credit is money coming back; it is definitionally not a capital
+        # election, so it never carries one.
+        category = inflow_category
+        amount = cost.amount
+        is_capital: bool | None = False
+        rationale: str | None = None
+    else:
+        category = "capital_improvement" if cost.is_capital else "repairs"
+        amount = -cost.amount
+        is_capital = cost.is_capital
+        rationale = cost.capitalisation_rationale
     event = ledger_module.append_event(
         conn,
         ledger_module.LedgerEntryIn(
             occurred_on=occurred_on,
             category=category,
-            amount=-cost.amount,  # money out
+            amount=amount,
             memo=cost.memo or work_order["summary"],
             counterparty=cost.counterparty or work_order["vendor_name"],
-            is_capital=cost.is_capital,
-            capitalisation_rationale=cost.capitalisation_rationale,
+            is_capital=is_capital,
+            capitalisation_rationale=rationale,
             property_id=work_order["property_id"],
             unit_id=work_order["unit_id"],
             document_id=cost.document_id,
