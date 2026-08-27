@@ -40,6 +40,7 @@ from hestia_api import (
     dossier,
     jurisdiction,
     ledger,
+    maintenance,
     payments,
     rent,
     reports,
@@ -1423,3 +1424,221 @@ def apply_document(
         after_value=result.model_dump(mode="json"),
     )
     return result
+
+
+# ---------------------------------------------------------------------------
+# Maintenance: vendors, work orders, and the completion that teaches the
+# inventory
+# ---------------------------------------------------------------------------
+
+
+@app.post("/vendors", response_model=maintenance.VendorOut, status_code=201)
+def create_vendor(
+    body: maintenance.VendorIn, conn: Conn, request: Request, actor: Actor = "system"
+) -> maintenance.VendorOut:
+    try:
+        vendor = maintenance.create_vendor(conn, body)
+    except maintenance.UnknownEntity as error:
+        raise HTTPException(status_code=404, detail="entity not found") from error
+    except maintenance.DuplicateVendor as error:
+        raise HTTPException(
+            status_code=409, detail=f"a vendor named {error} is already on this list"
+        ) from error
+    db.record_audit(
+        conn,
+        actor=actor,
+        action="vendors.create",
+        request_id=request.state.request_id,
+        table_name="vendors",
+        record_id=vendor.id,
+        after_value=vendor.model_dump(mode="json"),
+    )
+    return vendor
+
+
+@app.get("/vendors", response_model=list[maintenance.VendorOut])
+def list_vendors(
+    conn: Conn,
+    entity_id: Annotated[uuid.UUID | None, Query()] = None,
+    include_retired: Annotated[bool, Query()] = False,
+    as_of: Annotated[dt.date | None, Query()] = None,
+) -> list[maintenance.VendorOut]:
+    return maintenance.list_vendors(
+        conn,
+        as_of=as_of or dt.date.today(),
+        entity_id=str(entity_id) if entity_id else None,
+        include_retired=include_retired,
+    )
+
+
+@app.get("/vendors/{vendor_id}", response_model=maintenance.VendorOut)
+def read_vendor(
+    vendor_id: uuid.UUID, conn: Conn, as_of: Annotated[dt.date | None, Query()] = None
+) -> maintenance.VendorOut:
+    try:
+        return maintenance.read_vendor(conn, str(vendor_id), as_of=as_of or dt.date.today())
+    except maintenance.UnknownVendor as error:
+        raise HTTPException(status_code=404, detail="vendor not found") from error
+
+
+@app.post("/work-orders", response_model=maintenance.WorkOrderOut, status_code=201)
+def create_work_order(
+    body: maintenance.WorkOrderIn, conn: Conn, request: Request, actor: Actor = "system"
+) -> maintenance.WorkOrderOut:
+    try:
+        work_order = maintenance.create_work_order(conn, body)
+    except maintenance.UnknownProperty as error:
+        raise HTTPException(status_code=404, detail="property not found") from error
+    except psycopg.errors.ForeignKeyViolation as error:
+        # The composite keys refuse a unit or component of another property.
+        raise HTTPException(
+            status_code=422,
+            detail="the unit or component named does not belong to that property",
+        ) from error
+    db.record_audit(
+        conn,
+        actor=actor,
+        action="work_orders.create",
+        request_id=request.state.request_id,
+        table_name="work_orders",
+        record_id=work_order.id,
+        after_value={"summary": work_order.summary, "priority": work_order.priority},
+    )
+    return work_order
+
+
+@app.get("/work-orders", response_model=list[maintenance.WorkOrderOut])
+def list_work_orders(
+    conn: Conn,
+    property_id: Annotated[uuid.UUID | None, Query()] = None,
+    status: Annotated[maintenance.WorkOrderStatus | None, Query()] = None,
+    open_only: Annotated[bool, Query()] = False,
+) -> list[maintenance.WorkOrderOut]:
+    return maintenance.list_work_orders(
+        conn,
+        property_id=str(property_id) if property_id else None,
+        status=status,
+        open_only=open_only,
+    )
+
+
+@app.get("/work-orders/{work_order_id}", response_model=maintenance.WorkOrderOut)
+def read_work_order(work_order_id: uuid.UUID, conn: Conn) -> maintenance.WorkOrderOut:
+    try:
+        return maintenance.read_work_order(conn, str(work_order_id))
+    except maintenance.UnknownWorkOrder as error:
+        raise HTTPException(status_code=404, detail="work order not found") from error
+
+
+@app.post("/work-orders/{work_order_id}/transitions", response_model=maintenance.WorkOrderOut)
+def transition_work_order(
+    work_order_id: uuid.UUID,
+    body: maintenance.TransitionIn,
+    conn: Conn,
+    request: Request,
+    actor: Actor = "system",
+) -> maintenance.WorkOrderOut:
+    try:
+        work_order = maintenance.transition(conn, str(work_order_id), body)
+    except maintenance.UnknownWorkOrder as error:
+        raise HTTPException(status_code=404, detail="work order not found") from error
+    except maintenance.IllegalTransition as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    except psycopg.errors.CheckViolation as error:
+        raise HTTPException(
+            status_code=422,
+            detail="a scheduled visit needs a date and a cancellation needs a reason",
+        ) from error
+    db.record_audit(
+        conn,
+        actor=actor,
+        action=f"work_orders.{body.status}",
+        request_id=request.state.request_id,
+        table_name="work_orders",
+        record_id=str(work_order_id),
+        after_value={"status": work_order.status},
+    )
+    return work_order
+
+
+@app.post(
+    "/work-orders/{work_order_id}/complete",
+    response_model=maintenance.CompletionOut,
+    status_code=201,
+)
+def complete_work_order(
+    work_order_id: uuid.UUID,
+    body: maintenance.CompletionIn,
+    conn: Conn,
+    request: Request,
+    actor: Actor = "system",
+) -> maintenance.CompletionOut:
+    try:
+        result = maintenance.complete(conn, str(work_order_id), body, actor)
+    except maintenance.UnknownWorkOrder as error:
+        raise HTTPException(status_code=404, detail="work order not found") from error
+    except maintenance.AlreadyResolved as error:
+        raise HTTPException(
+            status_code=409, detail=f"this job is already {error}; its history is not re-made"
+        ) from error
+    except maintenance.ComponentAlreadyRetired as error:
+        raise HTTPException(status_code=409, detail="that component was already retired") from error
+    except maintenance.MissingComponent as error:
+        raise HTTPException(
+            status_code=422,
+            detail="a replacement must name the component it replaced",
+        ) from error
+    except maintenance.CapitalNeedsRationale as error:
+        raise HTTPException(
+            status_code=422, detail=f"capital spending explains itself: {error}"
+        ) from error
+    except maintenance.IllegalTransition as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    db.record_audit(
+        conn,
+        actor=actor,
+        action="work_orders.complete",
+        request_id=request.state.request_id,
+        table_name="work_orders",
+        record_id=str(work_order_id),
+        after_value=result.model_dump(mode="json", exclude={"work_order"}),
+    )
+    return result
+
+
+@app.post(
+    "/work-orders/{work_order_id}/costs",
+    response_model=maintenance.WorkOrderOut,
+    status_code=201,
+)
+def add_work_order_cost(
+    work_order_id: uuid.UUID,
+    body: maintenance.CostLinkIn,
+    conn: Conn,
+    request: Request,
+    actor: Actor = "system",
+) -> maintenance.WorkOrderOut:
+    try:
+        work_order = maintenance.add_cost(conn, str(work_order_id), body, actor)
+    except maintenance.UnknownWorkOrder as error:
+        raise HTTPException(status_code=404, detail="work order not found") from error
+    except ledger.UnknownEvent as error:
+        raise HTTPException(status_code=404, detail="ledger event not found") from error
+    except maintenance.WrongProperty as error:
+        raise HTTPException(
+            status_code=422, detail="that ledger event belongs to another property"
+        ) from error
+    except maintenance.CapitalNeedsRationale as error:
+        raise HTTPException(
+            status_code=422, detail=f"capital spending explains itself: {error}"
+        ) from error
+    db.record_audit(
+        conn,
+        actor=actor,
+        action="work_orders.cost",
+        request_id=request.state.request_id,
+        table_name="work_order_ledger_events",
+        record_id=str(work_order_id),
+        after_value={"net_cost": str(work_order.net_cost)},
+    )
+    return work_order

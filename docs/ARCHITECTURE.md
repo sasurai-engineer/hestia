@@ -268,6 +268,46 @@ Ordered for execution; struck items are closed and kept for the record.
 > (36 issues across 6 milestones). The sections below remain as the
 > architectural record; the issues are the source of truth for status.
 
+## D1 — maintenance, vendors, work orders (2026-08-27, issue #2)
+
+The last parity capability with no schema at all, built so that a completed
+job TEACHES the inventory instead of merely recording itself.
+
+- **Schema 016** — `vendors` (per-entity, with the two credentials that decide
+  whether hiring transfers risk or keeps it), `work_orders` (a lifecycle whose
+  every rule is a NAMED constraint, so the assertion suite can name it back),
+  `work_order_ledger_events` (association, never mutation: the ledger is
+  immutable and a correction is a reversal pair, so a `work_order_id` column
+  could never be set after the fact). Composite foreign keys stop a work order
+  citing another property's unit or component.
+- **The replacement transaction** — completing with `resolution='replaced'`
+  retires the old component, installs the new one with a KNOWN install date
+  and `owner_stated` provenance (someone did the work), and posts the cost.
+  `capex_forecast` reads only live components and takes an exact age when
+  `installed_on` is set, so the fan measurably narrows — the acceptance test
+  asserts the forecast total falls.
+- **The BAR question is refused, not guessed** — money may only be called
+  capital with the rationale that makes it so (`capital_spending_explains_itself`
+  has enforced that since module 005). The citation comes back with the
+  completion: Treas. Reg. 1.263(a)-3(k)(1)(vi) for a restoration, the de
+  minimis harbour under the threshold, routine maintenance above it. Leaving
+  the question undecided is allowed and lands in Schedule E's classification
+  queue — the same constant decides both, imported rather than re-declared.
+- **Vendor credentials are deadlines** — the sweep raises liability, workers
+  compensation and licence expiries. `deadlines` gained a `vendor_id` anchor
+  and the sweep identity index was rebuilt to include it: without it, two
+  vendors expiring on one day would collapse into one row and the second
+  lapse would be invisible. Liability and comp get distinct kinds for the
+  same reason.
+- **Known and named**: vendors are scoped per entity, which is right for
+  filing (the 1099 obligation is per payer) and wrong for operations — the
+  same plumber under three LLCs is three rows. The vendors page counts and
+  shows the split rather than letting it be silent; a proper vendor-identity
+  table is p1, not D1.
+- A multi-column `ON DELETE SET NULL` nulls EVERY referencing column,
+  including a NOT NULL one — the composite FKs name the column to null, so
+  deleting a component leaves the job's history alive at the property.
+
 ## C1 — the extraction loop (2026-08-26, issue #1)
 
 The last p0 from the original review is built: upload -> extract -> review ->

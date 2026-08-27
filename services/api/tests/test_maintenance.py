@@ -1,0 +1,699 @@
+"""Maintenance: vendors, work orders, and the completion that teaches the
+inventory.
+
+The load-bearing test is the water-heater replacement: the old component
+leaves the live inventory, the new one arrives with a known install date, the
+cost posts as capital with its authority, and the capital forecast VISIBLY
+moves because it is no longer guessing about that component.
+"""
+
+from __future__ import annotations
+
+import datetime as dt
+from decimal import Decimal
+from typing import Any
+
+import psycopg
+import pytest
+from fastapi.testclient import TestClient
+from hestia_api import maintenance
+
+WATER_HEATER = "water_heater.tank"
+
+
+@pytest.fixture
+def world(
+    newport_property: str, conn: psycopg.Connection[Any], client: TestClient
+) -> dict[str, str]:
+    """A property with an aged, inferred water heater and a vendor to call."""
+    entity = conn.execute(
+        "SELECT entity_id::text FROM properties WHERE id = %s", (newport_property,)
+    ).fetchone()
+    kind = conn.execute(
+        "SELECT id::text FROM component_types WHERE code = %s", (WATER_HEATER,)
+    ).fetchone()
+    assert kind is not None, "seed 901 must carry the tank water heater"
+    provenance = conn.execute(
+        """
+        INSERT INTO provenance (kind, confidence, derived_from)
+        VALUES ('inferred', 0.5, 'vintage 1962, no permit on file') RETURNING id::text
+        """
+    ).fetchone()
+    component = conn.execute(
+        """
+        INSERT INTO components
+          (property_id, component_type_id, installed_year_low, installed_year_high,
+           provenance_id, condition)
+        VALUES (%s, %s, 2004, 2014, %s, 'poor')
+        RETURNING id::text
+        """,
+        (newport_property, kind["id"], provenance["id"]),
+    ).fetchone()
+    conn.commit()
+    vendor = client.post(
+        "/vendors",
+        json={
+            "entity_id": entity["entity_id"],
+            "name": "Licking Valley Plumbing",
+            "trade": "plumbing",
+            "liability_expires_on": "2027-06-30",
+            "workers_comp_expires_on": "2027-06-30",
+        },
+    ).json()
+    return {
+        "property": newport_property,
+        "entity": entity["entity_id"],
+        "component": component["id"],
+        "component_type": kind["id"],
+        "vendor": vendor["id"],
+    }
+
+
+def open_order(client: TestClient, world: dict[str, str], **overrides: Any) -> dict[str, Any]:
+    body = {
+        "property_id": world["property"],
+        "component_id": world["component"],
+        "vendor_id": world["vendor"],
+        "summary": "No hot water",
+        "priority": "urgent",
+        "reported_on": "2026-08-01",
+        **overrides,
+    }
+    response = client.post("/work-orders", json=body)
+    assert response.status_code == 201, response.text
+    return response.json()
+
+
+class TestVendors:
+    def test_a_vendor_carries_its_credentials_and_their_standing(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        vendor = client.get(f"/vendors/{world['vendor']}?as_of=2026-08-27").json()
+        assert vendor["coverage_state"] == "current"
+        assert vendor["earliest_expiry"] == "2027-06-30"
+        assert vendor["entity_name"] == "D"
+        assert vendor["open_work_orders"] == 0
+
+    def test_an_expired_certificate_says_so(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        """The day it lapses, the owner silently reassumes the risk."""
+        vendor = client.post(
+            "/vendors",
+            json={
+                "entity_id": world["entity"],
+                "name": "Lapsed Roofing",
+                "trade": "roofing",
+                "liability_expires_on": "2026-01-31",
+            },
+        ).json()
+        assert vendor["coverage_state"] == "expired"
+        soon = client.post(
+            "/vendors",
+            json={
+                "entity_id": world["entity"],
+                "name": "Expiring Soon HVAC",
+                "trade": "hvac",
+                "liability_expires_on": str(dt.date.today() + dt.timedelta(days=10)),
+            },
+        ).json()
+        assert soon["coverage_state"] == "expiring"
+        # A vendor who never showed a certificate has not been shown to carry
+        # one; that is not the same as being covered.
+        bare = client.post(
+            "/vendors",
+            json={"entity_id": world["entity"], "name": "Cash Handyman", "trade": "handyman"},
+        ).json()
+        assert bare["coverage_state"] == "unknown"
+        assert bare["earliest_expiry"] is None
+
+    def test_the_same_trade_under_two_entities_says_so(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        """Vendors are scoped per entity — right for filing, wrong for
+        operations. The split is counted, not hidden."""
+        second = client.post("/entities", json={"name": "Second LLC", "kind": "llc"}).json()
+        client.post(
+            "/vendors",
+            json={
+                "entity_id": second["id"],
+                "name": "Licking Valley Plumbing",
+                "trade": "plumbing",
+            },
+        )
+        vendor = client.get(f"/vendors/{world['vendor']}").json()
+        assert vendor["also_registered_under"] == 1
+
+    def test_the_de_minimis_line_is_the_one_schedule_e_uses(self) -> None:
+        """One constant, so the completion citation and the classification
+        flag can never disagree about where $2,500 is."""
+        from hestia_api.reports import DE_MINIMIS_CENTS
+
+        assert "1.263(a)-1(f)" in maintenance._bar_citation(
+            False, DE_MINIMIS_CENTS - Decimal("0.01")
+        )
+        assert "1.263(a)-3(i)" in maintenance._bar_citation(False, DE_MINIMIS_CENTS)
+
+    def test_one_vendor_name_per_owner_list(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        response = client.post(
+            "/vendors",
+            json={
+                "entity_id": world["entity"],
+                "name": "Licking Valley Plumbing",
+                "trade": "hvac",
+            },
+        )
+        assert response.status_code == 409
+
+    def test_vendor_guards(self, world: dict[str, str], client: TestClient) -> None:
+        assert (
+            client.post(
+                "/vendors",
+                json={
+                    "entity_id": "00000000-0000-4000-8000-000000000000",
+                    "name": "Ghost",
+                    "trade": "other",
+                },
+            ).status_code
+            == 404
+        )
+        assert (
+            client.post(
+                "/vendors",
+                json={"entity_id": world["entity"], "name": "", "trade": "other"},
+            ).status_code
+            == 422
+        )
+        assert client.get("/vendors/00000000-0000-4000-8000-000000000000").status_code == 404
+        listed = client.get(f"/vendors?entity_id={world['entity']}").json()
+        assert any(row["id"] == world["vendor"] for row in listed)
+        assert client.get("/vendors?include_retired=true").status_code == 200
+
+    def test_credentials_become_deadlines_per_vendor(
+        self, world: dict[str, str], client: TestClient, conn: psycopg.Connection[Any]
+    ) -> None:
+        """Two vendors expiring on one day are two deadlines, and one vendor's
+        liability and comp expiring together are two more."""
+        client.post(
+            "/vendors",
+            json={
+                "entity_id": world["entity"],
+                "name": "Second Trade Co",
+                "trade": "electrical",
+                "liability_expires_on": "2027-06-30",
+            },
+        )
+        client.post("/sweep/deadlines?as_of=2026-08-27")
+        rows = conn.execute(
+            """
+            SELECT kind::text AS kind, vendor_id::text, note
+            FROM deadlines WHERE due_on = '2027-06-30' AND vendor_id IS NOT NULL
+            ORDER BY note, kind
+            """
+        ).fetchall()
+        kinds = {(row["kind"], row["note"]) for row in rows}
+        assert ("vendor_insurance_expiration", "Licking Valley Plumbing") in kinds
+        assert ("vendor_workers_comp_expiration", "Licking Valley Plumbing") in kinds
+        assert ("vendor_insurance_expiration", "Second Trade Co") in kinds
+        # Re-running the sweep inserts nothing new: the vendor anchor makes
+        # each of these its own identity.
+        before = len(rows)
+        client.post("/sweep/deadlines?as_of=2026-08-27")
+        after = conn.execute(
+            "SELECT count(*) AS n FROM deadlines WHERE due_on = '2027-06-30'"
+            " AND vendor_id IS NOT NULL"
+        ).fetchone()
+        assert after["n"] == before
+
+
+class TestLifecycle:
+    def test_the_board_walks_reported_to_scheduled_to_in_progress(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        order = open_order(client, world)
+        assert order["status"] == "reported"
+        assert order["legal_transitions"] == ["cancelled", "in_progress", "scheduled", "triaged"]
+        assert order["component_label"] is not None
+        assert order["vendor_name"] == "Licking Valley Plumbing"
+
+        triaged = client.post(
+            f"/work-orders/{order['id']}/transitions", json={"status": "triaged"}
+        ).json()
+        assert triaged["status"] == "triaged"
+        scheduled = client.post(
+            f"/work-orders/{order['id']}/transitions",
+            json={"status": "scheduled", "scheduled_for": "2026-08-05"},
+        ).json()
+        assert scheduled["scheduled_for"] == "2026-08-05"
+        started = client.post(
+            f"/work-orders/{order['id']}/transitions", json={"status": "in_progress"}
+        ).json()
+        assert started["status"] == "in_progress"
+        assert started["legal_transitions"] == ["cancelled"]
+
+    def test_an_illegal_transition_names_what_is_legal(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        order = open_order(client, world)
+        client.post(f"/work-orders/{order['id']}/transitions", json={"status": "in_progress"})
+        response = client.post(
+            f"/work-orders/{order['id']}/transitions", json={"status": "triaged"}
+        )
+        assert response.status_code == 409
+        assert "in_progress may become cancelled" in response.json()["detail"]
+
+    def test_scheduling_without_a_date_is_refused_by_the_database(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        order = open_order(client, world)
+        response = client.post(
+            f"/work-orders/{order['id']}/transitions", json={"status": "scheduled"}
+        )
+        assert response.status_code == 422
+
+    def test_a_cancellation_says_why(self, world: dict[str, str], client: TestClient) -> None:
+        order = open_order(client, world)
+        assert (
+            client.post(
+                f"/work-orders/{order['id']}/transitions", json={"status": "cancelled"}
+            ).status_code
+            == 422
+        )
+        cancelled = client.post(
+            f"/work-orders/{order['id']}/transitions",
+            json={"status": "cancelled", "cancelled_reason": "resident fixed the pilot light"},
+        ).json()
+        assert cancelled["status"] == "cancelled"
+        assert cancelled["legal_transitions"] == []
+        # Closed is closed.
+        assert (
+            client.post(
+                f"/work-orders/{order['id']}/complete",
+                json={"completed_on": "2026-08-10", "resolution": "repaired"},
+            ).status_code
+            == 409
+        )
+
+    def test_a_work_order_cannot_borrow_another_property_s_unit(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        entity = client.post("/entities", json={"name": "Other", "kind": "llc"}).json()
+        other = client.post(
+            "/properties",
+            json={
+                "entity_id": entity["id"],
+                "label": "Elsewhere",
+                "street_1": "1 Elsewhere Ave",
+                "city": "Newport",
+                "state": "KY",
+                "postal_code": "41071",
+                "kind": "single_family",
+            },
+        ).json()
+        unit = client.post("/units", json={"property_id": other["id"], "label": "A"}).json()
+        response = client.post(
+            "/work-orders",
+            json={
+                "property_id": world["property"],
+                "unit_id": unit["id"],
+                "summary": "Wrong property's unit",
+            },
+        )
+        assert response.status_code == 422
+
+    def test_listing_and_reading_guards(self, world: dict[str, str], client: TestClient) -> None:
+        order = open_order(client, world)
+        open_rows = client.get(
+            f"/work-orders?property_id={world['property']}&open_only=true"
+        ).json()
+        assert any(row["id"] == order["id"] for row in open_rows)
+        by_status = client.get("/work-orders?status=reported").json()
+        assert all(row["status"] == "reported" for row in by_status)
+        assert client.get("/work-orders/00000000-0000-4000-8000-000000000000").status_code == 404
+        assert (
+            client.post(
+                "/work-orders/00000000-0000-4000-8000-000000000000/transitions",
+                json={"status": "triaged"},
+            ).status_code
+            == 404
+        )
+        assert (
+            client.post(
+                "/work-orders/00000000-0000-4000-8000-000000000000/complete",
+                json={"completed_on": "2026-08-10", "resolution": "repaired"},
+            ).status_code
+            == 404
+        )
+        assert (
+            client.post(
+                "/work-orders",
+                json={
+                    "property_id": "00000000-0000-4000-8000-000000000000",
+                    "summary": "Ghost property",
+                },
+            ).status_code
+            == 404
+        )
+
+
+class TestCompletion:
+    def test_the_water_heater_replacement(
+        self, world: dict[str, str], client: TestClient, conn: psycopg.Connection[Any]
+    ) -> None:
+        """The acceptance criterion: old retired, new installed, cost posted as
+        capital with its rationale, and the forecast visibly sharper."""
+        before = client.get(
+            f"/properties/{world['property']}/capex-forecast?horizon_years=10&as_of=2026-08-27"
+        ).json()
+        order = open_order(client, world)
+        response = client.post(
+            f"/work-orders/{order['id']}/complete",
+            json={
+                "completed_on": "2026-08-27",
+                "resolution": "replaced",
+                "resolution_note": "50-gal gas tank, permit pulled",
+                "replacement": {"installed_on": "2026-08-27", "warranty_expires_on": "2032-08-27"},
+                "cost": {
+                    "amount": "1850.00",
+                    "is_capital": True,
+                    "capitalisation_rationale": "restoration: replaced a major component "
+                    "of the plumbing system",
+                    "relation": "invoice",
+                },
+            },
+        )
+        assert response.status_code == 201, response.text
+        result = response.json()
+        assert result["retired_component_id"] == world["component"]
+        assert result["installed_component_id"] is not None
+        assert "1.263(a)-3(k)(1)(vi)" in result["capitalisation_citation"]
+
+        retired = conn.execute(
+            "SELECT retired_on, replaced_by_id::text, condition::text AS condition"
+            " FROM components WHERE id = %s",
+            (world["component"],),
+        ).fetchone()
+        assert retired["retired_on"] == dt.date(2026, 8, 27)
+        assert retired["replaced_by_id"] == result["installed_component_id"]
+        assert retired["condition"] == "failed"
+
+        installed = conn.execute(
+            """
+            SELECT c.installed_on, c.condition::text AS condition, c.warranty_expires_on,
+                   c.replacement_cost, p.kind::text AS provenance_kind, p.confidence
+            FROM components c JOIN provenance p ON p.id = c.provenance_id
+            WHERE c.id = %s
+            """,
+            (result["installed_component_id"],),
+        ).fetchone()
+        assert installed["installed_on"] == dt.date(2026, 8, 27)
+        assert installed["condition"] == "new"
+        assert installed["warranty_expires_on"] == dt.date(2032, 8, 27)
+        assert installed["replacement_cost"] == Decimal("1850.00")
+        # Someone did the work, so the date is stated, not inferred.
+        assert installed["provenance_kind"] == "owner_stated"
+        assert installed["confidence"] == Decimal("1.000")
+
+        event = conn.execute(
+            """
+            SELECT amount, category::text AS category, is_capital, capitalisation_rationale
+            FROM ledger_events WHERE event_uuid = %s
+            """,
+            (result["ledger_event_uuid"],),
+        ).fetchone()
+        assert event["amount"] == Decimal("-1850.00")
+        assert event["category"] == "capital_improvement"
+        assert event["is_capital"] is True
+        assert "major component" in event["capitalisation_rationale"]
+
+        detail = client.get(f"/work-orders/{order['id']}").json()
+        assert detail["status"] == "completed"
+        assert detail["resolution"] == "replaced"
+        assert Decimal(detail["net_cost"]) == Decimal("1850.00")
+        assert detail["costs"][0]["relation"] == "invoice"
+        assert detail["costs"][0]["reversed"] is False
+
+        # THE POINT: the forecast stops guessing about this component. The old
+        # row carried a 2004-2014 band (12-22 years old, well past its life);
+        # the new one is a day old.
+        after = client.get(
+            f"/properties/{world['property']}/capex-forecast?horizon_years=10&as_of=2026-08-27"
+        ).json()
+        assert Decimal(after["total_expected"]) < Decimal(before["total_expected"])
+
+    def test_a_repair_leaves_the_inventory_alone(
+        self, world: dict[str, str], client: TestClient, conn: psycopg.Connection[Any]
+    ) -> None:
+        order = open_order(client, world)
+        result = client.post(
+            f"/work-orders/{order['id']}/complete",
+            json={
+                "completed_on": "2026-08-27",
+                "resolution": "repaired",
+                "cost": {"amount": "180.00", "is_capital": False},
+            },
+        ).json()
+        assert result["retired_component_id"] is None
+        assert result["installed_component_id"] is None
+        # Under the de minimis threshold, the safe harbour is the citation.
+        assert "1.263(a)-1(f)" in result["capitalisation_citation"]
+        event = conn.execute(
+            "SELECT category::text AS category FROM ledger_events WHERE event_uuid = %s",
+            (result["ledger_event_uuid"],),
+        ).fetchone()
+        assert event["category"] == "repairs"
+        still_live = conn.execute(
+            "SELECT retired_on FROM components WHERE id = %s", (world["component"],)
+        ).fetchone()
+        assert still_live["retired_on"] is None
+
+    def test_a_large_repair_cites_the_routine_maintenance_harbour(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        order = open_order(client, world)
+        result = client.post(
+            f"/work-orders/{order['id']}/complete",
+            json={
+                "completed_on": "2026-08-27",
+                "resolution": "repaired",
+                "cost": {"amount": "4200.00", "is_capital": False},
+            },
+        ).json()
+        assert "1.263(a)-3(i)" in result["capitalisation_citation"]
+
+    def test_no_action_completes_without_money_or_inventory(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        order = open_order(client, world)
+        result = client.post(
+            f"/work-orders/{order['id']}/complete",
+            json={
+                "completed_on": "2026-08-27",
+                "resolution": "no_action",
+                "resolution_note": "no fault found",
+            },
+        ).json()
+        assert result["ledger_event_uuid"] is None
+        assert result["capitalisation_citation"] is None
+        assert Decimal(result["work_order"]["net_cost"]) == 0
+
+    def test_an_unanswered_bar_question_lands_in_the_classification_queue(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        """The owner may not know yet. An unanswered question is recorded as
+        unanswered — not guessed — and Schedule E asks for it later
+        (Treas. Reg. 1.263(a)-1(f), the de minimis line at $2,500)."""
+        order = open_order(client, world)
+        result = client.post(
+            f"/work-orders/{order['id']}/complete",
+            json={
+                "completed_on": "2026-08-27",
+                "resolution": "repaired",
+                "cost": {"amount": "3000.00", "memo": "compressor work"},
+            },
+        ).json()
+        assert result["capitalisation_citation"] is None
+        report = client.get(
+            f"/properties/{world['property']}/reports/schedule-e?tax_year=2026"
+        ).json()
+        assert any(
+            "compressor work" in (row["memo"] or "") for row in report["needs_classification"]
+        )
+
+    def test_capital_spending_must_explain_itself(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        order = open_order(client, world)
+        response = client.post(
+            f"/work-orders/{order['id']}/complete",
+            json={
+                "completed_on": "2026-08-27",
+                "resolution": "repaired",
+                "cost": {"amount": "9000.00", "is_capital": True},
+            },
+        )
+        assert response.status_code == 422
+        assert "1.263(a)-3(k)" in response.json()["detail"]
+        # The refusal rolled the whole completion back.
+        assert client.get(f"/work-orders/{order['id']}").json()["status"] == "reported"
+
+    def test_a_replacement_must_name_what_it_replaced(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        order = open_order(client, world, component_id=None)
+        response = client.post(
+            f"/work-orders/{order['id']}/complete",
+            json={"completed_on": "2026-08-27", "resolution": "replaced"},
+        )
+        assert response.status_code == 422
+
+    def test_a_component_is_retired_once(self, world: dict[str, str], client: TestClient) -> None:
+        first = open_order(client, world)
+        client.post(
+            f"/work-orders/{first['id']}/complete",
+            json={"completed_on": "2026-08-27", "resolution": "replaced"},
+        )
+        second = open_order(client, world, summary="Second bite at the same heater")
+        response = client.post(
+            f"/work-orders/{second['id']}/complete",
+            json={"completed_on": "2026-08-28", "resolution": "replaced"},
+        )
+        assert response.status_code == 409
+
+    def test_completion_happens_once(self, world: dict[str, str], client: TestClient) -> None:
+        order = open_order(client, world)
+        assert (
+            client.post(
+                f"/work-orders/{order['id']}/complete",
+                json={"completed_on": "2026-08-27", "resolution": "repaired"},
+            ).status_code
+            == 201
+        )
+        response = client.post(
+            f"/work-orders/{order['id']}/complete",
+            json={"completed_on": "2026-08-28", "resolution": "repaired"},
+        )
+        assert response.status_code == 409
+        assert "already completed" in response.json()["detail"]
+
+    def test_work_cannot_complete_before_it_was_reported(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        order = open_order(client, world)
+        response = client.post(
+            f"/work-orders/{order['id']}/complete",
+            json={"completed_on": "2026-07-01", "resolution": "repaired"},
+        )
+        assert response.status_code == 422
+
+
+class TestCosts:
+    def test_costs_accumulate_and_a_reversal_shows(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        order = open_order(client, world)
+        client.post(
+            f"/work-orders/{order['id']}/costs",
+            json={"cost": {"amount": "120.00", "relation": "materials", "is_capital": False}},
+        )
+        detail = client.post(
+            f"/work-orders/{order['id']}/costs",
+            json={"cost": {"amount": "300.00", "relation": "invoice", "is_capital": False}},
+        ).json()
+        assert Decimal(detail["net_cost"]) == Decimal("420.00")
+        # A mis-posted invoice is corrected by a reversal PAIR, and the job's
+        # cost becomes the net — with the reversal visible, not hidden.
+        client.post(f"/ledger/{detail['costs'][1]['ledger_event_uuid']}/reverse", json={})
+        after = client.get(f"/work-orders/{order['id']}").json()
+        assert any(cost["reversed"] for cost in after["costs"])
+        assert Decimal(after["net_cost"]) == Decimal("420.00")
+
+    def test_an_existing_ledger_event_can_join_the_job(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        order = open_order(client, world)
+        event = client.post(
+            "/ledger",
+            json={
+                "occurred_on": "2026-08-02",
+                "category": "repairs",
+                "amount": "-95.00",
+                "property_id": world["property"],
+                "memo": "parts run",
+            },
+        ).json()
+        detail = client.post(
+            f"/work-orders/{order['id']}/costs",
+            json={"ledger_event_uuid": event["event_uuid"], "relation": "materials"},
+        ).json()
+        assert Decimal(detail["net_cost"]) == Decimal("95.00")
+        # Linking the same event twice is a no-op, not a 500.
+        again = client.post(
+            f"/work-orders/{order['id']}/costs",
+            json={"ledger_event_uuid": event["event_uuid"], "relation": "materials"},
+        ).json()
+        assert len(again["costs"]) == 1
+
+    def test_a_cost_from_another_property_is_refused(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        entity = client.post("/entities", json={"name": "Third", "kind": "llc"}).json()
+        other = client.post(
+            "/properties",
+            json={
+                "entity_id": entity["id"],
+                "label": "Other Books",
+                "street_1": "3 Other St",
+                "city": "Newport",
+                "state": "KY",
+                "postal_code": "41071",
+                "kind": "single_family",
+            },
+        ).json()
+        event = client.post(
+            "/ledger",
+            json={
+                "occurred_on": "2026-08-02",
+                "category": "repairs",
+                "amount": "-95.00",
+                "property_id": other["id"],
+            },
+        ).json()
+        order = open_order(client, world)
+        response = client.post(
+            f"/work-orders/{order['id']}/costs",
+            json={"ledger_event_uuid": event["event_uuid"]},
+        )
+        assert response.status_code == 422
+
+    def test_cost_guards(self, world: dict[str, str], client: TestClient) -> None:
+        order = open_order(client, world)
+        assert (
+            client.post(
+                f"/work-orders/{order['id']}/costs",
+                json={"ledger_event_uuid": "00000000-0000-4000-8000-000000000000"},
+            ).status_code
+            == 404
+        )
+        assert (
+            client.post(
+                "/work-orders/00000000-0000-4000-8000-000000000000/costs",
+                json={"cost": {"amount": "10.00"}},
+            ).status_code
+            == 404
+        )
+        assert (
+            client.post(
+                f"/work-orders/{order['id']}/costs",
+                json={"cost": {"amount": "10.00", "is_capital": True}},
+            ).status_code
+            == 422
+        )
+
+
+class TestPureHelpers:
+    def test_the_transition_message_names_a_terminal_state_honestly(self) -> None:
+        error = maintenance.IllegalTransition("completed", "triaged")
+        assert "nothing (terminal)" in str(error)

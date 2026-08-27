@@ -790,6 +790,154 @@ BEGIN
 END $$;
 
 \echo ''
+\echo 'maintenance'
+INSERT INTO components (id, property_id, component_type_id, installed_year_low,
+                        installed_year_high, provenance_id)
+  VALUES ('88888888-8888-4888-8888-888888888801', '33333333-3333-3333-3333-333333333333',
+          '44444444-4444-4444-4444-444444444444', 1995, 2005,
+          '22222222-2222-2222-2222-222222222222');
+INSERT INTO vendors (id, entity_id, name, trade)
+  VALUES ('88888888-8888-4888-8888-888888888802', '11111111-1111-1111-1111-111111111111',
+          'Licking Valley Plumbing', 'plumbing');
+SELECT assert_rejected(
+  $$INSERT INTO vendors (entity_id, name, trade)
+    VALUES ('11111111-1111-1111-1111-111111111111', 'Licking Valley Plumbing', 'hvac')$$,
+  'vendor_named_once_per_entity',
+  'the same vendor name twice on one owner''s list');
+SELECT assert_rejected(
+  $$INSERT INTO vendors (entity_id, name, trade)
+    VALUES ('11111111-1111-1111-1111-111111111111', '   ', 'hvac')$$,
+  'vendor_name_is_not_blank',
+  'a vendor with no name at all');
+
+-- The lifecycle, refused by name.
+SELECT assert_rejected(
+  $$INSERT INTO work_orders (property_id, summary, status)
+    VALUES ('33333333-3333-3333-3333-333333333333', 'No hot water', 'scheduled')$$,
+  'scheduled_orders_carry_a_date',
+  'a scheduled visit with no date');
+SELECT assert_rejected(
+  $$INSERT INTO work_orders (property_id, summary, status, resolution)
+    VALUES ('33333333-3333-3333-3333-333333333333', 'No hot water', 'completed', 'repaired')$$,
+  'completed_orders_say_when',
+  'completed work with no completion date');
+SELECT assert_rejected(
+  $$INSERT INTO work_orders (property_id, summary, status, completed_on)
+    VALUES ('33333333-3333-3333-3333-333333333333', 'No hot water', 'completed', '2026-08-27')$$,
+  'completed_orders_say_how',
+  'completed work that will not say what happened');
+SELECT assert_rejected(
+  $$INSERT INTO work_orders (property_id, summary, status, resolution)
+    VALUES ('33333333-3333-3333-3333-333333333333', 'No hot water', 'in_progress', 'repaired')$$,
+  'only_completed_orders_resolve',
+  'a resolution on work that is still open');
+SELECT assert_rejected(
+  $$INSERT INTO work_orders (property_id, summary, status)
+    VALUES ('33333333-3333-3333-3333-333333333333', 'No hot water', 'cancelled')$$,
+  'cancelled_orders_say_why',
+  'a cancellation with no reason');
+-- Isolated to ONE rule at a time: this order installs something, so only the
+-- missing `component_id` can be what refuses it.
+SELECT assert_rejected(
+  $$INSERT INTO work_orders (property_id, summary, status, completed_on, resolution,
+                             replacement_component_id)
+    VALUES ('33333333-3333-3333-3333-333333333333', 'No hot water', 'completed',
+            '2026-08-27', 'replaced', '88888888-8888-4888-8888-888888888801')$$,
+  'replaced_orders_name_the_component',
+  'a replacement that will not say what was replaced');
+SELECT assert_rejected(
+  $$INSERT INTO work_orders (property_id, summary, status, completed_on, resolution,
+                             replacement_component_id)
+    VALUES ('33333333-3333-3333-3333-333333333333', 'No hot water', 'completed',
+            '2026-08-27', 'repaired', '88888888-8888-4888-8888-888888888801')$$,
+  'replacements_belong_to_replaced_orders',
+  'a new component installed by a repair that replaced nothing');
+SELECT assert_rejected(
+  $$INSERT INTO work_orders (property_id, component_id, summary, status, completed_on,
+                             resolution)
+    VALUES ('33333333-3333-3333-3333-333333333333',
+            '88888888-8888-4888-8888-888888888801', 'No hot water', 'completed',
+            '2026-08-27', 'replaced')$$,
+  'replaced_orders_install_a_component',
+  'a replacement that installed nothing');
+SELECT assert_rejected(
+  $$INSERT INTO work_orders (property_id, summary, reported_on, status, completed_on, resolution)
+    VALUES ('33333333-3333-3333-3333-333333333333', 'No hot water', '2026-08-27',
+            'completed', '2026-08-01', 'repaired')$$,
+  'completed_after_reported',
+  'work completed before it was reported');
+-- A unit of another property cannot be named by this property's work order.
+INSERT INTO properties (id, entity_id, label, street_1, city, state, postal_code, kind)
+  VALUES ('88888888-8888-4888-8888-888888888803', '11111111-1111-1111-1111-111111111111',
+          'Elsewhere', '1 Elsewhere Ave', 'Newport', 'KY', '41071', 'single_family');
+SELECT assert_rejected(
+  $$INSERT INTO work_orders (property_id, unit_id, summary)
+    VALUES ('88888888-8888-4888-8888-888888888803',
+            '55555555-5555-5555-5555-555555555555', 'Wrong property''s unit')$$,
+  'work_orders_unit_id_property_id_fkey',
+  'a work order citing a unit that belongs to a different property');
+SELECT assert_accepted(
+  $$INSERT INTO work_orders (property_id, unit_id, component_id, summary, priority)
+    VALUES ('33333333-3333-3333-3333-333333333333',
+            '55555555-5555-5555-5555-555555555555',
+            '88888888-8888-4888-8888-888888888801', 'Roof leak over the kitchen', 'urgent')$$,
+  'a work order naming its own property''s unit and component');
+
+-- Deleting a component must not take the job's history with it, nor abort:
+-- a bare multi-column SET NULL would try to null the NOT NULL property_id.
+INSERT INTO components (id, property_id, component_type_id, installed_year_low,
+                        installed_year_high, provenance_id)
+  VALUES ('88888888-8888-4888-8888-888888888805', '33333333-3333-3333-3333-333333333333',
+          '44444444-4444-4444-4444-444444444444', 1990, 2000,
+          '22222222-2222-2222-2222-222222222222');
+INSERT INTO work_orders (id, property_id, component_id, summary)
+  VALUES ('88888888-8888-4888-8888-888888888806', '33333333-3333-3333-3333-333333333333',
+          '88888888-8888-4888-8888-888888888805', 'Component that will be deleted');
+DELETE FROM components WHERE id = '88888888-8888-4888-8888-888888888805';
+DO $$
+DECLARE
+  survivor RECORD;
+BEGIN
+  SELECT component_id, property_id INTO survivor
+  FROM work_orders WHERE id = '88888888-8888-4888-8888-888888888806';
+  IF survivor.component_id IS NOT NULL OR survivor.property_id IS NULL THEN
+    RAISE EXCEPTION 'SET NULL WRONG: component_id=%, property_id=%',
+      survivor.component_id, survivor.property_id;
+  END IF;
+  RAISE NOTICE '  ok      the job outlived the component it named';
+END $$;
+
+-- Two vendors expiring on one day are two deadlines, not one.
+INSERT INTO vendors (id, entity_id, name, trade)
+  VALUES ('88888888-8888-4888-8888-888888888804', '11111111-1111-1111-1111-111111111111',
+          'Second Trade Co', 'hvac');
+SELECT assert_accepted(
+  $$INSERT INTO deadlines (kind, due_on, entity_id, vendor_id, citation)
+    VALUES ('vendor_insurance_expiration', '2027-03-01',
+            '11111111-1111-1111-1111-111111111111',
+            '88888888-8888-4888-8888-888888888802', 'certificate of insurance')$$,
+  'a vendor certificate expiry as a deadline');
+SELECT assert_accepted(
+  $$INSERT INTO deadlines (kind, due_on, entity_id, vendor_id, citation)
+    VALUES ('vendor_insurance_expiration', '2027-03-01',
+            '11111111-1111-1111-1111-111111111111',
+            '88888888-8888-4888-8888-888888888804', 'certificate of insurance')$$,
+  'a second vendor expiring the same day is its own deadline');
+SELECT assert_accepted(
+  $$INSERT INTO deadlines (kind, due_on, entity_id, vendor_id, citation)
+    VALUES ('vendor_workers_comp_expiration', '2027-03-01',
+            '11111111-1111-1111-1111-111111111111',
+            '88888888-8888-4888-8888-888888888802', 'workers compensation term')$$,
+  'one vendor''s liability and comp expiring together are two deadlines');
+SELECT assert_rejected(
+  $$INSERT INTO deadlines (kind, due_on, entity_id, vendor_id, citation)
+    VALUES ('vendor_insurance_expiration', '2027-03-01',
+            '11111111-1111-1111-1111-111111111111',
+            '88888888-8888-4888-8888-888888888802', 'certificate of insurance')$$,
+  'deadlines_sweep_identity',
+  'the same vendor expiry generated twice');
+
+\echo ''
 \echo 'document extraction'
 -- The blob key is provably the sha256 of the bytes.
 INSERT INTO source_documents (id, kind, filename, content_hash, status)

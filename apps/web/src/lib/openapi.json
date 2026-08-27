@@ -701,6 +701,114 @@
         "title": "CollectOut",
         "type": "object"
       },
+      "CompletionIn": {
+        "properties": {
+          "completed_on": {
+            "format": "date",
+            "title": "Completed On",
+            "type": "string"
+          },
+          "cost": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CostIn"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "replacement": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReplacementIn"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "resolution": {
+            "enum": ["repaired", "replaced", "no_action"],
+            "title": "Resolution",
+            "type": "string"
+          },
+          "resolution_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolution Note"
+          }
+        },
+        "required": ["completed_on", "resolution"],
+        "title": "CompletionIn",
+        "type": "object"
+      },
+      "CompletionOut": {
+        "properties": {
+          "capitalisation_citation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capitalisation Citation"
+          },
+          "installed_component_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Installed Component Id"
+          },
+          "ledger_event_uuid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ledger Event Uuid"
+          },
+          "retired_component_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retired Component Id"
+          },
+          "work_order": {
+            "$ref": "#/components/schemas/WorkOrderOut"
+          }
+        },
+        "required": [
+          "work_order",
+          "retired_component_id",
+          "installed_component_id",
+          "ledger_event_uuid",
+          "capitalisation_citation"
+        ],
+        "title": "CompletionOut",
+        "type": "object"
+      },
       "ComponentOut": {
         "properties": {
           "code": {
@@ -797,6 +905,208 @@
           "derived_from"
         ],
         "title": "ComponentOut",
+        "type": "object"
+      },
+      "CostIn": {
+        "description": "A cost typed as a positive magnitude; the ledger's sign is our business,\nnot the operator's.",
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,16}|(?=[\\d.]{1,19}0*$)\\d{0,16}\\.\\d{0,2}0*$)",
+                "type": "string"
+              }
+            ],
+            "title": "Amount"
+          },
+          "capitalisation_rationale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capitalisation Rationale"
+          },
+          "counterparty": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Counterparty"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          },
+          "is_capital": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Capital"
+          },
+          "memo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Memo"
+          },
+          "occurred_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Occurred On"
+          },
+          "relation": {
+            "default": "invoice",
+            "enum": [
+              "invoice",
+              "materials",
+              "deposit",
+              "tenant_chargeback",
+              "warranty_credit",
+              "other"
+            ],
+            "title": "Relation",
+            "type": "string"
+          }
+        },
+        "required": ["amount"],
+        "title": "CostIn",
+        "type": "object"
+      },
+      "CostLinkIn": {
+        "description": "Either a new cost to post, or an existing ledger event to associate.",
+        "properties": {
+          "cost": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CostIn"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ledger_event_uuid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ledger Event Uuid"
+          },
+          "relation": {
+            "default": "invoice",
+            "enum": [
+              "invoice",
+              "materials",
+              "deposit",
+              "tenant_chargeback",
+              "warranty_credit",
+              "other"
+            ],
+            "title": "Relation",
+            "type": "string"
+          }
+        },
+        "title": "CostLinkIn",
+        "type": "object"
+      },
+      "CostOut": {
+        "properties": {
+          "amount": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Amount",
+            "type": "string"
+          },
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "is_capital": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Capital"
+          },
+          "ledger_event_uuid": {
+            "title": "Ledger Event Uuid",
+            "type": "string"
+          },
+          "occurred_on": {
+            "format": "date",
+            "title": "Occurred On",
+            "type": "string"
+          },
+          "relation": {
+            "enum": [
+              "invoice",
+              "materials",
+              "deposit",
+              "tenant_chargeback",
+              "warranty_credit",
+              "other"
+            ],
+            "title": "Relation",
+            "type": "string"
+          },
+          "reversed": {
+            "title": "Reversed",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ledger_event_uuid",
+          "occurred_on",
+          "amount",
+          "category",
+          "relation",
+          "is_capital",
+          "reversed"
+        ],
+        "title": "CostOut",
         "type": "object"
       },
       "CoverageGapOut": {
@@ -3413,6 +3723,103 @@
         "title": "RentSweepResult",
         "type": "object"
       },
+      "ReplacementIn": {
+        "properties": {
+          "component_type_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Component Type Id"
+          },
+          "expected_life_years": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Life Years"
+          },
+          "installed_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Installed On"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity"
+          },
+          "replacement_cost": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Replacement Cost"
+          },
+          "warranty_expires_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Warranty Expires On"
+          }
+        },
+        "title": "ReplacementIn",
+        "type": "object"
+      },
       "ResidentIn": {
         "properties": {
           "email": {
@@ -3953,6 +4360,52 @@
         "title": "SweepOut",
         "type": "object"
       },
+      "TransitionIn": {
+        "properties": {
+          "cancelled_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancelled Reason"
+          },
+          "scheduled_for": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scheduled For"
+          },
+          "status": {
+            "enum": ["triaged", "scheduled", "in_progress", "cancelled"],
+            "title": "Status",
+            "type": "string"
+          },
+          "vendor_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vendor Id"
+          }
+        },
+        "required": ["status"],
+        "title": "TransitionIn",
+        "type": "object"
+      },
       "UnitIn": {
         "properties": {
           "label": {
@@ -4087,6 +4540,346 @@
         "title": "ValuationOut",
         "type": "object"
       },
+      "VendorIn": {
+        "properties": {
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "entity_id": {
+            "title": "Entity Id",
+            "type": "string"
+          },
+          "insurer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Insurer"
+          },
+          "is_1099_reportable": {
+            "default": true,
+            "title": "Is 1099 Reportable",
+            "type": "boolean"
+          },
+          "liability_expires_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Liability Expires On"
+          },
+          "license_expires_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "License Expires On"
+          },
+          "license_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "License Number"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "trade": {
+            "enum": [
+              "plumbing",
+              "hvac",
+              "electrical",
+              "roofing",
+              "appliance",
+              "general_contractor",
+              "handyman",
+              "landscaping",
+              "pest_control",
+              "cleaning",
+              "flooring",
+              "painting",
+              "restoration",
+              "inspection",
+              "other"
+            ],
+            "title": "Trade",
+            "type": "string"
+          },
+          "w9_on_file": {
+            "default": false,
+            "title": "W9 On File",
+            "type": "boolean"
+          },
+          "workers_comp_expires_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workers Comp Expires On"
+          }
+        },
+        "required": ["entity_id", "name", "trade"],
+        "title": "VendorIn",
+        "type": "object"
+      },
+      "VendorOut": {
+        "properties": {
+          "also_registered_under": {
+            "title": "Also Registered Under",
+            "type": "integer"
+          },
+          "coverage_state": {
+            "enum": ["current", "expiring", "expired", "unknown"],
+            "title": "Coverage State",
+            "type": "string"
+          },
+          "earliest_expiry": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Earliest Expiry"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "entity_id": {
+            "title": "Entity Id",
+            "type": "string"
+          },
+          "entity_name": {
+            "title": "Entity Name",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "insurer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Insurer"
+          },
+          "is_1099_reportable": {
+            "title": "Is 1099 Reportable",
+            "type": "boolean"
+          },
+          "liability_expires_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Liability Expires On"
+          },
+          "license_expires_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "License Expires On"
+          },
+          "license_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "License Number"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "open_work_orders": {
+            "title": "Open Work Orders",
+            "type": "integer"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "retired_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retired On"
+          },
+          "trade": {
+            "enum": [
+              "plumbing",
+              "hvac",
+              "electrical",
+              "roofing",
+              "appliance",
+              "general_contractor",
+              "handyman",
+              "landscaping",
+              "pest_control",
+              "cleaning",
+              "flooring",
+              "painting",
+              "restoration",
+              "inspection",
+              "other"
+            ],
+            "title": "Trade",
+            "type": "string"
+          },
+          "w9_on_file": {
+            "title": "W9 On File",
+            "type": "boolean"
+          },
+          "workers_comp_expires_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workers Comp Expires On"
+          }
+        },
+        "required": [
+          "id",
+          "entity_id",
+          "entity_name",
+          "name",
+          "trade",
+          "phone",
+          "email",
+          "license_number",
+          "license_expires_on",
+          "insurer",
+          "liability_expires_on",
+          "workers_comp_expires_on",
+          "w9_on_file",
+          "is_1099_reportable",
+          "notes",
+          "retired_on",
+          "coverage_state",
+          "earliest_expiry",
+          "open_work_orders",
+          "also_registered_under"
+        ],
+        "title": "VendorOut",
+        "type": "object"
+      },
       "WaiveIn": {
         "properties": {
           "reason": {
@@ -4097,6 +4890,325 @@
         },
         "required": ["reason"],
         "title": "WaiveIn",
+        "type": "object"
+      },
+      "WorkOrderIn": {
+        "properties": {
+          "component_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Component Id"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "priority": {
+            "default": "routine",
+            "enum": ["emergency", "urgent", "routine", "planned"],
+            "title": "Priority",
+            "type": "string"
+          },
+          "property_id": {
+            "title": "Property Id",
+            "type": "string"
+          },
+          "reported_by": {
+            "default": "owner",
+            "enum": ["resident", "owner", "inspection", "vendor"],
+            "title": "Reported By",
+            "type": "string"
+          },
+          "reported_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reported On"
+          },
+          "summary": {
+            "maxLength": 400,
+            "minLength": 1,
+            "title": "Summary",
+            "type": "string"
+          },
+          "unit_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Id"
+          },
+          "vendor_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vendor Id"
+          }
+        },
+        "required": ["property_id", "summary"],
+        "title": "WorkOrderIn",
+        "type": "object"
+      },
+      "WorkOrderOut": {
+        "properties": {
+          "cancelled_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancelled Reason"
+          },
+          "completed_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed On"
+          },
+          "component_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Component Id"
+          },
+          "component_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Component Label"
+          },
+          "costs": {
+            "items": {
+              "$ref": "#/components/schemas/CostOut"
+            },
+            "title": "Costs",
+            "type": "array"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "legal_transitions": {
+            "items": {
+              "enum": ["reported", "triaged", "scheduled", "in_progress", "completed", "cancelled"],
+              "type": "string"
+            },
+            "title": "Legal Transitions",
+            "type": "array"
+          },
+          "net_cost": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Net Cost",
+            "type": "string"
+          },
+          "priority": {
+            "enum": ["emergency", "urgent", "routine", "planned"],
+            "title": "Priority",
+            "type": "string"
+          },
+          "property_id": {
+            "title": "Property Id",
+            "type": "string"
+          },
+          "property_label": {
+            "title": "Property Label",
+            "type": "string"
+          },
+          "replacement_component_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Replacement Component Id"
+          },
+          "reported_by": {
+            "enum": ["resident", "owner", "inspection", "vendor"],
+            "title": "Reported By",
+            "type": "string"
+          },
+          "reported_on": {
+            "format": "date",
+            "title": "Reported On",
+            "type": "string"
+          },
+          "resolution": {
+            "anyOf": [
+              {
+                "enum": ["repaired", "replaced", "no_action"],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolution"
+          },
+          "resolution_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolution Note"
+          },
+          "scheduled_for": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scheduled For"
+          },
+          "status": {
+            "enum": ["reported", "triaged", "scheduled", "in_progress", "completed", "cancelled"],
+            "title": "Status",
+            "type": "string"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "unit_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Id"
+          },
+          "unit_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Label"
+          },
+          "vendor_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vendor Id"
+          },
+          "vendor_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vendor Name"
+          }
+        },
+        "required": [
+          "id",
+          "property_id",
+          "property_label",
+          "unit_id",
+          "unit_label",
+          "component_id",
+          "component_label",
+          "vendor_id",
+          "vendor_name",
+          "status",
+          "priority",
+          "reported_by",
+          "reported_on",
+          "summary",
+          "detail",
+          "scheduled_for",
+          "completed_on",
+          "resolution",
+          "resolution_note",
+          "replacement_component_id",
+          "cancelled_reason",
+          "costs",
+          "net_cost",
+          "legal_transitions"
+        ],
+        "title": "WorkOrderOut",
         "type": "object"
       }
     }
@@ -6587,6 +7699,542 @@
           }
         },
         "summary": "Create Valuation"
+      }
+    },
+    "/vendors": {
+      "get": {
+        "operationId": "list_vendors_vendors_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "entity_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Entity Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_retired",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Retired",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "as_of",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "As Of"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/VendorOut"
+                  },
+                  "title": "Response List Vendors Vendors Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Vendors"
+      },
+      "post": {
+        "operationId": "create_vendor_vendors_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VendorIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Vendor"
+      }
+    },
+    "/vendors/{vendor_id}": {
+      "get": {
+        "operationId": "read_vendor_vendors__vendor_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vendor_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Vendor Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "as_of",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "As Of"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Vendor"
+      }
+    },
+    "/work-orders": {
+      "get": {
+        "operationId": "list_work_orders_work_orders_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "property_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Property Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "reported",
+                    "triaged",
+                    "scheduled",
+                    "in_progress",
+                    "completed",
+                    "cancelled"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "open_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Open Only",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/WorkOrderOut"
+                  },
+                  "title": "Response List Work Orders Work Orders Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Work Orders"
+      },
+      "post": {
+        "operationId": "create_work_order_work_orders_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkOrderIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkOrderOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Work Order"
+      }
+    },
+    "/work-orders/{work_order_id}": {
+      "get": {
+        "operationId": "read_work_order_work_orders__work_order_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "work_order_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Work Order Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkOrderOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Work Order"
+      }
+    },
+    "/work-orders/{work_order_id}/complete": {
+      "post": {
+        "operationId": "complete_work_order_work_orders__work_order_id__complete_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "work_order_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Work Order Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompletionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompletionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Complete Work Order"
+      }
+    },
+    "/work-orders/{work_order_id}/costs": {
+      "post": {
+        "operationId": "add_work_order_cost_work_orders__work_order_id__costs_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "work_order_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Work Order Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CostLinkIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkOrderOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Work Order Cost"
+      }
+    },
+    "/work-orders/{work_order_id}/transitions": {
+      "post": {
+        "operationId": "transition_work_order_work_orders__work_order_id__transitions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "work_order_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Work Order Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransitionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkOrderOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Transition Work Order"
       }
     }
   }

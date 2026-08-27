@@ -175,6 +175,85 @@ describe('the API client', () => {
     await expect(api.importStatement('a1', file)).rejects.toMatchObject({ message: 'HTTP 500' });
   });
 
+  it('walks the maintenance paths against the contract', async () => {
+    const fetchMock = vi.fn().mockImplementation(jsonResponse(200, []));
+    vi.stubGlobal('fetch', fetchMock);
+    await api.listVendors();
+    expect(fetchMock).toHaveBeenLastCalledWith('http://localhost:8000/vendors', expect.anything());
+    await api.listVendors('e1');
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/vendors?entity_id=e1',
+      expect.anything(),
+    );
+    await api.readVendor('v1');
+    await api.createVendor({
+      entity_id: 'e1',
+      name: 'Licking Valley Plumbing',
+      trade: 'plumbing',
+      phone: null,
+      email: null,
+      license_number: null,
+      license_expires_on: null,
+      insurer: null,
+      liability_expires_on: null,
+      workers_comp_expires_on: null,
+      w9_on_file: false,
+      is_1099_reportable: true,
+      notes: null,
+    });
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/vendors',
+      expect.objectContaining({ method: 'POST' }),
+    );
+    await api.listWorkOrders();
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/work-orders',
+      expect.anything(),
+    );
+    await api.listWorkOrders({ propertyId: 'p1', openOnly: true });
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/work-orders?property_id=p1&open_only=true',
+      expect.anything(),
+    );
+    await api.readWorkOrder('w1');
+    await api.createWorkOrder({
+      property_id: 'p1',
+      summary: 'No hot water',
+      priority: 'urgent',
+      reported_by: 'owner',
+    });
+    await api.transitionWorkOrder('w1', {
+      status: 'triaged',
+      scheduled_for: null,
+      vendor_id: null,
+      cancelled_reason: null,
+    });
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/work-orders/w1/transitions',
+      expect.objectContaining({ method: 'POST' }),
+    );
+    await api.completeWorkOrder('w1', {
+      completed_on: '2026-08-27',
+      resolution: 'replaced',
+      resolution_note: null,
+      cost: null,
+      replacement: null,
+    });
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/work-orders/w1/complete',
+      expect.objectContaining({ method: 'POST' }),
+    );
+    await api.addWorkOrderCost('w1', {
+      cost: null,
+      ledger_event_uuid: 'e-uuid',
+      relation: 'materials',
+    });
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/work-orders/w1/costs',
+      expect.objectContaining({ method: 'POST' }),
+    );
+  });
+
   it('walks the document loop against the contract paths', async () => {
     const fetchMock = vi.fn().mockImplementation(jsonResponse(200, []));
     vi.stubGlobal('fetch', fetchMock);

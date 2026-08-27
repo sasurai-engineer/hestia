@@ -28,11 +28,12 @@ Conn = psycopg.Connection[dict[str, Any]]
 INSERT = """
 INSERT INTO deadlines
   (kind, due_on, window_opens_on, property_id, entity_id, lease_id,
-   policy_id, debt_id, exchange_id, citation, note)
+   policy_id, debt_id, exchange_id, vendor_id, citation, note)
 VALUES (%(kind)s, %(due_on)s, %(window_opens_on)s, %(property_id)s, %(entity_id)s,
-        %(lease_id)s, %(policy_id)s, %(debt_id)s, %(exchange_id)s, %(citation)s, %(note)s)
+        %(lease_id)s, %(policy_id)s, %(debt_id)s, %(exchange_id)s, %(vendor_id)s,
+        %(citation)s, %(note)s)
 ON CONFLICT (kind, due_on, property_id, entity_id, lease_id,
-             policy_id, debt_id, exchange_id, appeal_id)
+             policy_id, debt_id, exchange_id, appeal_id, vendor_id)
 DO NOTHING
 """
 
@@ -69,6 +70,7 @@ def _row(kind: str, due_on: dt.date, citation: str, **anchors: Any) -> dict[str,
         "policy_id": None,
         "debt_id": None,
         "exchange_id": None,
+        "vendor_id": None,
         "citation": citation,
         "note": None,
     }
@@ -288,12 +290,65 @@ def _entity_tax_dates(conn: Conn, as_of: dt.date) -> list[dict[str, Any]]:
 
 # The dispatch seam is the rule data plus the calendar registry, not this
 # tuple: the tuple only lists the KINDS of fact the sweep reads.
+def _vendor_credentials(conn: Conn, as_of: dt.date) -> list[dict[str, Any]]:
+    """A vendor's certificate expiry is a deadline like any other: the day it
+    lapses is the day the owner silently reassumes the risk the vendor was
+    hired to carry. Anchored on the VENDOR, so two vendors expiring on one day
+    are two deadlines (module 016 added the anchor for exactly this)."""
+    rows = conn.execute(
+        """
+        SELECT id, entity_id, liability_expires_on, workers_comp_expires_on,
+               license_expires_on, name
+        FROM vendors
+        WHERE retired_on IS NULL
+          AND (liability_expires_on >= %(as_of)s
+               OR workers_comp_expires_on >= %(as_of)s
+               OR license_expires_on >= %(as_of)s)
+        """,
+        {"as_of": as_of},
+    ).fetchall()
+    out: list[dict[str, Any]] = []
+    for record in rows:
+        for column, kind, citation in (
+            (
+                "liability_expires_on",
+                "vendor_insurance_expiration",
+                "certificate of insurance — general liability term",
+            ),
+            (
+                "workers_comp_expires_on",
+                "vendor_workers_comp_expiration",
+                "certificate of insurance — workers compensation term",
+            ),
+            (
+                "license_expires_on",
+                "vendor_license_expiration",
+                "trade licence term on file",
+            ),
+        ):
+            due = record[column]
+            if due is None or due < as_of:
+                continue
+            out.append(
+                _row(
+                    kind,
+                    due,
+                    citation,
+                    entity_id=record["entity_id"],
+                    vendor_id=record["id"],
+                    note=record["name"],
+                )
+            )
+    return out
+
+
 GENERATORS = (
     _lease_expirations,
     _policy_expirations,
     _debt_events,
     _exchange_clocks,
     _entity_tax_dates,
+    _vendor_credentials,
 )
 
 

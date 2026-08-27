@@ -114,3 +114,42 @@ test('a closing statement walks upload, ratification and apply', async ({ page }
   await page.locator('#tx-filter').selectOption({ index: 1 });
   await expect(page.getByRole('row', { name: /Acquisition Cost/ }).first()).toBeVisible();
 });
+
+test('a work order completes and the vendor calendar knows its certificate', async ({ page }) => {
+  // A vendor with a certificate that expires: the day it lapses is a deadline.
+  await page.goto('/vendors');
+  await expect(page.getByRole('heading', { name: 'Vendors' })).toBeVisible();
+  const vendorName = `Licking Valley Plumbing ${String(Date.now())}`;
+  await page.getByLabel('Name').fill(vendorName);
+  await page.getByLabel('Trade').selectOption('plumbing');
+  await page.getByLabel('Liability expires').fill('2027-06-30');
+  await page.getByRole('button', { name: 'Add vendor' }).click();
+  await expect(page.getByRole('row', { name: new RegExp(vendorName) })).toBeVisible();
+  await expect(
+    page.getByRole('row', { name: new RegExp(vendorName) }).getByText('covered'),
+  ).toBeVisible();
+
+  // Report work, walk it across the board, and complete it with a cost whose
+  // repair-or-improvement answer the system insists on.
+  await page.goto('/maintenance');
+  await expect(page.getByRole('heading', { name: 'Maintenance' })).toBeVisible();
+  await page.getByLabel('Property', { exact: true }).selectOption({ index: 1 });
+  const summary = `No hot water ${String(Date.now())}`;
+  await page.getByLabel('What is wrong').fill(summary);
+  await page.getByLabel('Priority').selectOption('urgent');
+  await page.getByRole('button', { name: 'Report work' }).click();
+  await expect(page.getByRole('link', { name: summary })).toBeVisible();
+
+  await page.getByRole('link', { name: summary }).click();
+  await expect(page.getByRole('heading', { name: summary })).toBeVisible();
+  await page.getByRole('button', { name: 'Triaged' }).click();
+  await expect(page.getByText('Triaged', { exact: true })).toBeVisible();
+
+  await page.getByLabel('Invoice amount').fill('180.00');
+  await page.getByLabel('Repair or improvement?').selectOption('expense');
+  await page.getByRole('button', { name: 'Complete the job' }).click();
+  await expect(page.getByRole('heading', { name: 'Completed' })).toBeVisible();
+  // The money landed with its authority, and the job carries its net cost.
+  await expect(page.getByText(/1\.263\(a\)-1\(f\)/)).toBeVisible();
+  await expect(page.getByText(/Net cost/)).toBeVisible();
+});

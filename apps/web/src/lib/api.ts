@@ -51,6 +51,19 @@ export type DocumentApplyResult = components['schemas']['ApplyResult'];
 // The vocabularies themselves come from the contract, so a hand-kept option
 // list in a form can never drift from what the server accepts.
 export type DocumentKind = components['schemas']['Body_upload_document_documents_post']['kind'];
+export type VendorOut = components['schemas']['VendorOut'];
+export type VendorIn = components['schemas']['VendorIn'];
+export type WorkOrderOut = components['schemas']['WorkOrderOut'];
+export type WorkOrderIn = components['schemas']['WorkOrderIn'];
+export type WorkOrderCost = components['schemas']['CostOut'];
+export type TransitionIn = components['schemas']['TransitionIn'];
+export type CompletionIn = components['schemas']['CompletionIn'];
+export type CompletionOut = components['schemas']['CompletionOut'];
+export type CostLinkIn = components['schemas']['CostLinkIn'];
+export type WorkOrderStatus = WorkOrderOut['status'];
+export type WorkOrderPriority = WorkOrderIn['priority'];
+export type VendorTrade = VendorIn['trade'];
+
 export type DocumentStatus = NonNullable<
   NonNullable<operations['list_documents_documents_get']['parameters']['query']>['status']
 >;
@@ -121,6 +134,36 @@ export const api = {
   listBankAccounts: () => request<BankAccountOut[]>('/bank/accounts'),
   createBankAccount: (body: BankAccountIn) =>
     request<BankAccountOut>('/bank/accounts', { method: 'POST', body: JSON.stringify(body) }),
+  listVendors: (entityId?: string) =>
+    request<VendorOut[]>(`/vendors${entityId ? `?entity_id=${entityId}` : ''}`),
+  readVendor: (vendorId: string) => request<VendorOut>(`/vendors/${vendorId}`),
+  createVendor: (body: VendorIn) =>
+    request<VendorOut>('/vendors', { method: 'POST', body: JSON.stringify(body) }),
+  listWorkOrders: (params?: { propertyId?: string; openOnly?: boolean }) => {
+    const query = new URLSearchParams();
+    if (params?.propertyId) query.set('property_id', params.propertyId);
+    if (params?.openOnly) query.set('open_only', 'true');
+    const suffix = query.size > 0 ? `?${query.toString()}` : '';
+    return request<WorkOrderOut[]>(`/work-orders${suffix}`);
+  },
+  readWorkOrder: (workOrderId: string) => request<WorkOrderOut>(`/work-orders/${workOrderId}`),
+  createWorkOrder: (body: WorkOrderIn) =>
+    request<WorkOrderOut>('/work-orders', { method: 'POST', body: JSON.stringify(body) }),
+  transitionWorkOrder: (workOrderId: string, body: TransitionIn) =>
+    request<WorkOrderOut>(`/work-orders/${workOrderId}/transitions`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  completeWorkOrder: (workOrderId: string, body: CompletionIn) =>
+    request<CompletionOut>(`/work-orders/${workOrderId}/complete`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  addWorkOrderCost: (workOrderId: string, body: CostLinkIn) =>
+    request<WorkOrderOut>(`/work-orders/${workOrderId}/costs`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
   listDocuments: (status?: DocumentStatus) =>
     request<DocumentSummary[]>(`/documents${status ? `?status=${status}` : ''}`),
   documentDetail: (documentId: string) => request<DocumentDetail>(`/documents/${documentId}`),

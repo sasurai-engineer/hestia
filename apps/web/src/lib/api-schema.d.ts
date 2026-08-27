@@ -742,6 +742,127 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/vendors': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Vendors */
+    get: operations['list_vendors_vendors_get'];
+    put?: never;
+    /** Create Vendor */
+    post: operations['create_vendor_vendors_post'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/vendors/{vendor_id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Read Vendor */
+    get: operations['read_vendor_vendors__vendor_id__get'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/work-orders': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Work Orders */
+    get: operations['list_work_orders_work_orders_get'];
+    put?: never;
+    /** Create Work Order */
+    post: operations['create_work_order_work_orders_post'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/work-orders/{work_order_id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Read Work Order */
+    get: operations['read_work_order_work_orders__work_order_id__get'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/work-orders/{work_order_id}/complete': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Complete Work Order */
+    post: operations['complete_work_order_work_orders__work_order_id__complete_post'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/work-orders/{work_order_id}/costs': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Add Work Order Cost */
+    post: operations['add_work_order_cost_work_orders__work_order_id__costs_post'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/work-orders/{work_order_id}/transitions': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Transition Work Order */
+    post: operations['transition_work_order_work_orders__work_order_id__transitions_post'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1024,6 +1145,35 @@ export interface components {
       /** Status */
       status: string;
     };
+    /** CompletionIn */
+    CompletionIn: {
+      /**
+       * Completed On
+       * Format: date
+       */
+      completed_on: string;
+      cost?: components['schemas']['CostIn'] | null;
+      replacement?: components['schemas']['ReplacementIn'] | null;
+      /**
+       * Resolution
+       * @enum {string}
+       */
+      resolution: 'repaired' | 'replaced' | 'no_action';
+      /** Resolution Note */
+      resolution_note?: string | null;
+    };
+    /** CompletionOut */
+    CompletionOut: {
+      /** Capitalisation Citation */
+      capitalisation_citation: string | null;
+      /** Installed Component Id */
+      installed_component_id: string | null;
+      /** Ledger Event Uuid */
+      ledger_event_uuid: string | null;
+      /** Retired Component Id */
+      retired_component_id: string | null;
+      work_order: components['schemas']['WorkOrderOut'];
+    };
     /** ComponentOut */
     ComponentOut: {
       /** Code */
@@ -1048,6 +1198,89 @@ export interface components {
       provenance_kind: string;
       /** System */
       system: string;
+    };
+    /**
+     * CostIn
+     * @description A cost typed as a positive magnitude; the ledger's sign is our business,
+     *     not the operator's.
+     */
+    CostIn: {
+      /** Amount */
+      amount: number | string;
+      /** Capitalisation Rationale */
+      capitalisation_rationale?: string | null;
+      /** Counterparty */
+      counterparty?: string | null;
+      /** Document Id */
+      document_id?: string | null;
+      /** Is Capital */
+      is_capital?: boolean | null;
+      /** Memo */
+      memo?: string | null;
+      /** Occurred On */
+      occurred_on?: string | null;
+      /**
+       * Relation
+       * @default invoice
+       * @enum {string}
+       */
+      relation:
+        | 'invoice'
+        | 'materials'
+        | 'deposit'
+        | 'tenant_chargeback'
+        | 'warranty_credit'
+        | 'other';
+    };
+    /**
+     * CostLinkIn
+     * @description Either a new cost to post, or an existing ledger event to associate.
+     */
+    CostLinkIn: {
+      cost?: components['schemas']['CostIn'] | null;
+      /** Ledger Event Uuid */
+      ledger_event_uuid?: string | null;
+      /**
+       * Relation
+       * @default invoice
+       * @enum {string}
+       */
+      relation:
+        | 'invoice'
+        | 'materials'
+        | 'deposit'
+        | 'tenant_chargeback'
+        | 'warranty_credit'
+        | 'other';
+    };
+    /** CostOut */
+    CostOut: {
+      /** Amount */
+      amount: string;
+      /** Category */
+      category: string;
+      /** Is Capital */
+      is_capital: boolean | null;
+      /** Ledger Event Uuid */
+      ledger_event_uuid: string;
+      /**
+       * Occurred On
+       * Format: date
+       */
+      occurred_on: string;
+      /**
+       * Relation
+       * @enum {string}
+       */
+      relation:
+        | 'invoice'
+        | 'materials'
+        | 'deposit'
+        | 'tenant_chargeback'
+        | 'warranty_credit'
+        | 'other';
+      /** Reversed */
+      reversed: boolean;
     };
     /** CoverageGapOut */
     CoverageGapOut: {
@@ -1987,6 +2220,23 @@ export interface components {
         [key: string]: string;
       }[];
     };
+    /** ReplacementIn */
+    ReplacementIn: {
+      /** Component Type Id */
+      component_type_id?: string | null;
+      /** Expected Life Years */
+      expected_life_years?: number | string | null;
+      /** Installed On */
+      installed_on?: string | null;
+      /** Notes */
+      notes?: string | null;
+      /** Quantity */
+      quantity?: number | string | null;
+      /** Replacement Cost */
+      replacement_cost?: number | string | null;
+      /** Warranty Expires On */
+      warranty_expires_on?: string | null;
+    };
     /** ResidentIn */
     ResidentIn: {
       /** Email */
@@ -2197,6 +2447,20 @@ export interface components {
       /** Total */
       total: number;
     };
+    /** TransitionIn */
+    TransitionIn: {
+      /** Cancelled Reason */
+      cancelled_reason?: string | null;
+      /** Scheduled For */
+      scheduled_for?: string | null;
+      /**
+       * Status
+       * @enum {string}
+       */
+      status: 'triaged' | 'scheduled' | 'in_progress' | 'cancelled';
+      /** Vendor Id */
+      vendor_id?: string | null;
+    };
     /** UnitIn */
     UnitIn: {
       /** Label */
@@ -2259,10 +2523,226 @@ export interface components {
       /** Value */
       value: string;
     };
+    /** VendorIn */
+    VendorIn: {
+      /** Email */
+      email?: string | null;
+      /** Entity Id */
+      entity_id: string;
+      /** Insurer */
+      insurer?: string | null;
+      /**
+       * Is 1099 Reportable
+       * @default true
+       */
+      is_1099_reportable: boolean;
+      /** Liability Expires On */
+      liability_expires_on?: string | null;
+      /** License Expires On */
+      license_expires_on?: string | null;
+      /** License Number */
+      license_number?: string | null;
+      /** Name */
+      name: string;
+      /** Notes */
+      notes?: string | null;
+      /** Phone */
+      phone?: string | null;
+      /**
+       * Trade
+       * @enum {string}
+       */
+      trade:
+        | 'plumbing'
+        | 'hvac'
+        | 'electrical'
+        | 'roofing'
+        | 'appliance'
+        | 'general_contractor'
+        | 'handyman'
+        | 'landscaping'
+        | 'pest_control'
+        | 'cleaning'
+        | 'flooring'
+        | 'painting'
+        | 'restoration'
+        | 'inspection'
+        | 'other';
+      /**
+       * W9 On File
+       * @default false
+       */
+      w9_on_file: boolean;
+      /** Workers Comp Expires On */
+      workers_comp_expires_on?: string | null;
+    };
+    /** VendorOut */
+    VendorOut: {
+      /** Also Registered Under */
+      also_registered_under: number;
+      /**
+       * Coverage State
+       * @enum {string}
+       */
+      coverage_state: 'current' | 'expiring' | 'expired' | 'unknown';
+      /** Earliest Expiry */
+      earliest_expiry: string | null;
+      /** Email */
+      email: string | null;
+      /** Entity Id */
+      entity_id: string;
+      /** Entity Name */
+      entity_name: string;
+      /** Id */
+      id: string;
+      /** Insurer */
+      insurer: string | null;
+      /** Is 1099 Reportable */
+      is_1099_reportable: boolean;
+      /** Liability Expires On */
+      liability_expires_on: string | null;
+      /** License Expires On */
+      license_expires_on: string | null;
+      /** License Number */
+      license_number: string | null;
+      /** Name */
+      name: string;
+      /** Notes */
+      notes: string | null;
+      /** Open Work Orders */
+      open_work_orders: number;
+      /** Phone */
+      phone: string | null;
+      /** Retired On */
+      retired_on: string | null;
+      /**
+       * Trade
+       * @enum {string}
+       */
+      trade:
+        | 'plumbing'
+        | 'hvac'
+        | 'electrical'
+        | 'roofing'
+        | 'appliance'
+        | 'general_contractor'
+        | 'handyman'
+        | 'landscaping'
+        | 'pest_control'
+        | 'cleaning'
+        | 'flooring'
+        | 'painting'
+        | 'restoration'
+        | 'inspection'
+        | 'other';
+      /** W9 On File */
+      w9_on_file: boolean;
+      /** Workers Comp Expires On */
+      workers_comp_expires_on: string | null;
+    };
     /** WaiveIn */
     WaiveIn: {
       /** Reason */
       reason: string;
+    };
+    /** WorkOrderIn */
+    WorkOrderIn: {
+      /** Component Id */
+      component_id?: string | null;
+      /** Detail */
+      detail?: string | null;
+      /**
+       * Priority
+       * @default routine
+       * @enum {string}
+       */
+      priority: 'emergency' | 'urgent' | 'routine' | 'planned';
+      /** Property Id */
+      property_id: string;
+      /**
+       * Reported By
+       * @default owner
+       * @enum {string}
+       */
+      reported_by: 'resident' | 'owner' | 'inspection' | 'vendor';
+      /** Reported On */
+      reported_on?: string | null;
+      /** Summary */
+      summary: string;
+      /** Unit Id */
+      unit_id?: string | null;
+      /** Vendor Id */
+      vendor_id?: string | null;
+    };
+    /** WorkOrderOut */
+    WorkOrderOut: {
+      /** Cancelled Reason */
+      cancelled_reason: string | null;
+      /** Completed On */
+      completed_on: string | null;
+      /** Component Id */
+      component_id: string | null;
+      /** Component Label */
+      component_label: string | null;
+      /** Costs */
+      costs: components['schemas']['CostOut'][];
+      /** Detail */
+      detail: string | null;
+      /** Id */
+      id: string;
+      /** Legal Transitions */
+      legal_transitions: (
+        | 'reported'
+        | 'triaged'
+        | 'scheduled'
+        | 'in_progress'
+        | 'completed'
+        | 'cancelled'
+      )[];
+      /** Net Cost */
+      net_cost: string;
+      /**
+       * Priority
+       * @enum {string}
+       */
+      priority: 'emergency' | 'urgent' | 'routine' | 'planned';
+      /** Property Id */
+      property_id: string;
+      /** Property Label */
+      property_label: string;
+      /** Replacement Component Id */
+      replacement_component_id: string | null;
+      /**
+       * Reported By
+       * @enum {string}
+       */
+      reported_by: 'resident' | 'owner' | 'inspection' | 'vendor';
+      /**
+       * Reported On
+       * Format: date
+       */
+      reported_on: string;
+      /** Resolution */
+      resolution: ('repaired' | 'replaced' | 'no_action') | null;
+      /** Resolution Note */
+      resolution_note: string | null;
+      /** Scheduled For */
+      scheduled_for: string | null;
+      /**
+       * Status
+       * @enum {string}
+       */
+      status: 'reported' | 'triaged' | 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+      /** Summary */
+      summary: string;
+      /** Unit Id */
+      unit_id: string | null;
+      /** Unit Label */
+      unit_label: string | null;
+      /** Vendor Id */
+      vendor_id: string | null;
+      /** Vendor Name */
+      vendor_name: string | null;
     };
   };
   responses: never;
@@ -3895,6 +4375,319 @@ export interface operations {
           'application/json': {
             [key: string]: string;
           };
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  list_vendors_vendors_get: {
+    parameters: {
+      query?: {
+        entity_id?: string | null;
+        include_retired?: boolean;
+        as_of?: string | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['VendorOut'][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  create_vendor_vendors_post: {
+    parameters: {
+      query?: never;
+      header?: {
+        'x-actor'?: string;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['VendorIn'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['VendorOut'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  read_vendor_vendors__vendor_id__get: {
+    parameters: {
+      query?: {
+        as_of?: string | null;
+      };
+      header?: never;
+      path: {
+        vendor_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['VendorOut'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  list_work_orders_work_orders_get: {
+    parameters: {
+      query?: {
+        property_id?: string | null;
+        status?:
+          | ('reported' | 'triaged' | 'scheduled' | 'in_progress' | 'completed' | 'cancelled')
+          | null;
+        open_only?: boolean;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WorkOrderOut'][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  create_work_order_work_orders_post: {
+    parameters: {
+      query?: never;
+      header?: {
+        'x-actor'?: string;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['WorkOrderIn'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WorkOrderOut'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  read_work_order_work_orders__work_order_id__get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        work_order_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WorkOrderOut'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  complete_work_order_work_orders__work_order_id__complete_post: {
+    parameters: {
+      query?: never;
+      header?: {
+        'x-actor'?: string;
+      };
+      path: {
+        work_order_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CompletionIn'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CompletionOut'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  add_work_order_cost_work_orders__work_order_id__costs_post: {
+    parameters: {
+      query?: never;
+      header?: {
+        'x-actor'?: string;
+      };
+      path: {
+        work_order_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CostLinkIn'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WorkOrderOut'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  transition_work_order_work_orders__work_order_id__transitions_post: {
+    parameters: {
+      query?: never;
+      header?: {
+        'x-actor'?: string;
+      };
+      path: {
+        work_order_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['TransitionIn'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WorkOrderOut'];
         };
       };
       /** @description Validation Error */
