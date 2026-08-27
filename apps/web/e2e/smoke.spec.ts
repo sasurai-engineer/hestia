@@ -16,7 +16,13 @@ test('the portfolio starts honest and takes a property', async ({ page }) => {
   await expect(page.locator('.masthead__wordmark')).toHaveText('Hestia');
 
   await page.goto('/');
+  // Wait for a TERMINAL state before branching: isVisible() alone is an
+  // immediate check that loses the race against the loading state on a cold
+  // server with a fresh database — the button is skipped, and every later
+  // step waits on a form nobody opened. Empty portfolio or existing card,
+  // one of the two must render first.
   const addFirst = page.getByRole('button', { name: /Add the first property/ });
+  await expect(addFirst.or(page.locator('.card').first())).toBeVisible();
   if (await addFirst.isVisible().catch(() => false)) {
     await addFirst.click();
   }
