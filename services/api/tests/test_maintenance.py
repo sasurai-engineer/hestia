@@ -713,6 +713,66 @@ class TestCosts:
         )
 
 
+class TestEdgeValidation:
+    """Malformed input is a 422 at the edge, never a 500 in SQL."""
+
+    def test_a_malformed_id_is_refused_before_it_reaches_postgres(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        assert (
+            client.post(
+                "/work-orders",
+                json={"property_id": "not-a-uuid", "summary": "No hot water"},
+            ).status_code
+            == 422
+        )
+        assert (
+            client.post(
+                "/vendors",
+                json={"entity_id": "not-a-uuid", "name": "Ghost", "trade": "other"},
+            ).status_code
+            == 422
+        )
+        order = open_order(client, world)
+        assert (
+            client.post(
+                f"/work-orders/{order['id']}/transitions",
+                json={"status": "triaged", "vendor_id": "not-a-uuid"},
+            ).status_code
+            == 422
+        )
+        assert (
+            client.post(
+                f"/work-orders/{order['id']}/costs",
+                json={"ledger_event_uuid": "not-a-uuid"},
+            ).status_code
+            == 422
+        )
+
+    def test_a_replacement_cannot_overflow_the_component_columns(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        """components.quantity is NUMERIC(10,2) and expected_life_years is
+        NUMERIC(5,2); unbounded Decimals overflowed the column as a 500."""
+        order = open_order(client, world)
+        for field, value in (
+            ("quantity", "99999999999.00"),
+            ("expected_life_years", "9999.00"),
+            ("replacement_cost", "9" * 17 + ".00"),
+        ):
+            response = client.post(
+                f"/work-orders/{order['id']}/complete",
+                json={
+                    "completed_on": "2026-08-27",
+                    "resolution": "replaced",
+                    "replacement": {field: value},
+                },
+            )
+            assert response.status_code == 422, f"{field}={value} -> {response.status_code}"
+        # The refusals rolled back: the job is still open and still completable.
+        assert client.get(f"/work-orders/{order['id']}").json()["status"] == "reported"
+
+
 class TestCredits:
     def test_a_tenant_chargeback_is_income_and_reduces_what_the_job_cost(
         self, world: dict[str, str], client: TestClient

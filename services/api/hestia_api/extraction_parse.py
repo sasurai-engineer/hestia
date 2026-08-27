@@ -28,6 +28,10 @@ MODEL_ID = "deterministic/alta-v1"
 # and far below anything that hurts.
 MAX_PAGES = 200
 MAX_CONTENT_BYTES = 8 * 1024 * 1024
+# The line list is what actually lives in memory, and it is the one thing both
+# branches produce. A 200-page closing package runs to a few thousand lines;
+# this sits far above that and far below what would hurt.
+MAX_LINES = 50_000
 # One statement line is a label and an amount. Anything vastly longer is not
 # a line we can read, and scanning it is work an uploader chose for us.
 MAX_LINE_CHARS = 2_000
@@ -88,16 +92,33 @@ def extract_lines(content: bytes) -> list[tuple[int, str]]:
                 lines.extend(
                     (page_number, line) for line in (page.extract_text() or "").splitlines()
                 )
+                if len(lines) > MAX_LINES:
+                    raise UnreadableDocument(
+                        f"more than {MAX_LINES} text lines exceeds the extraction cap"
+                    )
             return lines
         except UnreadableDocument:
             raise
         except Exception as error:
             raise UnreadableDocument(f"PDF could not be read: {error}") from error
+    # The PDF branch bounds its work; this one bounded nothing at all, so an
+    # upload just under the byte cap decoded to a str and then to a list of
+    # str — hundreds of megabytes of objects, allocated inside the request's
+    # open transaction.
+    if len(content) > MAX_CONTENT_BYTES:
+        raise UnreadableDocument(
+            f"{len(content)} bytes of text exceeds the {MAX_CONTENT_BYTES}-byte extraction budget"
+        )
     try:
         text = content.decode("utf-8-sig")
     except UnicodeDecodeError as error:
         raise UnreadableDocument("neither a PDF nor UTF-8 text") from error
-    return [(1, line) for line in text.splitlines()]
+    lines = text.splitlines()
+    if len(lines) > MAX_LINES:
+        raise UnreadableDocument(
+            f"{len(lines)} text lines exceeds the {MAX_LINES}-line extraction cap"
+        )
+    return [(1, line) for line in lines]
 
 
 # The amount ending a charge line. ANCHORED AT THE AMOUNT on purpose: a
