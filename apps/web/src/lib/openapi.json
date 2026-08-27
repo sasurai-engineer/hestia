@@ -1429,6 +1429,528 @@
         "title": "DeadlineOut",
         "type": "object"
       },
+      "DebtIn": {
+        "properties": {
+          "amortization": {
+            "default": "fully_amortizing",
+            "enum": [
+              "fully_amortizing",
+              "interest_only",
+              "balloon",
+              "arm",
+              "negative_amortizing"
+            ],
+            "title": "Amortization",
+            "type": "string"
+          },
+          "amortization_months": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 600.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amortization Months"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          },
+          "entity_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Id"
+          },
+          "escrows_insurance": {
+            "default": false,
+            "title": "Escrows Insurance",
+            "type": "boolean"
+          },
+          "escrows_taxes": {
+            "default": false,
+            "title": "Escrows Taxes",
+            "type": "boolean"
+          },
+          "first_payment_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Payment On"
+          },
+          "has_due_on_sale": {
+            "default": true,
+            "title": "Has Due On Sale",
+            "type": "boolean"
+          },
+          "interest_rate": {
+            "anyOf": [
+              {
+                "exclusiveMaximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,1}|(?=[\\d.]{1,10}0*$)\\d{0,1}\\.\\d{0,8}0*$)",
+                "type": "string"
+              }
+            ],
+            "title": "Interest Rate"
+          },
+          "is_recourse": {
+            "default": true,
+            "title": "Is Recourse",
+            "type": "boolean"
+          },
+          "kind": {
+            "default": "conventional_mortgage",
+            "enum": [
+              "conventional_mortgage",
+              "portfolio_loan",
+              "dscr_loan",
+              "agency_multifamily",
+              "bridge",
+              "hard_money",
+              "heloc",
+              "seller_financing",
+              "private_note"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "lender": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lender"
+          },
+          "lien_position": {
+            "default": 1,
+            "maximum": 9.0,
+            "minimum": 1.0,
+            "title": "Lien Position",
+            "type": "integer"
+          },
+          "matures_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matures On"
+          },
+          "original_principal": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,16}|(?=[\\d.]{1,19}0*$)\\d{0,16}\\.\\d{0,2}0*$)",
+                "type": "string"
+              }
+            ],
+            "title": "Original Principal"
+          },
+          "originated_on": {
+            "format": "date",
+            "title": "Originated On",
+            "type": "string"
+          },
+          "prepayment": {
+            "default": "none",
+            "enum": [
+              "none",
+              "step_down",
+              "flat_percent",
+              "yield_maintenance",
+              "defeasance",
+              "lockout"
+            ],
+            "title": "Prepayment",
+            "type": "string"
+          },
+          "prepayment_terms": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prepayment Terms"
+          },
+          "property_id": {
+            "format": "uuid",
+            "title": "Property Id",
+            "type": "string"
+          },
+          "rate_adjusts_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rate Adjusts On"
+          },
+          "rate_cap_lifetime": {
+            "anyOf": [
+              {
+                "exclusiveMaximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,1}|(?=[\\d.]{1,10}0*$)\\d{0,1}\\.\\d{0,8}0*$)",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rate Cap Lifetime"
+          },
+          "rate_cap_periodic": {
+            "anyOf": [
+              {
+                "exclusiveMaximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,1}|(?=[\\d.]{1,10}0*$)\\d{0,1}\\.\\d{0,8}0*$)",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rate Cap Periodic"
+          },
+          "rate_index": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rate Index"
+          },
+          "rate_margin": {
+            "anyOf": [
+              {
+                "exclusiveMaximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,1}|(?=[\\d.]{1,10}0*$)\\d{0,1}\\.\\d{0,8}0*$)",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rate Margin"
+          },
+          "term_months": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 600.0,
+            "title": "Term Months",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "property_id",
+          "original_principal",
+          "interest_rate",
+          "term_months",
+          "originated_on"
+        ],
+        "title": "DebtIn",
+        "type": "object"
+      },
+      "DebtOut": {
+        "properties": {
+          "amortization": {
+            "title": "Amortization",
+            "type": "string"
+          },
+          "amortization_months": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amortization Months"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          },
+          "entity_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Id"
+          },
+          "escrows_insurance": {
+            "title": "Escrows Insurance",
+            "type": "boolean"
+          },
+          "escrows_taxes": {
+            "title": "Escrows Taxes",
+            "type": "boolean"
+          },
+          "first_payment_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Payment On"
+          },
+          "has_due_on_sale": {
+            "title": "Has Due On Sale",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "interest_paid": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Interest Paid",
+            "type": "string"
+          },
+          "interest_rate": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Interest Rate",
+            "type": "string"
+          },
+          "is_recourse": {
+            "title": "Is Recourse",
+            "type": "boolean"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "lender": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lender"
+          },
+          "lien_position": {
+            "title": "Lien Position",
+            "type": "integer"
+          },
+          "matures_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matures On"
+          },
+          "original_principal": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Original Principal",
+            "type": "string"
+          },
+          "originated_on": {
+            "format": "date",
+            "title": "Originated On",
+            "type": "string"
+          },
+          "paid_off_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paid Off On"
+          },
+          "payments_recorded": {
+            "title": "Payments Recorded",
+            "type": "integer"
+          },
+          "prepayment": {
+            "title": "Prepayment",
+            "type": "string"
+          },
+          "prepayment_terms": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prepayment Terms"
+          },
+          "principal_paid": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Principal Paid",
+            "type": "string"
+          },
+          "property_id": {
+            "title": "Property Id",
+            "type": "string"
+          },
+          "property_label": {
+            "title": "Property Label",
+            "type": "string"
+          },
+          "rate_adjusts_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rate Adjusts On"
+          },
+          "rate_index": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rate Index"
+          },
+          "scheduled_payment": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scheduled Payment"
+          },
+          "term_months": {
+            "title": "Term Months",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "property_id",
+          "property_label",
+          "entity_id",
+          "lender",
+          "kind",
+          "lien_position",
+          "original_principal",
+          "interest_rate",
+          "amortization",
+          "term_months",
+          "amortization_months",
+          "originated_on",
+          "first_payment_on",
+          "matures_on",
+          "rate_adjusts_on",
+          "rate_index",
+          "prepayment",
+          "prepayment_terms",
+          "is_recourse",
+          "has_due_on_sale",
+          "escrows_taxes",
+          "escrows_insurance",
+          "paid_off_on",
+          "document_id",
+          "scheduled_payment",
+          "payments_recorded",
+          "principal_paid",
+          "interest_paid"
+        ],
+        "title": "DebtOut",
+        "type": "object"
+      },
       "DebtTerms": {
         "properties": {
           "annual_rate": {
@@ -3282,6 +3804,175 @@
         "title": "NoticeIn",
         "type": "object"
       },
+      "PaymentIn": {
+        "properties": {
+          "escrow": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,16}|(?=[\\d.]{1,19}0*$)\\d{0,16}\\.\\d{0,2}0*$)",
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "title": "Escrow"
+          },
+          "extra_principal": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,16}|(?=[\\d.]{1,19}0*$)\\d{0,16}\\.\\d{0,2}0*$)",
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "title": "Extra Principal"
+          },
+          "interest": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,16}|(?=[\\d.]{1,19}0*$)\\d{0,16}\\.\\d{0,2}0*$)",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Interest"
+          },
+          "paid_on": {
+            "format": "date",
+            "title": "Paid On",
+            "type": "string"
+          },
+          "post_to_ledger": {
+            "default": true,
+            "title": "Post To Ledger",
+            "type": "boolean"
+          },
+          "principal": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,16}|(?=[\\d.]{1,19}0*$)\\d{0,16}\\.\\d{0,2}0*$)",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Principal"
+          }
+        },
+        "required": [
+          "paid_on"
+        ],
+        "title": "PaymentIn",
+        "type": "object"
+      },
+      "PaymentOut": {
+        "properties": {
+          "balance_after": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Balance After"
+          },
+          "debt_id": {
+            "title": "Debt Id",
+            "type": "string"
+          },
+          "escrow": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Escrow",
+            "type": "string"
+          },
+          "extra_principal": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Extra Principal",
+            "type": "string"
+          },
+          "from_schedule_month": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "From Schedule Month"
+          },
+          "interest": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Interest",
+            "type": "string"
+          },
+          "ledger_event_uuids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Ledger Event Uuids",
+            "type": "array"
+          },
+          "paid_on": {
+            "format": "date",
+            "title": "Paid On",
+            "type": "string"
+          },
+          "principal": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Principal",
+            "type": "string"
+          }
+        },
+        "required": [
+          "debt_id",
+          "paid_on",
+          "principal",
+          "interest",
+          "escrow",
+          "extra_principal",
+          "balance_after",
+          "from_schedule_month",
+          "ledger_event_uuids"
+        ],
+        "title": "PaymentOut",
+        "type": "object"
+      },
+      "PayoffIn": {
+        "properties": {
+          "paid_off_on": {
+            "format": "date",
+            "title": "Paid Off On",
+            "type": "string"
+          }
+        },
+        "required": [
+          "paid_off_on"
+        ],
+        "title": "PayoffIn",
+        "type": "object"
+      },
       "PolicyIn": {
         "properties": {
           "annual_premium": {
@@ -4415,6 +5106,119 @@
           "caveat"
         ],
         "title": "ScheduleEReport",
+        "type": "object"
+      },
+      "ScheduleOut": {
+        "properties": {
+          "citation": {
+            "title": "Citation",
+            "type": "string"
+          },
+          "debt_id": {
+            "title": "Debt Id",
+            "type": "string"
+          },
+          "next_interest": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Interest"
+          },
+          "next_month": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Month"
+          },
+          "next_principal": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Principal"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ScheduleRow"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "scheduled_payment": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Scheduled Payment",
+            "type": "string"
+          },
+          "total_interest": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Interest",
+            "type": "string"
+          }
+        },
+        "required": [
+          "debt_id",
+          "scheduled_payment",
+          "total_interest",
+          "rows",
+          "next_month",
+          "next_interest",
+          "next_principal",
+          "citation"
+        ],
+        "title": "ScheduleOut",
+        "type": "object"
+      },
+      "ScheduleRow": {
+        "properties": {
+          "balance": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Balance",
+            "type": "string"
+          },
+          "interest": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Interest",
+            "type": "string"
+          },
+          "month": {
+            "title": "Month",
+            "type": "integer"
+          },
+          "payment": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Payment",
+            "type": "string"
+          },
+          "principal": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Principal",
+            "type": "string"
+          }
+        },
+        "required": [
+          "month",
+          "payment",
+          "interest",
+          "principal",
+          "balance"
+        ],
+        "title": "ScheduleRow",
         "type": "object"
       },
       "ScreeningIn": {
@@ -6367,6 +7171,332 @@
           }
         },
         "summary": "List Deadlines"
+      }
+    },
+    "/debts": {
+      "get": {
+        "operationId": "list_debts_debts_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "property_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Property Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_paid_off",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Paid Off",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DebtOut"
+                  },
+                  "title": "Response List Debts Debts Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Debts"
+      },
+      "post": {
+        "operationId": "create_debt_debts_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DebtIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DebtOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Debt"
+      }
+    },
+    "/debts/{debt_id}": {
+      "get": {
+        "operationId": "read_debt_debts__debt_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "debt_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Debt Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DebtOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Debt"
+      }
+    },
+    "/debts/{debt_id}/payments": {
+      "post": {
+        "operationId": "record_debt_payment_debts__debt_id__payments_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "debt_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Debt Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Record Debt Payment"
+      }
+    },
+    "/debts/{debt_id}/payoff": {
+      "post": {
+        "operationId": "pay_off_debt_debts__debt_id__payoff_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "debt_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Debt Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayoffIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DebtOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Pay Off Debt"
+      }
+    },
+    "/debts/{debt_id}/schedule": {
+      "get": {
+        "operationId": "read_debt_schedule_debts__debt_id__schedule_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "debt_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Debt Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "as_of",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "As Of"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Debt Schedule"
       }
     },
     "/documents": {
