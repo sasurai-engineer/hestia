@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Bitter, IBM_Plex_Mono, IBM_Plex_Sans } from 'next/font/google';
 import type { ReactNode } from 'react';
+import { CommandBar } from '../components/CommandBar';
 import '@hestia/design/css/tokens.css';
 import '@hestia/design/css/base.css';
 import '@hestia/design/css/primitives.css';
@@ -51,6 +52,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <a href="/calendar">Calendar</a>
               <a href="/coverage">Coverage</a>
             </nav>
+            <CommandBar />
           </header>
           <main>{children}</main>
         </div>

@@ -52,6 +52,29 @@
     color: var(--ember);
   }
 
+  /* The palette's key, worn as a quiet mono chip at the masthead's edge. */
+  .masthead__command {
+    font-family: var(--mono);
+    font-size: var(--type-label);
+    color: var(--ink-dim);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 2px var(--space-2);
+    cursor: pointer;
+    margin-left: var(--space-4);
+  }
+
+  .masthead__command:hover {
+    color: var(--ink);
+    border-color: var(--ember);
+  }
+
+  .masthead__command:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: 2px;
+  }
+
   /* ---- authority ---- */
 
   .citation {
