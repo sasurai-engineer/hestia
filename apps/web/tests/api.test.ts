@@ -186,6 +186,10 @@ describe('the API client', () => {
       expect.anything(),
     );
     await api.readVendor('v1');
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/vendors/v1',
+      expect.anything(),
+    );
     await api.createVendor({
       entity_id: 'e1',
       name: 'Licking Valley Plumbing',
@@ -216,12 +220,20 @@ describe('the API client', () => {
       expect.anything(),
     );
     await api.readWorkOrder('w1');
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/work-orders/w1',
+      expect.anything(),
+    );
     await api.createWorkOrder({
       property_id: 'p1',
       summary: 'No hot water',
       priority: 'urgent',
       reported_by: 'owner',
     });
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/work-orders',
+      expect.objectContaining({ method: 'POST' }),
+    );
     await api.transitionWorkOrder('w1', {
       status: 'triaged',
       scheduled_for: null,
@@ -268,6 +280,10 @@ describe('the API client', () => {
       expect.anything(),
     );
     await api.documentDetail('d1');
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/documents/d1',
+      expect.anything(),
+    );
     await api.reviewDocumentField('d1', {
       field_path: 'settlement.sale_price',
       action: 'accept',
@@ -278,6 +294,10 @@ describe('the API client', () => {
       expect.objectContaining({ method: 'POST' }),
     );
     await api.reExtractDocument('d1');
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/documents/d1/extract',
+      expect.objectContaining({ method: 'POST' }),
+    );
     await api.applyDocument('d1', {
       land_value: '35490.56',
       personal_property: '0.00',
