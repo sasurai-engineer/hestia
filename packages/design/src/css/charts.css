@@ -131,6 +131,31 @@
     opacity: 0.5;
   }
 
+  /* The hurdle: the bar a return must clear, drawn in the second ink. */
+  .chart__hurdle {
+    stroke: var(--graphite);
+    stroke-width: 1;
+    stroke-dasharray: 6 4;
+    opacity: 0.7;
+  }
+
+  /* The crossover ghost: where the verdict flips, marked but not shouted. */
+  .chart__ghost {
+    stroke: var(--graphite);
+    stroke-width: 1;
+    stroke-dasharray: 2 3;
+  }
+
+  /* The scrubbed exit marker wears the pressed ember. */
+  .chart__exit {
+    stroke: var(--ember-deep);
+    stroke-width: 2;
+  }
+
+  .chart__exit-head {
+    fill: var(--ember-deep);
+  }
+
   .chart__spark {
     fill: none;
     stroke: var(--ember);

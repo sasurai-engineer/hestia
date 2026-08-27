@@ -59,6 +59,16 @@ test('the reports page rolls the ledger up with authorities', async ({ page }) =
   await expect(page.getByText(/not tax advice/).first()).toBeVisible();
 });
 
+test('the dossier carries the spine and the exit instrument', async ({ page }) => {
+  await page.goto('/');
+  await page.getByText('998 Monmouth St, Newport, KY 41071').first().click();
+  // The spine: the property as one navigable time axis, datum at today.
+  await expect(page.getByRole('application').first()).toBeVisible();
+  // The exit: no valuation on this property yet, so the instrument refuses
+  // to guess — the honest gap, not a fake IRR.
+  await expect(page.getByText(/Record a valuation to unlock the exit instrument/)).toBeVisible();
+});
+
 test('the calendar and coverage pages answer', async ({ page }) => {
   await page.goto('/calendar');
   await expect(
