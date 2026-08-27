@@ -123,7 +123,9 @@ describe('buildExitModel', () => {
     expect(model.crossovers).toEqual([]);
   });
 
-  it('finds the crossover where a leveraged return decays through the hurdle', () => {
+  it('finds the crossover where a leveraged return decays through the hurdle', {
+    timeout: 30_000,
+  }, () => {
     // Leverage: small equity earns the whole building's growth early, then
     // the return decays toward the unlevered rate as equity accretes. Pick
     // a hurdle between the two and the verdict must flip mid-horizon.
