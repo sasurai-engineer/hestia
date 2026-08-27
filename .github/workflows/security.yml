@@ -26,6 +26,10 @@ jobs:
     permissions:
       contents: read
       security-events: write
+      # Required on a PRIVATE repository: the SARIF uploader reads the workflow
+      # run to fingerprint results, and without this every upload fails with
+      # "Resource not accessible by integration".
+      actions: read
     strategy:
       fail-fast: false
       matrix:
@@ -49,6 +53,10 @@ jobs:
     permissions:
       contents: read
       security-events: write
+      # Required on a PRIVATE repository: the SARIF uploader reads the workflow
+      # run to fingerprint results, and without this every upload fails with
+      # "Resource not accessible by integration".
+      actions: read
     steps:
       - uses: actions/checkout@v4
         with:
@@ -99,6 +107,10 @@ jobs:
     permissions:
       contents: read
       security-events: write
+      # Required on a PRIVATE repository: the SARIF uploader reads the workflow
+      # run to fingerprint results, and without this every upload fails with
+      # "Resource not accessible by integration".
+      actions: read
     steps:
       - uses: actions/checkout@v4
         with:
@@ -117,7 +129,7 @@ jobs:
       # No continue-on-error: a known vulnerability in a dependency is the one
       # thing this job exists to stop.
       - name: OSV Scanner
-        uses: google/osv-scanner-action/osv-scanner-action@v2
+        uses: google/osv-scanner-action/osv-scanner-action@v2.5.1
         with:
           scan-args: |-
             --recursive
@@ -132,7 +144,7 @@ jobs:
         continue-on-error: true
 
       - name: Trivy filesystem scan
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: .

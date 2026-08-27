@@ -171,25 +171,13 @@ jobs:
     name: schema · apply · constraint tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    services:
-      postgres:
-        image: postgres:17-alpine
-        env:
-          # Ephemeral service container, destroyed with the job.
-          POSTGRES_PASSWORD: postgres  # config-audit: allow
-          POSTGRES_DB: hestia
-        ports: ['5432:5432']
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
-    env:
-      PGHOST: localhost
-      PGPORT: '5432'
-      PGUSER: postgres
-      PGPASSWORD: postgres  # config-audit: allow
-      PGDATABASE: hestia
+    # NO postgres service, and PGHOST deliberately unset: verify-schema.sh then
+    # takes its container path and execs psql/pg_dump INSIDE the postgres image,
+    # so the client and the server are the same build by construction. With a
+    # service container the runner's own client is used instead, and
+    # ubuntu-latest ships PostgreSQL 16 while the image is 17 — pg_dump refuses
+    # to dump a newer server, which failed the restore proof on every run. This
+    # also makes CI walk the exact path a developer walks locally.
     steps:
       - uses: actions/checkout@v4
         with:
