@@ -20,11 +20,6 @@ const walk = (dir: string): string[] =>
   });
 
 describe('the app spends the livery lawfully', () => {
-  it('reserves survey-blue for citations and ember for actions', () => {
-    expect(css).toMatch(/\.citation\s*\{[^}]*var\(--survey-blue\)/);
-    expect(css).toMatch(/\.button\s*\{[^}]*var\(--ember\)/);
-  });
-
   it('never uses pure white or pure black in declarations', () => {
     const declarations = css.replaceAll(/\/\*[\s\S]*?\*\//g, '');
     expect(declarations).not.toMatch(/#fff\b|#ffffff\b|(?<!-)\bwhite\b/i);

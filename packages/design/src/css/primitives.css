@@ -1,0 +1,556 @@
+/* The Field Book — primitives layer.
+
+   The component classes every surface composes from. Absorbed from the app's
+   globals as the primitive set landed; the app layer now holds page-local
+   rules only. Standing laws, tested: ember carries actions and the one number
+   that matters (a tenth of any view, no more); survey-blue belongs to
+   citations and statutory authority alone; ink on ember-wash is ember-deep,
+   never ember; money-out is umber, never madder — an expense is not an
+   error. Elevation is drawn (hairline + paper shadow), never poured. */
+
+@layer primitives {
+  /* ---- shell ---- */
+
+  .shell {
+    max-width: var(--measure-page);
+    margin: 0 auto;
+    padding: 0 var(--space-6) 96px;
+  }
+
+  .masthead {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-7);
+    padding: 26px 0 18px;
+    border-bottom: 2px solid var(--ember);
+    margin-bottom: 36px;
+  }
+
+  .masthead__wordmark {
+    font-family: var(--serif);
+    font-size: var(--type-heading);
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    color: var(--ink);
+  }
+
+  .masthead__wordmark::first-letter {
+    color: var(--ember);
+  }
+
+  .masthead__nav {
+    display: flex;
+    gap: 22px;
+    margin-left: auto;
+    font-size: var(--type-small);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--ink-dim);
+  }
+
+  .masthead__nav a:hover {
+    color: var(--ember);
+  }
+
+  /* ---- authority ---- */
+
+  .citation {
+    color: var(--survey-blue);
+    font-family: var(--mono);
+    font-size: var(--type-label);
+  }
+
+  /* The stamp: authority pressed into the paper. Hover lifts nothing —
+     a stamp is not a button; only :active presses. */
+  .citation-chip {
+    display: inline-block;
+    color: var(--survey-blue);
+    font-family: var(--mono);
+    font-size: var(--type-label);
+    background: var(--survey-wash);
+    border: 1px solid rgb(51 98 140 / 25%);
+    border-radius: var(--radius-sm);
+    padding: 1px var(--space-2);
+    transition: box-shadow var(--dur-1) var(--ease-out);
+  }
+
+  .citation-chip:active {
+    box-shadow: var(--shadow-press);
+  }
+
+  /* ---- cards & tables ---- */
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--radius-lg);
+    padding: 18px var(--space-5);
+  }
+
+  .card--flush {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .grid {
+    display: grid;
+    gap: 14px;
+  }
+
+  .grid--cards {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+
+  .table,
+  .ledger-table {
+    --cell-pad-y: 10px;
+    --cell-type: 14px;
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--cell-type);
+  }
+
+  .table th,
+  .ledger-table th {
+    text-align: left;
+    font-size: var(--type-micro);
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    font-weight: 600;
+    padding: var(--space-3) var(--space-4) var(--space-2);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .table td,
+  .ledger-table td {
+    padding: var(--cell-pad-y) var(--space-4);
+    border-bottom: 1px solid var(--line-soft);
+    vertical-align: top;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .table tr:last-child td,
+  .ledger-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* The ledger is ruled paper: figures are ink, money keeps its column. */
+  .ledger-table td {
+    font-family: var(--mono);
+    font-size: var(--type-small);
+  }
+
+  .ledger-table td.ledger-table__prose {
+    font-family: var(--sans);
+    font-size: var(--cell-type);
+  }
+
+  .ledger-table[data-density="compact"] {
+    --cell-pad-y: 6px;
+    --cell-type: var(--type-small);
+  }
+
+  /* ---- signals ---- */
+
+  .pill {
+    display: inline-block;
+    font-size: var(--type-micro);
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    border-radius: var(--radius-full);
+    padding: 2px 10px;
+    border: 1px solid var(--line);
+    color: var(--ink-dim);
+    background: var(--ground);
+  }
+
+  .pill--ok {
+    color: var(--fern);
+    border-color: rgb(62 107 79 / 35%);
+    background: rgb(62 107 79 / 7%);
+  }
+
+  .pill--skipped {
+    color: var(--ink-dim);
+  }
+
+  .pill--failed {
+    color: var(--madder);
+    border-color: rgb(143 45 60 / 35%);
+    background: rgb(143 45 60 / 6%);
+  }
+
+  .pill--flag {
+    /* Ink on ember-wash is ember-deep by contract: ember itself reads
+       4.14:1 on this wash and fails AA. */
+    color: var(--ember-deep);
+    border-color: rgb(178 74 23 / 35%);
+    background: var(--ember-wash);
+  }
+
+  /* ---- the readout ---- */
+
+  .stat__label {
+    font-size: var(--type-micro);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--ink-dim);
+  }
+
+  .stat__value {
+    font-family: var(--mono);
+    font-size: var(--type-stat);
+    font-variant-numeric: tabular-nums slashed-zero;
+    color: var(--ink);
+    line-height: 1.2;
+  }
+
+  .stat__delta {
+    font-family: var(--mono);
+    font-size: var(--type-small);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stat__delta--in {
+    color: var(--money-in);
+  }
+
+  .stat__delta--out {
+    color: var(--money-out);
+  }
+
+  /* ---- component life bars ---- */
+
+  .lifebar {
+    position: relative;
+    height: 6px;
+    border-radius: 3px;
+    background: rgb(34 30 25 / 10%);
+    min-width: 120px;
+  }
+
+  .lifebar__fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--umber), var(--ember));
+  }
+
+  .lifebar__fill--spent {
+    background: linear-gradient(90deg, var(--umber), var(--madder));
+  }
+
+  /* ---- forms & buttons ---- */
+
+  .button {
+    background: var(--ember);
+    color: var(--hearth-white);
+    font-weight: 600;
+    font-size: 14px;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 9px 18px;
+    cursor: pointer;
+    transition: background var(--dur-2) var(--ease-out);
+  }
+
+  .button:hover {
+    background: var(--ember-deep);
+  }
+
+  .button:active {
+    background: var(--ember-deep);
+    box-shadow: var(--shadow-press);
+  }
+
+  .button:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  .button:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: 2px;
+  }
+
+  .button--quiet {
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  .button--quiet:hover {
+    background: var(--ember-wash);
+    border-color: var(--ember);
+  }
+
+  .button--quiet:active {
+    background: var(--ember-wash);
+  }
+
+  /* Danger is madder — reserved for the confirm step of a destructive act,
+     never the first click. */
+  .button--danger {
+    background: var(--madder);
+  }
+
+  .button--danger:hover,
+  .button--danger:active {
+    background: var(--madder);
+    filter: brightness(0.9);
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .field label {
+    font-size: var(--type-micro);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--ink-dim);
+  }
+
+  .field input,
+  .field select {
+    background: var(--ground);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    color: var(--ink);
+    padding: var(--space-2) 10px;
+    font: inherit;
+  }
+
+  .field input:focus-visible,
+  .field select:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: 1px;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+  }
+
+  /* The instrument: a slider whose readout is live engine math. */
+  .range-field input[type="range"] {
+    accent-color: var(--ember);
+    width: 100%;
+  }
+
+  .range-field__readout {
+    font-family: var(--mono);
+    font-size: var(--type-small);
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+
+  .error-note {
+    color: var(--madder);
+    font-size: var(--type-small);
+  }
+
+  .empty-state {
+    border: 1px dashed var(--line);
+    border-radius: var(--radius-lg);
+    padding: 36px;
+    text-align: center;
+    color: var(--ink-dim);
+  }
+
+  /* ---- key-value ---- */
+
+  .kv {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: var(--space-1) var(--space-4);
+    margin: 0;
+  }
+
+  .kv dt {
+    font-size: var(--type-micro);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    align-self: baseline;
+  }
+
+  .kv dd {
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---- skeleton: paper waiting for ink ---- */
+
+  .skeleton {
+    display: block;
+    background: linear-gradient(
+      100deg,
+      var(--surface-2) 40%,
+      var(--surface) 50%,
+      var(--surface-2) 60%
+    );
+    background-size: 200% 100%;
+    border-radius: var(--radius-sm);
+    min-height: 1em;
+  }
+
+  .skeleton + .skeleton {
+    margin-top: var(--space-2);
+  }
+
+  /* ---- overlays ---- */
+
+  .dialog {
+    border: 1px solid var(--hairline, var(--line));
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-3);
+    background: var(--ground);
+    color: var(--ink);
+    padding: var(--space-6);
+    max-width: min(560px, calc(100vw - var(--space-8)));
+  }
+
+  .dialog::backdrop {
+    background: rgb(34 30 25 / 32%);
+  }
+
+  .toast {
+    position: fixed;
+    right: var(--space-6);
+    bottom: var(--space-6);
+    z-index: var(--layer-toast);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-2);
+    padding: var(--space-3) var(--space-4);
+    max-width: 360px;
+    display: flex;
+    gap: var(--space-3);
+    align-items: baseline;
+  }
+
+  .toast--failed {
+    border-color: var(--madder);
+    background: var(--madder-wash);
+  }
+
+  .toast__dismiss {
+    background: none;
+    border: none;
+    color: var(--ink-dim);
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .toast__dismiss:hover {
+    color: var(--ink);
+  }
+
+  /* ---- disclosure: the depth mechanism ---- */
+
+  .disclosure__summary {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: inherit;
+  }
+
+  .disclosure__summary:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: 2px;
+  }
+
+  .disclosure__marker {
+    color: var(--ink-faint);
+    font-family: var(--mono);
+    font-size: var(--type-label);
+    transition: rotate var(--dur-2) var(--ease-out);
+  }
+
+  .disclosure__summary[aria-expanded="true"] .disclosure__marker {
+    rotate: 90deg;
+  }
+
+  .disclosure__panel {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows var(--dur-3) var(--ease-out);
+  }
+
+  .disclosure__panel--open {
+    grid-template-rows: 1fr;
+  }
+
+  .disclosure__inner {
+    overflow: hidden;
+  }
+
+  /* ---- the command palette ---- */
+
+  .palette {
+    margin: 10vh auto 0;
+    padding: 0;
+    width: min(560px, calc(100vw - var(--space-8)));
+  }
+
+  .palette__input {
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid var(--line);
+    background: none;
+    color: var(--ink);
+    font: inherit;
+    font-size: var(--type-lead);
+    padding: var(--space-4) var(--space-5);
+  }
+
+  .palette__input:focus-visible {
+    outline: none;
+  }
+
+  .palette__list {
+    list-style: none;
+    margin: 0;
+    padding: var(--space-2);
+    max-height: 320px;
+    overflow-y: auto;
+  }
+
+  .palette__option {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+
+  .palette__option[aria-selected="true"] {
+    background: var(--ember-wash);
+    color: var(--ember-deep);
+  }
+
+  .palette__hint {
+    color: var(--ink-faint);
+    font-size: var(--type-small);
+  }
+
+  .palette__empty {
+    padding: var(--space-4) var(--space-3);
+    color: var(--ink-dim);
+  }
+}

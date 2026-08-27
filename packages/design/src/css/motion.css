@@ -1,0 +1,86 @@
+/* The Field Book — motion layer.
+
+   The vocabulary is small and named: settle (entries land on the page),
+   sweep (paper waiting for ink), trace (the draftsman draws a line once,
+   at mount, never on data updates). Durations speak only in --dur tokens —
+   a raw millisecond outside the scale is a livery-test failure.
+
+   Reduced motion is the Plat Edition: composition instead of choreography.
+   Everything renders already-drawn; nothing is amputated. */
+
+@layer motion {
+  @keyframes settle {
+    from {
+      opacity: 0;
+      translate: 0 -4px;
+    }
+
+    to {
+      opacity: 1;
+      translate: 0 0;
+    }
+  }
+
+  @keyframes sweep {
+    from {
+      background-position: 120% 0;
+    }
+
+    to {
+      background-position: -80% 0;
+    }
+  }
+
+  @keyframes trace {
+    from {
+      stroke-dashoffset: var(--trace-length, 1);
+    }
+
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  /* Entries settle onto the page, oldest first; cap the stagger at eight —
+     a ledger is not a chorus line. */
+  .settle {
+    animation: settle var(--dur-2) var(--ease-settle) both;
+    animation-delay: calc(min(var(--settle-index, 0), 8) * var(--dur-stagger));
+  }
+
+  .skeleton {
+    animation: sweep var(--dur-4) var(--ease-out) infinite;
+  }
+
+  .trace {
+    stroke-dasharray: var(--trace-length, 1);
+    animation: trace var(--dur-4) var(--ease-out) both;
+  }
+
+  /* The Plat Edition: for readers who ask for stillness, the page arrives
+     complete — every line already drawn, every entry already seated. */
+  @media (prefers-reduced-motion: reduce) {
+    :root {
+      --dur-1: 0.01ms;
+      --dur-2: 0.01ms;
+      --dur-3: 0.01ms;
+      --dur-4: 0.01ms;
+      --dur-stagger: 0.01ms;
+    }
+
+    .settle,
+    .skeleton,
+    .trace {
+      animation: none;
+    }
+
+    .settle {
+      opacity: 1;
+      translate: 0 0;
+    }
+
+    .trace {
+      stroke-dashoffset: 0;
+    }
+  }
+}
