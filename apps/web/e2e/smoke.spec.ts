@@ -79,6 +79,22 @@ test('the command palette answers ⌘K and navigates', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Calendar' })).toBeVisible();
 });
 
+test('the 11pm surface: property, symptom, proof, and the incident on the board', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Emergency', exact: true }).click();
+  await page.getByRole('button', { name: '998 Monmouth St', exact: true }).first().click();
+  await page.getByRole('button', { name: /Water — burst pipe/ }).click();
+  // The smoke vendor carries a live certificate; the proof line says so.
+  await expect(page.getByText(/insured through Jun 30, 2027/).first()).toBeVisible();
+  await page.getByRole('button', { name: 'Log with this vendor' }).first().click();
+  await expect(page.getByText(/is on the maintenance board as an emergency/)).toBeVisible();
+  await page.getByRole('button', { name: 'Close', exact: true }).click();
+  await page.goto('/maintenance');
+  await expect(page.getByRole('link', { name: /Water emergency/ }).first()).toBeVisible();
+});
+
 test('the calendar and coverage pages answer', async ({ page }) => {
   await page.goto('/calendar');
   await expect(

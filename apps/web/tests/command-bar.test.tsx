@@ -61,6 +61,20 @@ describe('CommandBar', () => {
     expect(list).toHaveBeenCalledTimes(1);
   });
 
+  it('opens the 11pm surface from the palette and the masthead control', async () => {
+    vi.spyOn(api, 'listProperties').mockResolvedValue(PROPERTIES);
+    vi.spyOn(api, 'listVendors').mockResolvedValue([]);
+    render(<CommandBar />);
+    fireEvent.keyDown(window, { key: 'k', metaKey: true });
+    fireEvent.click(screen.getByText(/Emergency: burst pipe/));
+    const dispatch = screen.getByLabelText('Emergency dispatch', { selector: 'dialog' });
+    expect(dispatch.hasAttribute('open')).toBe(true);
+    fireEvent(dispatch, new Event('close'));
+    expect(dispatch.hasAttribute('open')).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: 'Emergency' }));
+    expect(dispatch.hasAttribute('open')).toBe(true);
+  });
+
   it('stays useful when the property fetch fails, and retries next open', async () => {
     const list = vi
       .spyOn(api, 'listProperties')

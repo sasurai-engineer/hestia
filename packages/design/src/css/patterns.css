@@ -193,4 +193,134 @@
   .exit__knobs {
     margin-top: var(--space-4);
   }
+
+  /* ---- the 11pm surface: urgency is stillness ---- */
+
+  /* The masthead control: a madder hairline, never crying wolf. */
+  .masthead__emergency {
+    font-size: var(--type-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--madder);
+    background: none;
+    border: 1px solid rgb(143 45 60 / 40%);
+    border-radius: var(--radius-sm);
+    padding: 2px var(--space-2);
+    cursor: pointer;
+    margin-left: var(--space-2);
+  }
+
+  .masthead__emergency:hover {
+    background: var(--madder-wash);
+  }
+
+  .masthead__emergency:focus-visible {
+    outline: 2px solid var(--madder);
+    outline-offset: 2px;
+  }
+
+  .dispatch {
+    width: min(520px, calc(100vw - var(--space-6)));
+  }
+
+  .dispatch__title {
+    font-family: var(--serif);
+    font-size: var(--type-sub);
+    font-weight: 600;
+    color: var(--madder);
+    margin: 0 0 var(--space-3);
+  }
+
+  .dispatch__ask {
+    font-size: var(--type-lead);
+    margin: 0 0 var(--space-3);
+  }
+
+  .dispatch__choice {
+    display: block;
+    width: 100%;
+    text-align: left;
+    font: inherit;
+    font-size: var(--type-lead);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    margin-bottom: var(--space-2);
+    cursor: pointer;
+    min-height: 56px;
+  }
+
+  .dispatch__choice:hover {
+    border-color: var(--ember);
+  }
+
+  .dispatch__choice:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: 2px;
+  }
+
+  .dispatch__choice--quiet {
+    background: none;
+    color: var(--ink-dim);
+    min-height: 44px;
+    font-size: var(--type-body);
+  }
+
+  /* Safety guidance outranks every phone number on the page. */
+  .dispatch__note {
+    background: var(--madder-wash);
+    color: var(--madder);
+    border-radius: var(--radius-md);
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--type-lead);
+    margin: 0 0 var(--space-3);
+  }
+
+  .dispatch__vendor {
+    border: 1px solid var(--line-soft);
+    border-radius: var(--radius-md);
+    padding: var(--space-3) var(--space-4);
+    margin-bottom: var(--space-3);
+  }
+
+  .dispatch__vendor-head {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    font-size: var(--type-sub);
+  }
+
+  /* The one thing a wet hand must hit. */
+  .dispatch__call {
+    display: block;
+    text-align: center;
+    background: var(--ember);
+    color: var(--hearth-white);
+    font-size: var(--type-lead);
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    margin: var(--space-2) 0;
+    min-height: 56px;
+  }
+
+  .dispatch__call:hover {
+    background: var(--ember-deep);
+  }
+
+  .dispatch__proof {
+    font-size: var(--type-small);
+    color: var(--fern);
+    margin: 0 0 var(--space-2);
+  }
+
+  .dispatch__proof--warn {
+    color: var(--umber);
+  }
+
+  .dispatch__proof--bad {
+    color: var(--madder);
+    font-weight: 600;
+  }
 }

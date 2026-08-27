@@ -4,6 +4,7 @@ import { type Command, CommandPalette, useCommandK } from '@hestia/design';
 import { useRouter } from 'next/navigation';
 import { useCallback, useRef, useState } from 'react';
 import { api, type PropertySummary } from '../lib/api';
+import { EmergencyDispatch } from './EmergencyDispatch';
 
 /**
  * ⌘K, wired: one keystroke to any page or property. Routes are static;
@@ -26,6 +27,7 @@ const ROUTES: readonly { label: string; path: string }[] = [
 export function CommandBar() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [dispatchOpen, setDispatchOpen] = useState(false);
   const [properties, setProperties] = useState<readonly PropertySummary[]>([]);
   const fetched = useRef(false);
 
@@ -46,6 +48,12 @@ export function CommandBar() {
   useCommandK(openPalette);
 
   const commands: Command[] = [
+    {
+      id: 'emergency',
+      label: 'Emergency: burst pipe, no heat, electrical…',
+      hint: 'dispatch',
+      run: () => setDispatchOpen(true),
+    },
     ...ROUTES.map((route) => ({
       id: `go${route.path}`,
       label: `Go: ${route.label}`,
@@ -70,6 +78,9 @@ export function CommandBar() {
       >
         ⌘K
       </button>
+      <button type="button" className="masthead__emergency" onClick={() => setDispatchOpen(true)}>
+        Emergency
+      </button>
       <CommandPalette
         open={open}
         onClose={() => {
@@ -77,6 +88,7 @@ export function CommandBar() {
         }}
         commands={commands}
       />
+      <EmergencyDispatch open={dispatchOpen} onClose={() => setDispatchOpen(false)} />
     </>
   );
 }
