@@ -44,6 +44,7 @@ from hestia_api import (
     payments,
     rent,
     reports,
+    screening,
     sweep,
     views,
 )
@@ -1692,3 +1693,134 @@ def add_work_order_cost(
         after_value={"net_cost": str(work_order.net_cost)},
     )
     return work_order
+
+
+# ---------------------------------------------------------------------------
+# Screening decisions and the notice a denial owes (FCRA s.615(a))
+# ---------------------------------------------------------------------------
+
+
+@app.post("/screening", response_model=screening.ScreeningOut, status_code=201)
+def open_screening(
+    body: screening.ScreeningIn, conn: Conn, request: Request, actor: Actor = "system"
+) -> screening.ScreeningOut:
+    try:
+        result = screening.create(conn, body)
+    except screening.UnknownResident as error:
+        raise HTTPException(status_code=404, detail="resident not found") from error
+    except screening.UnknownProperty as error:
+        raise HTTPException(status_code=404, detail="property not found") from error
+    except psycopg.errors.ForeignKeyViolation as error:
+        raise HTTPException(
+            status_code=422, detail="that unit does not belong to that property"
+        ) from error
+    db.record_audit(
+        conn,
+        actor=actor,
+        action="screening.open",
+        request_id=request.state.request_id,
+        table_name="screening_requests",
+        record_id=result.id,
+        after_value={"provider": result.provider},
+    )
+    return result
+
+
+@app.get("/screening", response_model=list[screening.ScreeningOut])
+def list_screening(
+    conn: Conn,
+    resident_id: Annotated[uuid.UUID | None, Query()] = None,
+    property_id: Annotated[uuid.UUID | None, Query()] = None,
+    notice_owed: Annotated[bool, Query()] = False,
+) -> list[screening.ScreeningOut]:
+    return screening.list_requests(
+        conn,
+        resident_id=str(resident_id) if resident_id else None,
+        property_id=str(property_id) if property_id else None,
+        notice_owed=notice_owed,
+    )
+
+
+@app.get("/screening/{screening_id}", response_model=screening.ScreeningOut)
+def read_screening(screening_id: uuid.UUID, conn: Conn) -> screening.ScreeningOut:
+    try:
+        return screening.read(conn, str(screening_id))
+    except screening.UnknownScreening as error:
+        raise HTTPException(status_code=404, detail="screening not found") from error
+
+
+@app.post("/screening/{screening_id}/decision", response_model=screening.ScreeningOut)
+def decide_screening(
+    screening_id: uuid.UUID,
+    body: screening.DecisionIn,
+    conn: Conn,
+    request: Request,
+    actor: Actor = "system",
+) -> screening.ScreeningOut:
+    try:
+        result = screening.decide(conn, str(screening_id), body)
+    except screening.UnknownScreening as error:
+        raise HTTPException(status_code=404, detail="screening not found") from error
+    except screening.AlreadyDecided as error:
+        raise HTTPException(
+            status_code=409,
+            detail=f"this application was already {error}; a decision is recorded once",
+        ) from error
+    except psycopg.errors.CheckViolation as error:
+        raise HTTPException(
+            status_code=422,
+            detail="a decision cannot precede the application it answers",
+        ) from error
+    db.record_audit(
+        conn,
+        actor=actor,
+        action="screening.decide",
+        request_id=request.state.request_id,
+        table_name="screening_requests",
+        record_id=str(screening_id),
+        after_value={
+            "decision": result.decision,
+            "adverse_action_required": result.adverse_action_required,
+        },
+    )
+    return result
+
+
+@app.post("/screening/{screening_id}/adverse-action", response_model=screening.ScreeningOut)
+def record_adverse_action(
+    screening_id: uuid.UUID,
+    body: screening.NoticeIn,
+    conn: Conn,
+    request: Request,
+    actor: Actor = "system",
+) -> screening.ScreeningOut:
+    try:
+        result = screening.record_notice(conn, str(screening_id), body)
+    except screening.UnknownScreening as error:
+        raise HTTPException(status_code=404, detail="screening not found") from error
+    except screening.NoticeNotOwed as error:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "no notice is owed: s.615(a) attaches only when a consumer "
+                "report drove an adverse decision"
+            ),
+        ) from error
+    except screening.NoticeAlreadySent as error:
+        raise HTTPException(
+            status_code=409, detail=f"the notice was already sent on {error}"
+        ) from error
+    except psycopg.errors.CheckViolation as error:
+        raise HTTPException(
+            status_code=422, detail="a notice cannot precede the decision it is about"
+        ) from error
+    db.record_audit(
+        conn,
+        actor=actor,
+        action="screening.adverse_action",
+        request_id=request.state.request_id,
+        table_name="screening_requests",
+        record_id=str(screening_id),
+        after_value={"sent_on": str(result.adverse_action_sent_on)},
+    )
+    return result

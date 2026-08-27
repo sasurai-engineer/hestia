@@ -657,6 +657,75 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/screening": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Screening */
+        get: operations["list_screening_screening_get"];
+        put?: never;
+        /** Open Screening */
+        post: operations["open_screening_screening_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/screening/{screening_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Screening */
+        get: operations["read_screening_screening__screening_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/screening/{screening_id}/adverse-action": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record Adverse Action */
+        post: operations["record_adverse_action_screening__screening_id__adverse_action_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/screening/{screening_id}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decide Screening */
+        post: operations["decide_screening_screening__screening_id__decision_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/sweep/deadlines": {
         parameters: {
             query?: never;
@@ -1336,6 +1405,23 @@ export interface components {
             /** Term Months */
             term_months: number;
         };
+        /** DecisionIn */
+        DecisionIn: {
+            /**
+             * Based On Consumer Report
+             * @default false
+             */
+            based_on_consumer_report: boolean;
+            /** Decided On */
+            decided_on?: string | null;
+            /**
+             * Decision
+             * @enum {string}
+             */
+            decision: "approved" | "conditional" | "denied" | "withdrawn";
+            /** Decision Basis */
+            decision_basis?: string | null;
+        };
         /** DefectOut */
         DefectOut: {
             /** Affects Financing */
@@ -1871,6 +1957,11 @@ export interface components {
             /** Reason */
             reason: string;
         };
+        /** NoticeIn */
+        NoticeIn: {
+            /** Sent On */
+            sent_on?: string | null;
+        };
         /** PolicyIn */
         PolicyIn: {
             /** Annual Premium */
@@ -2218,6 +2309,74 @@ export interface components {
             total_expenses: string;
             /** Total Income */
             total_income: string;
+        };
+        /** ScreeningIn */
+        ScreeningIn: {
+            /** Notes */
+            notes?: string | null;
+            /**
+             * Property Id
+             * Format: uuid
+             */
+            property_id: string;
+            /**
+             * Provider
+             * @default manual
+             */
+            provider: string;
+            /** Requested On */
+            requested_on?: string | null;
+            /**
+             * Resident Id
+             * Format: uuid
+             */
+            resident_id: string;
+            /** Unit Id */
+            unit_id?: string | null;
+        };
+        /** ScreeningOut */
+        ScreeningOut: {
+            /** Adverse Action Required */
+            adverse_action_required: boolean;
+            /** Adverse Action Sent On */
+            adverse_action_sent_on: string | null;
+            /** Based On Consumer Report */
+            based_on_consumer_report: boolean;
+            /** Citation */
+            citation: string | null;
+            /** Decided On */
+            decided_on: string | null;
+            /** Decision */
+            decision: string;
+            /** Decision Basis */
+            decision_basis: string | null;
+            /** Id */
+            id: string;
+            /** Notes */
+            notes: string | null;
+            /** Notice Contents */
+            notice_contents: {
+                [key: string]: string;
+            }[];
+            /** Property Id */
+            property_id: string;
+            /** Property Label */
+            property_label: string;
+            /** Provider */
+            provider: string;
+            /**
+             * Requested On
+             * Format: date
+             */
+            requested_on: string;
+            /** Resident Id */
+            resident_id: string;
+            /** Resident Name */
+            resident_name: string;
+            /** Unit Id */
+            unit_id: string | null;
+            /** Unit Label */
+            unit_label: string | null;
         };
         /** Signoff */
         Signoff: {
@@ -4016,6 +4175,179 @@ export interface operations {
                     "application/json": {
                         [key: string]: string;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_screening_screening_get: {
+        parameters: {
+            query?: {
+                resident_id?: string | null;
+                property_id?: string | null;
+                notice_owed?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScreeningOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    open_screening_screening_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScreeningIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScreeningOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_screening_screening__screening_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                screening_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScreeningOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    record_adverse_action_screening__screening_id__adverse_action_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path: {
+                screening_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoticeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScreeningOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    decide_screening_screening__screening_id__decision_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path: {
+                screening_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecisionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScreeningOut"];
                 };
             };
             /** @description Validation Error */

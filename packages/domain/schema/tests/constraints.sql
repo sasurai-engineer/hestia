@@ -1018,6 +1018,101 @@ SELECT assert_rejected(
   'the same vendor expiry generated twice');
 
 \echo ''
+\echo 'screening and adverse action'
+INSERT INTO residents (id, full_name)
+  VALUES ('99999999-9999-4999-8999-999999999901', 'A. Applicant');
+SELECT assert_rejected(
+  $$INSERT INTO screening_requests (resident_id, property_id, decision)
+    VALUES ('99999999-9999-4999-8999-999999999901',
+            '33333333-3333-3333-3333-333333333333', 'denied')$$,
+  'decided_requests_say_when',
+  'a decision with no date');
+SELECT assert_rejected(
+  $$INSERT INTO screening_requests
+      (resident_id, property_id, requested_on, decision, decided_on)
+    VALUES ('99999999-9999-4999-8999-999999999901',
+            '33333333-3333-3333-3333-333333333333', '2026-08-01', 'pending',
+            '2026-08-05')$$,
+  'pending_requests_are_undecided',
+  'an undecided request carrying a decision date');
+SELECT assert_rejected(
+  $$INSERT INTO screening_requests
+      (resident_id, property_id, requested_on, decision, decided_on)
+    VALUES ('99999999-9999-4999-8999-999999999901',
+            '33333333-3333-3333-3333-333333333333', '2026-08-10', 'approved',
+            '2026-08-01')$$,
+  'decided_after_requested',
+  'a decision made before the application arrived');
+SELECT assert_rejected(
+  $$INSERT INTO screening_requests
+      (resident_id, property_id, requested_on, decision, decided_on,
+       based_on_consumer_report, adverse_action_sent_on)
+    VALUES ('99999999-9999-4999-8999-999999999901',
+            '33333333-3333-3333-3333-333333333333', '2026-08-01', 'denied',
+            '2026-08-05', TRUE, '2026-08-02')$$,
+  'notice_follows_its_decision',
+  'a notice sent before the decision it is about');
+SELECT assert_rejected(
+  $$INSERT INTO screening_requests
+      (resident_id, property_id, requested_on, decision, decided_on,
+       based_on_consumer_report, adverse_action_sent_on)
+    VALUES ('99999999-9999-4999-8999-999999999901',
+            '33333333-3333-3333-3333-333333333333', '2026-08-01', 'approved',
+            '2026-08-05', TRUE, '2026-08-06')$$,
+  'notice_only_when_a_report_drove_an_adverse_decision',
+  'an adverse-action notice for an approval');
+-- The obligation is DERIVED: both halves of s.615(a) or it does not attach.
+INSERT INTO screening_requests
+  (id, resident_id, property_id, requested_on, decision, decided_on,
+   based_on_consumer_report)
+VALUES ('99999999-9999-4999-8999-999999999902',
+        '99999999-9999-4999-8999-999999999901',
+        '33333333-3333-3333-3333-333333333333', '2026-08-01', 'denied',
+        '2026-08-05', TRUE);
+INSERT INTO screening_requests
+  (id, resident_id, property_id, requested_on, decision, decided_on,
+   based_on_consumer_report)
+VALUES ('99999999-9999-4999-8999-999999999903',
+        '99999999-9999-4999-8999-999999999901',
+        '33333333-3333-3333-3333-333333333333', '2026-08-01', 'denied',
+        '2026-08-05', FALSE);
+DO $$
+DECLARE
+  with_report BOOLEAN;
+  without_report BOOLEAN;
+BEGIN
+  SELECT adverse_action_required INTO with_report FROM screening_requests
+    WHERE id = '99999999-9999-4999-8999-999999999902';
+  SELECT adverse_action_required INTO without_report FROM screening_requests
+    WHERE id = '99999999-9999-4999-8999-999999999903';
+  IF NOT with_report OR without_report THEN
+    RAISE EXCEPTION 'DERIVATION WRONG: report-driven=%, owner-judgement=%',
+      with_report, without_report;
+  END IF;
+  RAISE NOTICE '  ok      s.615(a) attaches only when a report drove the denial';
+END $$;
+-- Two applicants denied the same day at one property are two notices.
+SELECT assert_accepted(
+  $$INSERT INTO deadlines (kind, due_on, property_id, screening_request_id, citation)
+    VALUES ('adverse_action_notice', '2026-08-05',
+            '33333333-3333-3333-3333-333333333333',
+            '99999999-9999-4999-8999-999999999902', 'FCRA s.615(a)')$$,
+  'an adverse-action notice as a deadline');
+SELECT assert_accepted(
+  $$INSERT INTO deadlines (kind, due_on, property_id, screening_request_id, citation)
+    VALUES ('adverse_action_notice', '2026-08-05',
+            '33333333-3333-3333-3333-333333333333',
+            '99999999-9999-4999-8999-999999999903', 'FCRA s.615(a)')$$,
+  'a second applicant denied the same day is its own notice');
+SELECT assert_rejected(
+  $$INSERT INTO deadlines (kind, due_on, property_id, screening_request_id, citation)
+    VALUES ('adverse_action_notice', '2026-08-05',
+            '33333333-3333-3333-3333-333333333333',
+            '99999999-9999-4999-8999-999999999902', 'FCRA s.615(a)')$$,
+  'deadlines_sweep_identity',
+  'the same notice generated twice');
+
+\echo ''
 \echo 'document extraction'
 -- The blob key is provably the sha256 of the bytes.
 INSERT INTO source_documents (id, kind, filename, content_hash, status)
