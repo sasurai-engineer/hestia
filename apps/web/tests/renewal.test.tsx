@@ -50,9 +50,12 @@ describe('RenewalCard', () => {
   it('renders the EV table with the recommendation and offers on click', () => {
     const onOffer = vi.fn();
     render(<RenewalCard context={context({})} onOffer={onOffer} />);
-    expect(screen.getByText(/recommend \+\d+%/)).toBeDefined();
+    expect(screen.getByText('Recommended ask')).toBeDefined();
+    expect(screen.getByText('raise').className).toBe('pill pill--flag');
+    // The flat renewal is the counterfactual — the road not taken, priced.
+    expect(screen.getByText(/Hold the rent flat/).className).toBe('decision__counterfactual');
     expect(screen.getByText(/Lease ends 2027-03-31/)).toBeDefined();
-    expect(screen.getByText(/market \$1,550\.00/)).toBeDefined();
+    expect(screen.getByText(/Market \$1,550\.00/)).toBeDefined();
     const offers = screen.getAllByText('Offer');
     expect(offers).toHaveLength(5);
     offers[0]?.click();
@@ -76,10 +79,10 @@ describe('RenewalCard', () => {
       />,
     );
     expect(screen.getByText(/Lease ends 2027-03-31/)).toBeDefined();
-    expect(screen.queryByText(/market/)).toBeNull();
+    expect(screen.queryByText(/Market/)).toBeNull();
     cleanup();
-    // Market data with a missing source label degrades to blank, not 'null'.
+    // Market data with a missing source label says so — never 'null'.
     render(<RenewalCard context={context({ market_rent_source: null })} onOffer={vi.fn()} />);
-    expect(screen.getByText(/market \$1,550\.00/)).toBeDefined();
+    expect(screen.getByText(/Market \$1,550\.00 \(source unrecorded\)/)).toBeDefined();
   });
 });

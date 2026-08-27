@@ -1,0 +1,62 @@
+/* The Field Book — patterns layer.
+
+   Compositions with a grammar: the decision card first. A pattern is a
+   sentence built from primitives; if a rule here is useful to two patterns,
+   it is a primitive wearing the wrong coat. */
+
+@layer patterns {
+  .decision__glance {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+  }
+
+  .decision__heading {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+  }
+
+  .decision__title {
+    font-family: var(--serif);
+    font-size: var(--type-lead);
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .decision__depth {
+    font-size: var(--type-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--ink-dim);
+  }
+
+  .decision__scan {
+    margin: var(--space-2) 0 0;
+  }
+
+  /* The road not taken, in the expense's own ink — never the error's. */
+  .decision__counterfactual {
+    margin: var(--space-1) 0 0;
+    color: var(--money-out);
+    font-style: italic;
+  }
+
+  .decision__authority {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    margin: var(--space-2) 0 var(--space-2);
+  }
+
+  .decision__caveat {
+    margin-top: var(--space-2);
+  }
+
+  .decision .disclosure {
+    margin-top: var(--space-3);
+  }
+}

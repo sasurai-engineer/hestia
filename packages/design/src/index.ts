@@ -10,6 +10,7 @@ export { contrastRatio, relativeLuminance } from './contrast.js';
 export { cx } from './cx.js';
 export { fuzzyMatch } from './fuzzy.js';
 export { useReducedMotion } from './motion/reduced.js';
+export { type Authority, DecisionCard } from './patterns/DecisionCard.js';
 export { Button } from './primitives/Button.js';
 export { Card } from './primitives/Card.js';
 export { CitationChip } from './primitives/CitationChip.js';
