@@ -1067,7 +1067,7 @@
         "type": "object"
       },
       "CostLinkIn": {
-        "description": "Either a new cost to post, or an existing ledger event to associate.",
+        "description": "Either a new cost to post, or an existing ledger event to associate.\n\nA posted cost carries its own relation; this one describes the LINK to an\nevent that already exists. Setting both said two different things about\none row and silently kept one of them, so it is refused instead.",
         "properties": {
           "cost": {
             "anyOf": [
@@ -1092,17 +1092,23 @@
             "title": "Ledger Event Uuid"
           },
           "relation": {
-            "default": "invoice",
-            "enum": [
-              "invoice",
-              "materials",
-              "deposit",
-              "tenant_chargeback",
-              "warranty_credit",
-              "other"
+            "anyOf": [
+              {
+                "enum": [
+                  "invoice",
+                  "materials",
+                  "deposit",
+                  "tenant_chargeback",
+                  "warranty_credit",
+                  "other"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
             ],
-            "title": "Relation",
-            "type": "string"
+            "title": "Relation"
           }
         },
         "title": "CostLinkIn",
@@ -1274,6 +1280,82 @@
           "gaps"
         ],
         "title": "CoverageReport",
+        "type": "object"
+      },
+      "CredentialsIn": {
+        "description": "A renewal. Certificates expire every year, so recording the new dates\nhas to be possible without inventing a second vendor \u2014 the unique name\nper entity made re-adding impossible, and there was no other door.",
+        "properties": {
+          "insurer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Insurer"
+          },
+          "liability_expires_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Liability Expires On"
+          },
+          "license_expires_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "License Expires On"
+          },
+          "license_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "License Number"
+          },
+          "w9_on_file": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "W9 On File"
+          },
+          "workers_comp_expires_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workers Comp Expires On"
+          }
+        },
+        "title": "CredentialsIn",
         "type": "object"
       },
       "DeadlineOut": {
@@ -8205,6 +8287,66 @@
           }
         },
         "summary": "Read Vendor"
+      }
+    },
+    "/vendors/{vendor_id}/credentials": {
+      "post": {
+        "operationId": "renew_vendor_credentials_vendors__vendor_id__credentials_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vendor_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Vendor Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialsIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Renew Vendor Credentials"
       }
     },
     "/work-orders": {

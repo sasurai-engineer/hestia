@@ -777,6 +777,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/vendors/{vendor_id}/credentials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Renew Vendor Credentials */
+        post: operations["renew_vendor_credentials_vendors__vendor_id__credentials_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/work-orders": {
         parameters: {
             query?: never;
@@ -1187,17 +1204,17 @@ export interface components {
         /**
          * CostLinkIn
          * @description Either a new cost to post, or an existing ledger event to associate.
+         *
+         *     A posted cost carries its own relation; this one describes the LINK to an
+         *     event that already exists. Setting both said two different things about
+         *     one row and silently kept one of them, so it is refused instead.
          */
         CostLinkIn: {
             cost?: components["schemas"]["CostIn"] | null;
             /** Ledger Event Uuid */
             ledger_event_uuid?: string | null;
-            /**
-             * Relation
-             * @default invoice
-             * @enum {string}
-             */
-            relation: "invoice" | "materials" | "deposit" | "tenant_chargeback" | "warranty_credit" | "other";
+            /** Relation */
+            relation?: ("invoice" | "materials" | "deposit" | "tenant_chargeback" | "warranty_credit" | "other") | null;
         };
         /** CostOut */
         CostOut: {
@@ -1263,6 +1280,26 @@ export interface components {
             gaps: components["schemas"]["CoverageGapOut"][];
             /** Properties */
             properties: components["schemas"]["PropertyCoverage"][];
+        };
+        /**
+         * CredentialsIn
+         * @description A renewal. Certificates expire every year, so recording the new dates
+         *     has to be possible without inventing a second vendor — the unique name
+         *     per entity made re-adding impossible, and there was no other door.
+         */
+        CredentialsIn: {
+            /** Insurer */
+            insurer?: string | null;
+            /** Liability Expires On */
+            liability_expires_on?: string | null;
+            /** License Expires On */
+            license_expires_on?: string | null;
+            /** License Number */
+            license_number?: string | null;
+            /** W9 On File */
+            w9_on_file?: boolean | null;
+            /** Workers Comp Expires On */
+            workers_comp_expires_on?: string | null;
         };
         /** DeadlineOut */
         DeadlineOut: {
@@ -4245,6 +4282,43 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    renew_vendor_credentials_vendors__vendor_id__credentials_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path: {
+                vendor_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CredentialsIn"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

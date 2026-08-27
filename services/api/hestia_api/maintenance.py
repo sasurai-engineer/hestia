@@ -18,7 +18,7 @@ from decimal import Decimal
 from typing import Any, Literal
 
 import psycopg
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from hestia_api import ledger as ledger_module
 from hestia_api.reports import DE_MINIMIS_CENTS
@@ -104,6 +104,10 @@ class UnknownDocument(Exception):
 
 class DuplicateVendor(Exception):
     """One vendor name per owner's list."""
+
+
+class NothingToRenew(Exception):
+    """A renewal that names no field renews nothing."""
 
 
 class IllegalTransition(Exception):
@@ -268,6 +272,36 @@ def create_vendor(conn: Conn, body: VendorIn) -> VendorOut:
     except psycopg.errors.UniqueViolation as error:
         raise DuplicateVendor(body.name) from error
     return read_vendor(conn, row["id"], as_of=dt.date.today())
+
+
+class CredentialsIn(BaseModel):
+    """A renewal. Certificates expire every year, so recording the new dates
+    has to be possible without inventing a second vendor — the unique name
+    per entity made re-adding impossible, and there was no other door."""
+
+    license_number: str | None = None
+    license_expires_on: dt.date | None = None
+    insurer: str | None = None
+    liability_expires_on: dt.date | None = None
+    workers_comp_expires_on: dt.date | None = None
+    w9_on_file: bool | None = None
+
+
+def renew_credentials(
+    conn: Conn, vendor_id: str, body: CredentialsIn, *, as_of: dt.date
+) -> VendorOut:
+    """Only the fields supplied move; a renewal names what was renewed."""
+    supplied = body.model_dump(exclude_unset=True)
+    if not supplied:
+        raise NothingToRenew(vendor_id)
+    assignments = ", ".join(f"{column} = %({column})s" for column in supplied)
+    updated = conn.execute(
+        f"UPDATE vendors SET {assignments} WHERE id = %(vendor_id)s RETURNING id::text",  # noqa: S608 - columns come from the model's own field names, never the request
+        {**supplied, "vendor_id": vendor_id},
+    ).fetchone()
+    if updated is None:
+        raise UnknownVendor(vendor_id)
+    return read_vendor(conn, vendor_id, as_of=as_of)
 
 
 def read_vendor(conn: Conn, vendor_id: str, *, as_of: dt.date) -> VendorOut:
@@ -819,11 +853,22 @@ def complete(conn: Conn, work_order_id: str, body: CompletionIn, actor: str) -> 
 
 
 class CostLinkIn(BaseModel):
-    """Either a new cost to post, or an existing ledger event to associate."""
+    """Either a new cost to post, or an existing ledger event to associate.
+
+    A posted cost carries its own relation; this one describes the LINK to an
+    event that already exists. Setting both said two different things about
+    one row and silently kept one of them, so it is refused instead.
+    """
 
     cost: CostIn | None = None
     ledger_event_uuid: uuid.UUID | None = None
-    relation: CostRelation = "invoice"
+    relation: CostRelation | None = None
+
+    @model_validator(mode="after")
+    def one_relation_only(self) -> CostLinkIn:
+        if self.cost is not None and self.relation is not None:
+            raise ValueError("a posted cost carries its own relation; drop the outer one")
+        return self
 
 
 def add_cost(conn: Conn, work_order_id: str, body: CostLinkIn, actor: str) -> WorkOrderOut:
@@ -862,6 +907,6 @@ def add_cost(conn: Conn, work_order_id: str, body: CostLinkIn, actor: str) -> Wo
             VALUES (%s, %s, %s, %s)
             ON CONFLICT (work_order_id, ledger_event_id) DO NOTHING
             """,
-            (work_order_id, event["id"], body.relation, actor),
+            (work_order_id, event["id"], body.relation or "invoice", actor),
         )
     return read_work_order(conn, work_order_id)
