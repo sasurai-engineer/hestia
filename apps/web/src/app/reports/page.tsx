@@ -2,14 +2,9 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { ScheduleEView } from '../../components/ScheduleEView';
-import {
-  api,
-  type PropertySummary,
-  type RentRollRow,
-  type ScheduleEReport,
-} from '../../lib/api';
-import { formatDate } from '../../lib/format';
 import { formatMoney } from '../../components/TransactionsTable';
+import { api, type PropertySummary, type RentRollRow, type ScheduleEReport } from '../../lib/api';
+import { formatDate } from '../../lib/format';
 
 export default function ReportsPage() {
   const [rentRoll, setRentRoll] = useState<RentRollRow[] | null>(null);
@@ -49,8 +44,8 @@ export default function ReportsPage() {
     <>
       <h1 className="page-title">Reports</h1>
       <p className="page-subtitle">
-        The ledger rolled up with its authorities attached — Schedule E per
-        property, and the portfolio rent roll.
+        The ledger rolled up with its authorities attached — Schedule E per property, and the
+        portfolio rent roll.
       </p>
       {error ? <p className="error-note">{error}</p> : null}
 

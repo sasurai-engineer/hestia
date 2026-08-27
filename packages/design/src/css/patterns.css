@@ -59,4 +59,87 @@
   .decision .disclosure {
     margin-top: var(--space-3);
   }
+
+  /* ---- the timeline spine ---- */
+
+  /* The plat: a whisper-faint survey grid under the marks. */
+  .spine__surface {
+    position: relative;
+    background:
+      repeating-linear-gradient(to right, transparent 0 23px, var(--line-soft) 23px 24px),
+      repeating-linear-gradient(to bottom, transparent 0 23px, var(--line-soft) 23px 24px),
+      var(--surface);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--radius-lg);
+    cursor: grab;
+    touch-action: pan-y;
+  }
+
+  .spine__surface:active {
+    cursor: grabbing;
+  }
+
+  .spine__surface:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: 2px;
+  }
+
+  .spine__hit {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    transform: translate(-50%, 0);
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  .spine__hit:focus-visible {
+    outline: var(--focus-outline);
+    border-radius: var(--radius-full);
+  }
+
+  .spine__empty {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    margin: 0;
+  }
+
+  .spine__legend {
+    margin: var(--space-2) 0 0;
+    font-size: var(--type-label);
+  }
+
+  .spine__legend-ember {
+    color: var(--ember);
+  }
+
+  .spine__legend-fern {
+    color: var(--fern);
+  }
+
+  .spine__legend-graphite {
+    color: var(--graphite);
+  }
+
+  .spine__legend-umber {
+    color: var(--umber);
+  }
+
+  .spine__detail {
+    margin-top: var(--space-3);
+  }
+
+  .spine__detail-head {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+  }
+
+  .spine__detail-head .button {
+    margin-left: auto;
+  }
 }

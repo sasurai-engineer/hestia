@@ -8,34 +8,44 @@ import { DefectRegister } from '../../../components/DefectRegister';
 import { HazardCard } from '../../../components/HazardCard';
 import { JurisdictionChain } from '../../../components/JurisdictionChain';
 import { StatusPill } from '../../../components/StatusPill';
+import { TimelineSpine } from '../../../components/TimelineSpine';
 import {
   api,
   type CapexForecastOut,
   type DossierStep,
   type DossierView,
   type Financials,
+  type LeaseSummary,
+  type LedgerRegister,
 } from '../../../lib/api';
-import { titleCase } from '../../../lib/format';
+import { localIsoDate, titleCase } from '../../../lib/format';
+import { buildSpine } from '../../../lib/timeline';
 
 export default function PropertyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [view, setView] = useState<DossierView | null>(null);
   const [financials, setFinancials] = useState<Financials | null>(null);
   const [capex, setCapex] = useState<CapexForecastOut | null>(null);
+  const [ledger, setLedger] = useState<LedgerRegister | null>(null);
+  const [leases, setLeases] = useState<LeaseSummary[] | null>(null);
   const [steps, setSteps] = useState<DossierStep[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
-      const [dossierView, money, forecast] = await Promise.all([
+      const [dossierView, money, forecast, register, leaseRows] = await Promise.all([
         api.readDossier(id),
         api.financials(id),
         api.capexForecast(id),
+        api.ledgerRegister({ propertyId: id }),
+        api.listLeases(),
       ]);
       setView(dossierView);
       setFinancials(money);
       setCapex(forecast);
+      setLedger(register);
+      setLeases(leaseRows);
       setError(null);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught));
@@ -65,6 +75,15 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
   }
 
   const nowYear = new Date().getFullYear();
+  const today = localIsoDate(new Date());
+  const spineEvents = buildSpine({
+    today,
+    ledger: ledger?.events ?? [],
+    deadlines: view.deadlines,
+    leases: (leases ?? []).filter((lease) => lease.property_label === view.label),
+    capex,
+    debts: financials?.debts ?? [],
+  });
 
   return (
     <>
@@ -74,6 +93,15 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
         {view.county ? ` · ${view.county}` : ''}
         {view.year_built != null ? ` · built ${String(view.year_built)}` : ''}
       </p>
+
+      <section className="section">
+        <h2 className="section__title">The spine</h2>
+        <TimelineSpine
+          events={spineEvents}
+          today={today}
+          ariaLabel={`${view.label} — ledger and horizon`}
+        />
+      </section>
 
       <button
         className="button"

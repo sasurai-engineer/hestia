@@ -2,8 +2,11 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { BalanceCurve } from './BalanceCurve.js';
 import { ChartFrame } from './ChartFrame.js';
+import { Datum } from './Datum.js';
 import { FanChart } from './FanChart.js';
 import { Sparkline } from './Sparkline.js';
+import { linearScale } from './scale.js';
+import { TimeAxis } from './TimeAxis.js';
 
 describe('ChartFrame', () => {
   it('is a named image with the chart class', () => {
@@ -119,5 +122,48 @@ describe('BalanceCurve', () => {
     );
     expect(screen.getByText('5')).toBeDefined();
     expect(container.querySelector('.chart__line.trace')).not.toBeNull();
+  });
+});
+
+describe('TimeAxis', () => {
+  it('draws the baseline and one tick per boundary, years heavier', () => {
+    const ticks = [
+      { day: 100, label: 'Feb', major: false },
+      { day: 130, label: '1971', major: true },
+    ];
+    const { container } = render(
+      <svg role="img" aria-label="axis under test">
+        <TimeAxis ticks={ticks} x={linearScale(90, 140, 0, 500)} y={80} from={0} to={500} />
+      </svg>,
+    );
+    expect(container.querySelector('.chart__axis-line')?.getAttribute('x2')).toBe('500');
+    expect(container.querySelectorAll('.chart__tick')).toHaveLength(2);
+    expect(screen.getByText('Feb').getAttribute('class')).toBe('chart__axis');
+    expect(screen.getByText('1971').getAttribute('class')).toBe('chart__axis chart__axis--major');
+    expect(screen.getByText('Feb').getAttribute('x')).toBe('100');
+  });
+});
+
+describe('Datum', () => {
+  it('drops the plumb line with its diamond and default label', () => {
+    const { container } = render(
+      <svg role="img" aria-label="datum under test">
+        <Datum x={250} top={10} bottom={120} />
+      </svg>,
+    );
+    const rule = container.querySelector('.chart__datum');
+    expect(rule?.getAttribute('x1')).toBe('250');
+    expect(rule?.getAttribute('y2')).toBe('120');
+    expect(container.querySelector('.chart__plumb')).not.toBeNull();
+    expect(screen.getByText('TODAY').getAttribute('class')).toBe('chart__datum-label');
+  });
+
+  it('takes a caller label', () => {
+    render(
+      <svg role="img" aria-label="datum labeled">
+        <Datum x={10} top={0} bottom={50} label="AS OF" />
+      </svg>,
+    );
+    expect(screen.getByText('AS OF')).toBeDefined();
   });
 });
