@@ -822,8 +822,9 @@ SELECT assert_rejected(
   'completed_orders_say_when',
   'completed work with no completion date');
 SELECT assert_rejected(
-  $$INSERT INTO work_orders (property_id, summary, status, completed_on)
-    VALUES ('33333333-3333-3333-3333-333333333333', 'No hot water', 'completed', '2026-08-27')$$,
+  $$INSERT INTO work_orders (property_id, summary, reported_on, status, completed_on)
+    VALUES ('33333333-3333-3333-3333-333333333333', 'No hot water', '2026-08-01',
+            'completed', '2026-08-27')$$,
   'completed_orders_say_how',
   'completed work that will not say what happened');
 SELECT assert_rejected(
@@ -839,25 +840,27 @@ SELECT assert_rejected(
 -- Isolated to ONE rule at a time: this order installs something, so only the
 -- missing `component_id` can be what refuses it.
 SELECT assert_rejected(
-  $$INSERT INTO work_orders (property_id, summary, status, completed_on, resolution,
-                             replacement_component_id)
-    VALUES ('33333333-3333-3333-3333-333333333333', 'No hot water', 'completed',
-            '2026-08-27', 'replaced', '88888888-8888-4888-8888-888888888801')$$,
+  $$INSERT INTO work_orders (property_id, summary, reported_on, status, completed_on,
+                             resolution, replacement_component_id)
+    VALUES ('33333333-3333-3333-3333-333333333333', 'No hot water', '2026-08-01',
+            'completed', '2026-08-27', 'replaced',
+            '88888888-8888-4888-8888-888888888801')$$,
   'replaced_orders_name_the_component',
   'a replacement that will not say what was replaced');
 SELECT assert_rejected(
-  $$INSERT INTO work_orders (property_id, summary, status, completed_on, resolution,
-                             replacement_component_id)
-    VALUES ('33333333-3333-3333-3333-333333333333', 'No hot water', 'completed',
-            '2026-08-27', 'repaired', '88888888-8888-4888-8888-888888888801')$$,
+  $$INSERT INTO work_orders (property_id, summary, reported_on, status, completed_on,
+                             resolution, replacement_component_id)
+    VALUES ('33333333-3333-3333-3333-333333333333', 'No hot water', '2026-08-01',
+            'completed', '2026-08-27', 'repaired',
+            '88888888-8888-4888-8888-888888888801')$$,
   'replacements_belong_to_replaced_orders',
   'a new component installed by a repair that replaced nothing');
 SELECT assert_rejected(
-  $$INSERT INTO work_orders (property_id, component_id, summary, status, completed_on,
-                             resolution)
+  $$INSERT INTO work_orders (property_id, component_id, summary, reported_on, status,
+                             completed_on, resolution)
     VALUES ('33333333-3333-3333-3333-333333333333',
-            '88888888-8888-4888-8888-888888888801', 'No hot water', 'completed',
-            '2026-08-27', 'replaced')$$,
+            '88888888-8888-4888-8888-888888888801', 'No hot water', '2026-08-01',
+            'completed', '2026-08-27', 'replaced')$$,
   'replaced_orders_install_a_component',
   'a replacement that installed nothing');
 SELECT assert_rejected(
@@ -905,6 +908,77 @@ BEGIN
       survivor.component_id, survivor.property_id;
   END IF;
   RAISE NOTICE '  ok      the job outlived the component it named';
+END $$;
+
+-- ...but a COMPLETED REPLACEMENT is the authority for the new component's
+-- KNOWN install date, so both of its pointers are frozen. Deleting what it
+-- replaced would run the same SET NULL and leave a finished job claiming a
+-- replacement of nothing.
+INSERT INTO components (id, property_id, component_type_id, installed_year_low,
+                        installed_year_high, provenance_id)
+  VALUES ('88888888-8888-4888-8888-888888888807', '33333333-3333-3333-3333-333333333333',
+          '44444444-4444-4444-4444-444444444444', 1998, 2004,
+          '22222222-2222-2222-2222-222222222222');
+INSERT INTO components (id, property_id, component_type_id, installed_on, provenance_id)
+  VALUES ('88888888-8888-4888-8888-888888888808', '33333333-3333-3333-3333-333333333333',
+          '44444444-4444-4444-4444-444444444444', '2026-08-02',
+          '22222222-2222-2222-2222-222222222222');
+INSERT INTO work_orders (id, property_id, component_id, summary, reported_on, status,
+                         completed_on, resolution, replacement_component_id)
+  VALUES ('88888888-8888-4888-8888-888888888809', '33333333-3333-3333-3333-333333333333',
+          '88888888-8888-4888-8888-888888888807', 'Water heater replaced', '2026-08-01',
+          'completed', '2026-08-02', 'replaced', '88888888-8888-4888-8888-888888888808');
+SELECT assert_rejected(
+  $$DELETE FROM components WHERE id = '88888888-8888-4888-8888-888888888807'$$,
+  'replacements_keep_naming_their_components',
+  'deleting the component a completed replacement replaced');
+SELECT assert_rejected(
+  $$UPDATE work_orders SET component_id = NULL
+    WHERE id = '88888888-8888-4888-8888-888888888809'$$,
+  'replacements_keep_naming_their_components',
+  'unlinking a completed replacement from what it replaced');
+SELECT assert_rejected(
+  $$UPDATE work_orders
+    SET replacement_component_id = '88888888-8888-4888-8888-888888888801'
+    WHERE id = '88888888-8888-4888-8888-888888888809'$$,
+  'replacements_keep_naming_their_components',
+  'rewriting which component a completed replacement installed');
+SELECT assert_rejected(
+  $$DELETE FROM components WHERE id = '88888888-8888-4888-8888-888888888808'$$,
+  'work_orders_replacement_component_id_fkey',
+  'deleting the component a completed replacement installed');
+SELECT assert_accepted(
+  $$UPDATE work_orders SET resolution_note = 'gas valve seized'
+    WHERE id = '88888888-8888-4888-8888-888888888809'$$,
+  'an unrelated edit to a completed replacement');
+-- The freeze must not make the property undeletable: the job is cascaded away
+-- in the same statement, so no history survives to be falsified. A guard on
+-- components instead of work_orders would refuse this delete.
+INSERT INTO properties (id, entity_id, label, street_1, city, state, postal_code, kind)
+  VALUES ('88888888-8888-4888-8888-888888888810', '11111111-1111-1111-1111-111111111111',
+          'Sold On', '3 Sold On Way', 'Newport', 'KY', '41071', 'single_family');
+INSERT INTO components (id, property_id, component_type_id, installed_year_low,
+                        installed_year_high, provenance_id)
+  VALUES ('88888888-8888-4888-8888-888888888811', '88888888-8888-4888-8888-888888888810',
+          '44444444-4444-4444-4444-444444444444', 1998, 2004,
+          '22222222-2222-2222-2222-222222222222');
+INSERT INTO components (id, property_id, component_type_id, installed_on, provenance_id)
+  VALUES ('88888888-8888-4888-8888-888888888812', '88888888-8888-4888-8888-888888888810',
+          '44444444-4444-4444-4444-444444444444', '2026-08-02',
+          '22222222-2222-2222-2222-222222222222');
+INSERT INTO work_orders (id, property_id, component_id, summary, reported_on, status,
+                         completed_on, resolution, replacement_component_id)
+  VALUES ('88888888-8888-4888-8888-888888888813', '88888888-8888-4888-8888-888888888810',
+          '88888888-8888-4888-8888-888888888811', 'Replaced, then sold', '2026-08-01',
+          'completed', '2026-08-02', 'replaced', '88888888-8888-4888-8888-888888888812');
+DELETE FROM properties WHERE id = '88888888-8888-4888-8888-888888888810';
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM work_orders
+             WHERE id = '88888888-8888-4888-8888-888888888813') THEN
+    RAISE EXCEPTION 'CASCADE DID NOT FIRE: a work order outlived its property';
+  END IF;
+  RAISE NOTICE '  ok      a property with a completed replacement is still deletable';
 END $$;
 
 -- Two vendors expiring on one day are two deadlines, not one.
