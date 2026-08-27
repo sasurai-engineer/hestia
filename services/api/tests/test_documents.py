@@ -494,11 +494,13 @@ class TestReviewFindings:
     def test_non_finite_money_is_not_a_money_amount(
         self, newport_property: str, client: TestClient
     ) -> None:
-        """Decimal parses NaN and Infinity happily; both would poison every
-        total downstream and make the document unrenderable."""
+        """Decimal parses NaN and Infinity happily, and quantize() raises on a
+        value too big for the decimal context — all of them reached the caller
+        as a 500 rather than a refusal. money_amount is NUMERIC(18, 2), and
+        the edge says so instead of the database discovering it."""
         detail = upload(client, newport_property, pdf_variant("nan-money"))
         doc_id = detail["id"]
-        for hostile in ("nan", "NaN", "Infinity", "-inf"):
+        for hostile in ("nan", "NaN", "Infinity", "-inf", "1e30", "-1e30"):
             response = client.post(
                 f"/documents/{doc_id}/review",
                 json={
@@ -662,6 +664,27 @@ class TestExtractionBudgets:
         fat = b"BT /F1 10 Tf (" + b"x" * (extraction_parse.MAX_CONTENT_BYTES + 1) + b") Tj ET"
         with pytest.raises(extraction_parse.UnreadableDocument, match="extraction budget"):
             extraction_parse.extract_lines(self.build_pdf([fat]))
+
+    def test_a_pdf_of_endless_lines_is_refused_too(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """The page and decompressed-byte budgets do not bound the LINE list,
+        which is what actually accumulates in memory. Cap lowered rather than
+        building a 50,000-line document, the way MAX_BYTES is exercised."""
+        monkeypatch.setattr(extraction_parse, "MAX_LINES", 1)
+        with pytest.raises(extraction_parse.UnreadableDocument, match="text lines"):
+            extraction_parse.extract_lines(FIXTURE)
+
+    def test_plain_text_is_bounded_like_the_pdf_branch(self) -> None:
+        """The PDF branch bounded its work; this one bounded nothing, so an
+        upload just under the byte cap became hundreds of megabytes of str
+        objects inside the request's open transaction."""
+        oversized = b"x" * (extraction_parse.MAX_CONTENT_BYTES + 1)
+        with pytest.raises(extraction_parse.UnreadableDocument, match="extraction budget"):
+            extraction_parse.extract_lines(oversized)
+
+    def test_a_text_file_of_nothing_but_newlines_is_refused(self) -> None:
+        many = b"\n" * (extraction_parse.MAX_LINES + 1)
+        with pytest.raises(extraction_parse.UnreadableDocument, match="line extraction cap"):
+            extraction_parse.extract_lines(many)
 
     def test_a_single_space_is_not_a_column_separator(self) -> None:
         # `Total $5.00` is prose, not a two-column charge line.

@@ -28,6 +28,10 @@ from hestia_api import ledger as ledger_module
 Conn = psycopg.Connection[dict[str, Any]]
 
 CENT = Decimal("0.01")
+# money_amount is NUMERIC(18, 2): sixteen digits before the point. A value
+# beyond it cannot be stored, so it is refused at the edge with a sentence
+# rather than at the database with a stack trace.
+MAX_MONEY = Decimal("9" * 16 + ".99")
 # Multipart reads the file into memory; refuse anything implausibly large for
 # a closing package before it gets there.
 MAX_BYTES = 25 * 1024 * 1024
@@ -384,6 +388,12 @@ def _canonicalise(datatype: str, value: str) -> str:
         # and make the document's own detail unrenderable.
         if not amount.is_finite():
             raise InvalidValue(f"not a money amount: {value!r}")
+        # quantize() raises InvalidOperation when the result needs more digits
+        # than the decimal context allows, so "1e30" reached the caller as a
+        # 500 rather than a refusal. The bound is the money_amount column's
+        # own precision, checked here instead of discovered in SQL.
+        if abs(amount) > MAX_MONEY:
+            raise InvalidValue(f"{value!r} exceeds the largest amount this records")
         return str(amount.quantize(CENT))
     if datatype == "date":
         normalised = extraction_parse.normalise_date(value)

@@ -2364,7 +2364,10 @@ export interface components {
         VendorIn: {
             /** Email */
             email?: string | null;
-            /** Entity Id */
+            /**
+             * Entity Id
+             * Format: uuid
+             */
             entity_id: string;
             /** Insurer */
             insurer?: string | null;
@@ -2464,7 +2467,10 @@ export interface components {
              * @enum {string}
              */
             priority: "emergency" | "urgent" | "routine" | "planned";
-            /** Property Id */
+            /**
+             * Property Id
+             * Format: uuid
+             */
             property_id: string;
             /**
              * Reported By

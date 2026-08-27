@@ -1003,6 +1003,7 @@
           "document_id": {
             "anyOf": [
               {
+                "format": "uuid",
                 "type": "string"
               },
               {
@@ -1081,6 +1082,7 @@
           "ledger_event_uuid": {
             "anyOf": [
               {
+                "format": "uuid",
                 "type": "string"
               },
               {
@@ -3906,6 +3908,7 @@
           "component_type_id": {
             "anyOf": [
               {
+                "format": "uuid",
                 "type": "string"
               },
               {
@@ -3917,10 +3920,11 @@
           "expected_life_years": {
             "anyOf": [
               {
+                "exclusiveMinimum": 0.0,
                 "type": "number"
               },
               {
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,3}|(?=[\\d.]{1,6}0*$)\\d{0,3}\\.\\d{0,2}0*$)",
                 "type": "string"
               },
               {
@@ -3955,10 +3959,11 @@
           "quantity": {
             "anyOf": [
               {
+                "exclusiveMinimum": 0.0,
                 "type": "number"
               },
               {
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,8}|(?=[\\d.]{1,11}0*$)\\d{0,8}\\.\\d{0,2}0*$)",
                 "type": "string"
               },
               {
@@ -3970,10 +3975,11 @@
           "replacement_cost": {
             "anyOf": [
               {
+                "minimum": 0.0,
                 "type": "number"
               },
               {
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,16}|(?=[\\d.]{1,19}0*$)\\d{0,16}\\.\\d{0,2}0*$)",
                 "type": "string"
               },
               {
@@ -4628,6 +4634,7 @@
           "vendor_id": {
             "anyOf": [
               {
+                "format": "uuid",
                 "type": "string"
               },
               {
@@ -4807,6 +4814,7 @@
             "title": "Email"
           },
           "entity_id": {
+            "format": "uuid",
             "title": "Entity Id",
             "type": "string"
           },
@@ -5161,6 +5169,7 @@
           "component_id": {
             "anyOf": [
               {
+                "format": "uuid",
                 "type": "string"
               },
               {
@@ -5192,6 +5201,7 @@
             "type": "string"
           },
           "property_id": {
+            "format": "uuid",
             "title": "Property Id",
             "type": "string"
           },
@@ -5227,6 +5237,7 @@
           "unit_id": {
             "anyOf": [
               {
+                "format": "uuid",
                 "type": "string"
               },
               {
@@ -5238,6 +5249,7 @@
           "vendor_id": {
             "anyOf": [
               {
+                "format": "uuid",
                 "type": "string"
               },
               {

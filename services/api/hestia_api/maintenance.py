@@ -13,6 +13,7 @@ question that decides whether the money was an expense or basis.
 from __future__ import annotations
 
 import datetime as dt
+import uuid
 from decimal import Decimal
 from typing import Any, Literal
 
@@ -128,7 +129,8 @@ VendorTrade = Literal[
 
 
 class VendorIn(BaseModel):
-    entity_id: str
+    # UUID-typed so a malformed id is a 422 at the edge, not a 500 in SQL.
+    entity_id: uuid.UUID
     name: str = Field(min_length=1, max_length=200)
     trade: VendorTrade
     phone: str | None = None
@@ -314,10 +316,10 @@ Reporter = Literal["resident", "owner", "inspection", "vendor"]
 
 
 class WorkOrderIn(BaseModel):
-    property_id: str
-    unit_id: str | None = None
-    component_id: str | None = None
-    vendor_id: str | None = None
+    property_id: uuid.UUID
+    unit_id: uuid.UUID | None = None
+    component_id: uuid.UUID | None = None
+    vendor_id: uuid.UUID | None = None
     summary: str = Field(min_length=1, max_length=400)
     detail: str | None = None
     priority: WorkOrderPriority = "routine"
@@ -328,7 +330,7 @@ class WorkOrderIn(BaseModel):
 class TransitionIn(BaseModel):
     status: Literal["triaged", "scheduled", "in_progress", "cancelled"]
     scheduled_for: dt.date | None = None
-    vendor_id: str | None = None
+    vendor_id: uuid.UUID | None = None
     cancelled_reason: str | None = None
 
 
@@ -343,16 +345,19 @@ class CostIn(BaseModel):
     capitalisation_rationale: str | None = None
     counterparty: str | None = None
     memo: str | None = None
-    document_id: str | None = None
+    document_id: uuid.UUID | None = None
 
 
 class ReplacementIn(BaseModel):
-    component_type_id: str | None = None  # defaults to the retired row's type
+    component_type_id: uuid.UUID | None = None  # defaults to the retired row's type
     installed_on: dt.date | None = None  # defaults to the completion date
-    quantity: Decimal | None = None
+    # Bounded to the columns these land in — components.quantity NUMERIC(10,2),
+    # expected_life_years NUMERIC(5,2), replacement_cost money_amount
+    # NUMERIC(18,2). Unbounded, they overflowed the column as a 500.
+    quantity: Decimal | None = Field(default=None, gt=0, decimal_places=2, max_digits=10)
     warranty_expires_on: dt.date | None = None
-    expected_life_years: Decimal | None = None
-    replacement_cost: Decimal | None = None
+    expected_life_years: Decimal | None = Field(default=None, gt=0, decimal_places=2, max_digits=5)
+    replacement_cost: Decimal | None = Field(default=None, ge=0, decimal_places=2, max_digits=18)
     notes: str | None = None
 
 
@@ -746,7 +751,7 @@ class CostLinkIn(BaseModel):
     """Either a new cost to post, or an existing ledger event to associate."""
 
     cost: CostIn | None = None
-    ledger_event_uuid: str | None = None
+    ledger_event_uuid: uuid.UUID | None = None
     relation: CostRelation = "invoice"
 
 
