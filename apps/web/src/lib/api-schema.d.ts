@@ -227,6 +227,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/deposits/open": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Open Deposits */
+        get: operations["list_open_deposits_deposits_open_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/documents": {
         parameters: {
             query?: never;
@@ -411,6 +428,40 @@ export interface paths {
         put?: never;
         /** Collect Rent */
         post: operations["collect_rent_leases__lease_id__collect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/leases/{lease_id}/deposit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Deposit */
+        get: operations["read_deposit_leases__lease_id__deposit_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/leases/{lease_id}/deposit-return": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Return Deposit */
+        post: operations["return_deposit_leases__lease_id__deposit_return_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1677,6 +1728,34 @@ export interface components {
             /** Triggers Disclosure */
             triggers_disclosure: boolean;
         };
+        /** DepositOut */
+        DepositOut: {
+            /** Deposit Account */
+            deposit_account: string | null;
+            /** Deposit Returned */
+            deposit_returned: string | null;
+            /** Deposit Returned On */
+            deposit_returned_on: string | null;
+            /** Duties */
+            duties: components["schemas"]["DutyOut"][];
+            /** Gaps */
+            gaps: components["schemas"]["GapOut"][];
+            interest: components["schemas"]["InterestOut"] | null;
+            /** Lease Id */
+            lease_id: string;
+            /** Moved Out On */
+            moved_out_on: string | null;
+            /** Return Citation */
+            return_citation: string | null;
+            /** Return Days */
+            return_days: number | null;
+            /** Return Due On */
+            return_due_on: string | null;
+            /** Security Deposit */
+            security_deposit: string;
+            /** State */
+            state: string;
+        };
         /** DocumentDetail */
         DocumentDetail: {
             /** Applied At */
@@ -1826,6 +1905,18 @@ export interface components {
             /** Year Built */
             year_built: number | null;
         };
+        /**
+         * DutyOut
+         * @description One thing the jurisdiction requires, and the authority that requires it.
+         */
+        DutyOut: {
+            /** Citation */
+            citation: string;
+            /** Code */
+            code: string;
+            /** Requirement */
+            requirement: string;
+        };
         /** EntityIn */
         EntityIn: {
             /** Formation State */
@@ -1918,6 +2009,18 @@ export interface components {
             property_id: string;
             valuation: components["schemas"]["ValuationOut"] | null;
         };
+        /**
+         * GapOut
+         * @description A duty this chain cannot answer. Named, never defaulted.
+         */
+        GapOut: {
+            /** Code */
+            code: string;
+            /** Detail */
+            detail: string;
+            /** Reason */
+            reason: string;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -1959,6 +2062,21 @@ export interface components {
             staged: number;
             /** Suggested */
             suggested: number;
+        };
+        /** InterestOut */
+        InterestOut: {
+            /** Accrued */
+            accrued: string;
+            /** Citation */
+            citation: string;
+            /** Exempt Amount */
+            exempt_amount: string;
+            /** Interest Bearing */
+            interest_bearing: string;
+            /** Months Held */
+            months_held: number;
+            /** Rate */
+            rate: string;
         };
         /** LeaseDetail */
         LeaseDetail: {
@@ -2542,6 +2660,40 @@ export interface components {
             chain: string[];
             /** Level */
             level: string;
+        };
+        /** ReturnIn */
+        ReturnIn: {
+            /** Amount */
+            amount: number | string;
+            /**
+             * Post To Ledger
+             * @default true
+             */
+            post_to_ledger: boolean;
+            /** Returned On */
+            returned_on?: string | null;
+            /** Withheld Reason */
+            withheld_reason?: string | null;
+        };
+        /** ReturnOut */
+        ReturnOut: {
+            /** Deadline Resolved */
+            deadline_resolved: boolean;
+            /** Lease Id */
+            lease_id: string;
+            /** Ledger Event Uuid */
+            ledger_event_uuid: string | null;
+            /** Returned */
+            returned: string;
+            /**
+             * Returned On
+             * Format: date
+             */
+            returned_on: string;
+            /** Withheld */
+            withheld: string;
+            /** Withheld Reason */
+            withheld_reason: string | null;
         };
         /** ReversalIn */
         ReversalIn: {
@@ -3578,6 +3730,37 @@ export interface operations {
             };
         };
     };
+    list_open_deposits_deposits_open_get: {
+        parameters: {
+            query?: {
+                as_of?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DepositOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_documents_documents_get: {
         parameters: {
             query?: {
@@ -4000,6 +4183,76 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CollectOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_deposit_leases__lease_id__deposit_get: {
+        parameters: {
+            query?: {
+                as_of?: string | null;
+            };
+            header?: never;
+            path: {
+                lease_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DepositOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    return_deposit_leases__lease_id__deposit_return_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path: {
+                lease_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReturnIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReturnOut"];
                 };
             };
             /** @description Validation Error */

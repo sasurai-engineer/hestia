@@ -2102,6 +2102,145 @@
         "title": "DefectOut",
         "type": "object"
       },
+      "DepositOut": {
+        "properties": {
+          "deposit_account": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deposit Account"
+          },
+          "deposit_returned": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deposit Returned"
+          },
+          "deposit_returned_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deposit Returned On"
+          },
+          "duties": {
+            "items": {
+              "$ref": "#/components/schemas/DutyOut"
+            },
+            "title": "Duties",
+            "type": "array"
+          },
+          "gaps": {
+            "items": {
+              "$ref": "#/components/schemas/GapOut"
+            },
+            "title": "Gaps",
+            "type": "array"
+          },
+          "interest": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InterestOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lease_id": {
+            "title": "Lease Id",
+            "type": "string"
+          },
+          "moved_out_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Moved Out On"
+          },
+          "return_citation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Return Citation"
+          },
+          "return_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Return Days"
+          },
+          "return_due_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Return Due On"
+          },
+          "security_deposit": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Security Deposit",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "lease_id",
+          "state",
+          "security_deposit",
+          "deposit_account",
+          "moved_out_on",
+          "deposit_returned_on",
+          "deposit_returned",
+          "duties",
+          "gaps",
+          "return_days",
+          "return_due_on",
+          "return_citation",
+          "interest"
+        ],
+        "title": "DepositOut",
+        "type": "object"
+      },
       "DocumentDetail": {
         "properties": {
           "applied_at": {
@@ -2577,6 +2716,30 @@
         "title": "DossierView",
         "type": "object"
       },
+      "DutyOut": {
+        "description": "One thing the jurisdiction requires, and the authority that requires it.",
+        "properties": {
+          "citation": {
+            "title": "Citation",
+            "type": "string"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "requirement": {
+            "title": "Requirement",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "requirement",
+          "citation"
+        ],
+        "title": "DutyOut",
+        "type": "object"
+      },
       "EntityIn": {
         "properties": {
           "formation_state": {
@@ -2918,6 +3081,30 @@
         "title": "Financials",
         "type": "object"
       },
+      "GapOut": {
+        "description": "A duty this chain cannot answer. Named, never defaulted.",
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "reason",
+          "detail"
+        ],
+        "title": "GapOut",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -3031,6 +3218,48 @@
           "suggested"
         ],
         "title": "ImportSummary",
+        "type": "object"
+      },
+      "InterestOut": {
+        "properties": {
+          "accrued": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Accrued",
+            "type": "string"
+          },
+          "citation": {
+            "title": "Citation",
+            "type": "string"
+          },
+          "exempt_amount": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Exempt Amount",
+            "type": "string"
+          },
+          "interest_bearing": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Interest Bearing",
+            "type": "string"
+          },
+          "months_held": {
+            "title": "Months Held",
+            "type": "integer"
+          },
+          "rate": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Rate",
+            "type": "string"
+          }
+        },
+        "required": [
+          "accrued",
+          "rate",
+          "months_held",
+          "exempt_amount",
+          "interest_bearing",
+          "citation"
+        ],
+        "title": "InterestOut",
         "type": "object"
       },
       "LeaseDetail": {
@@ -4898,6 +5127,116 @@
           "chain"
         ],
         "title": "Resolution",
+        "type": "object"
+      },
+      "ReturnIn": {
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,16}|(?=[\\d.]{1,19}0*$)\\d{0,16}\\.\\d{0,2}0*$)",
+                "type": "string"
+              }
+            ],
+            "title": "Amount"
+          },
+          "post_to_ledger": {
+            "default": true,
+            "title": "Post To Ledger",
+            "type": "boolean"
+          },
+          "returned_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Returned On"
+          },
+          "withheld_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Withheld Reason"
+          }
+        },
+        "required": [
+          "amount"
+        ],
+        "title": "ReturnIn",
+        "type": "object"
+      },
+      "ReturnOut": {
+        "properties": {
+          "deadline_resolved": {
+            "title": "Deadline Resolved",
+            "type": "boolean"
+          },
+          "lease_id": {
+            "title": "Lease Id",
+            "type": "string"
+          },
+          "ledger_event_uuid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ledger Event Uuid"
+          },
+          "returned": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Returned",
+            "type": "string"
+          },
+          "returned_on": {
+            "format": "date",
+            "title": "Returned On",
+            "type": "string"
+          },
+          "withheld": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Withheld",
+            "type": "string"
+          },
+          "withheld_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Withheld Reason"
+          }
+        },
+        "required": [
+          "lease_id",
+          "returned_on",
+          "returned",
+          "withheld",
+          "withheld_reason",
+          "ledger_event_uuid",
+          "deadline_resolved"
+        ],
+        "title": "ReturnOut",
         "type": "object"
       },
       "ReversalIn": {
@@ -7499,6 +7838,57 @@
         "summary": "Read Debt Schedule"
       }
     },
+    "/deposits/open": {
+      "get": {
+        "operationId": "list_open_deposits_deposits_open_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "as_of",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "As Of"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DepositOut"
+                  },
+                  "title": "Response List Open Deposits Deposits Open Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Open Deposits"
+      }
+    },
     "/documents": {
       "get": {
         "operationId": "list_documents_documents_get",
@@ -8113,6 +8503,123 @@
           }
         },
         "summary": "Collect Rent"
+      }
+    },
+    "/leases/{lease_id}/deposit": {
+      "get": {
+        "operationId": "read_deposit_leases__lease_id__deposit_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lease_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Lease Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "as_of",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "As Of"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepositOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Deposit"
+      }
+    },
+    "/leases/{lease_id}/deposit-return": {
+      "post": {
+        "operationId": "return_deposit_leases__lease_id__deposit_return_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lease_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Lease Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReturnIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReturnOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Return Deposit"
       }
     },
     "/leases/{lease_id}/receipts": {

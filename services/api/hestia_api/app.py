@@ -37,6 +37,7 @@ from hestia_api import (
     coverage,
     db,
     debt,
+    deposit,
     documents,
     dossier,
     jurisdiction,
@@ -1968,3 +1969,64 @@ def pay_off_debt(
         after_value={"paid_off_on": str(note.paid_off_on)},
     )
     return note
+
+
+# ---------------------------------------------------------------------------
+# The security deposit: the jurisdiction's duties, and returning it
+# ---------------------------------------------------------------------------
+
+
+@app.get("/leases/{lease_id}/deposit", response_model=deposit.DepositOut)
+def read_deposit(
+    lease_id: uuid.UUID, conn: Conn, as_of: Annotated[dt.date | None, Query()] = None
+) -> deposit.DepositOut:
+    try:
+        return deposit.read(conn, str(lease_id), as_of=as_of or dt.date.today())
+    except deposit.UnknownLease as error:
+        raise HTTPException(status_code=404, detail="lease not found") from error
+
+
+@app.get("/deposits/open", response_model=list[deposit.DepositOut])
+def list_open_deposits(
+    conn: Conn, as_of: Annotated[dt.date | None, Query()] = None
+) -> list[deposit.DepositOut]:
+    return deposit.list_open(conn, as_of=as_of or dt.date.today())
+
+
+@app.post(
+    "/leases/{lease_id}/deposit-return",
+    response_model=deposit.ReturnOut,
+    status_code=201,
+)
+def return_deposit(
+    lease_id: uuid.UUID,
+    body: deposit.ReturnIn,
+    conn: Conn,
+    request: Request,
+    actor: Actor = "system",
+) -> deposit.ReturnOut:
+    try:
+        result = deposit.return_deposit(conn, str(lease_id), body)
+    except deposit.UnknownLease as error:
+        raise HTTPException(status_code=404, detail="lease not found") from error
+    except deposit.AlreadyReturned as error:
+        raise HTTPException(
+            status_code=409, detail=f"the deposit was returned on {error}"
+        ) from error
+    except deposit.NotMovedOut as error:
+        raise HTTPException(
+            status_code=422,
+            detail="record the move-out date first; a deposit is settled after the tenancy",
+        ) from error
+    except deposit.ReturnExceedsDeposit as error:
+        raise HTTPException(status_code=422, detail=f"the deposit held was only {error}") from error
+    db.record_audit(
+        conn,
+        actor=actor,
+        action="deposit.return",
+        request_id=request.state.request_id,
+        table_name="leases",
+        record_id=str(lease_id),
+        after_value=result.model_dump(mode="json"),
+    )
+    return result
