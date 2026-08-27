@@ -175,6 +175,75 @@ describe('the API client', () => {
     await expect(api.importStatement('a1', file)).rejects.toMatchObject({ message: 'HTTP 500' });
   });
 
+  it('walks the document loop against the contract paths', async () => {
+    const fetchMock = vi.fn().mockImplementation(jsonResponse(200, []));
+    vi.stubGlobal('fetch', fetchMock);
+    await api.listDocuments();
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/documents',
+      expect.anything(),
+    );
+    await api.listDocuments('needs_review');
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/documents?status=needs_review',
+      expect.anything(),
+    );
+    await api.documentDetail('d1');
+    await api.reviewDocumentField('d1', {
+      field_path: 'settlement.sale_price',
+      action: 'accept',
+      value: null,
+    });
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/documents/d1/review',
+      expect.objectContaining({ method: 'POST' }),
+    );
+    await api.reExtractDocument('d1');
+    await api.applyDocument('d1', {
+      land_value: '35490.56',
+      personal_property: '0.00',
+      method: 'assessor ratio',
+    });
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/documents/d1/apply',
+      expect.objectContaining({ method: 'POST' }),
+    );
+    expect(api.documentContentUrl('d1')).toBe('http://localhost:8000/documents/d1/content');
+  });
+
+  it('uploads documents as multipart and surfaces refusals', async () => {
+    const file = new File(['%PDF fake'], 'closing.pdf', { type: 'application/pdf' });
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(jsonResponse(201, { id: 'd9', status: 'extracted' }));
+    vi.stubGlobal('fetch', fetchMock);
+    const detail = await api.uploadDocument('settlement_statement', 'p1', file);
+    expect(detail.id).toBe('d9');
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('http://localhost:8000/documents');
+    expect(init.body).toBeInstanceOf(FormData);
+    expect((init.body as FormData).get('kind')).toBe('settlement_statement');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation(jsonResponse(409, { detail: 'these exact bytes exist' })),
+    );
+    await expect(api.uploadDocument('settlement_statement', 'p1', file)).rejects.toMatchObject({
+      status: 409,
+      message: 'these exact bytes exist',
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation(() => Promise.resolve(new Response('boom', { status: 502 }))),
+    );
+    await expect(api.uploadDocument('settlement_statement', 'p1', file)).rejects.toMatchObject({
+      message: 'HTTP 502',
+    });
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(jsonResponse(500, { detail: { odd: 1 } })));
+    await expect(api.uploadDocument('settlement_statement', 'p1', file)).rejects.toMatchObject({
+      message: 'HTTP 500',
+    });
+  });
+
   it('treats a 204 as a bodiless success', async () => {
     vi.stubGlobal(
       'fetch',

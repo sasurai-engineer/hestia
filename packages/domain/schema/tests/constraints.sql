@@ -790,6 +790,60 @@ BEGIN
 END $$;
 
 \echo ''
+\echo 'document extraction'
+-- The blob key is provably the sha256 of the bytes.
+INSERT INTO source_documents (id, kind, filename, content_hash, status)
+VALUES ('66666666-6666-4666-8666-666666666601', 'settlement_statement', 'alta.pdf',
+        encode(sha256('alta bytes'::bytea), 'hex'), 'pending');
+SELECT assert_accepted(
+  $$INSERT INTO document_blobs (content_hash, content, byte_size)
+    VALUES (encode(sha256('alta bytes'::bytea), 'hex'), 'alta bytes'::bytea, 10)$$,
+  'a blob stored under the hash of its own bytes');
+SELECT assert_rejected(
+  $$UPDATE document_blobs SET content = 'tampered'::bytea
+    WHERE content_hash = encode(sha256('alta bytes'::bytea), 'hex')$$,
+  'blob_hash_is_its_content',
+  'bytes that no longer match the address they sit under');
+DO $$
+BEGIN
+  BEGIN
+    INSERT INTO source_documents (kind, filename, content_hash, status, applied_at)
+    VALUES ('settlement_statement', 'sneaky.pdf', repeat('b', 64), 'applied', now());
+    RAISE EXCEPTION 'CONSTRAINT DID NOT BITE: applied without its actor was accepted';
+  EXCEPTION WHEN check_violation THEN
+    RAISE NOTICE '  ok      rejected by CHECK: applied documents say when AND by whom';
+  END;
+END $$;
+SELECT assert_accepted(
+  $$INSERT INTO source_documents (kind, filename, content_hash, status, applied_at, applied_by)
+    VALUES ('settlement_statement', 'done.pdf', repeat('c', 64), 'applied', now(), 'reviewer')$$,
+  'an applied document carrying its timestamp and actor');
+-- The registry refuses two specs on one path and two specs in one display slot.
+SELECT assert_rejected(
+  $$INSERT INTO extraction_field_specs
+      (document_kind, field_path, label, datatype, display_order)
+    VALUES ('settlement_statement', 'settlement.sale_price', 'Duplicate', 'money', 90)$$,
+  'extraction_field_specs_document_kind_field_path_key',
+  'a second spec for a field path the kind already defines');
+SELECT assert_rejected(
+  $$INSERT INTO extraction_field_specs
+      (document_kind, field_path, label, datatype, display_order)
+    VALUES ('settlement_statement', 'settlement.novel', 'Novel', 'money', 1)$$,
+  'extraction_field_specs_document_kind_display_order_key',
+  'a second spec in a display slot the kind already fills');
+-- Deleting the document takes its blob with it (content-addressed orphans
+-- would block re-upload of the same bytes forever).
+DELETE FROM source_documents WHERE id = '66666666-6666-4666-8666-666666666601';
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM document_blobs
+             WHERE content_hash = encode(sha256('alta bytes'::bytea), 'hex')) THEN
+    RAISE EXCEPTION 'CASCADE DID NOT FIRE: an orphaned blob survived its document';
+  END IF;
+  RAISE NOTICE '  ok      cascade: the blob left with its document';
+END $$;
+
+\echo ''
 \echo 'sweep identity'
 SELECT assert_rejected(
   $$INSERT INTO deadlines (kind, due_on, property_id, citation)

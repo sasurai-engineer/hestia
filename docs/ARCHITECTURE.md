@@ -268,6 +268,100 @@ Ordered for execution; struck items are closed and kept for the record.
 > (36 issues across 6 milestones). The sections below remain as the
 > architectural record; the issues are the source of truth for status.
 
+## C1 — the extraction loop (2026-08-26, issue #1)
+
+The last p0 from the original review is built: upload -> extract -> review ->
+apply, on the module-005 seam it was designed against.
+
+- **Bytes are first-class** — `document_blobs` (schema 015), content-addressed
+  with a database CHECK that the key IS the sha256 of the bytes; bank
+  statements stay blob-less by design. Re-extraction and "show me the
+  original" both read from here; backup restore-proof counts it like any
+  table.
+- **The registry drives the loop** — `extraction_field_specs` (+ seed 905,
+  settlement_statement only in C1) tells the deterministic parser what to
+  find and the review UI what to show: label, datatype, required, order,
+  and a target hint. Apply stays per-kind CODE on purpose: a registry row
+  must never name an arbitrary table.column and have the system write there.
+- **Deterministic parser first** — pypdf reads the text layer (the one new
+  dependency; a hand-rolled PDF reader would be tested only against our own
+  fixture), then an exact-label ALTA line parser: matches are confidence 1,
+  a DERIVED sum (itemized capitalizable charges with no printed total)
+  arrives at 0.9 flagged with its working, a self-contradicting statement
+  or unparseable date at 0.5. Missing required fields become flagged
+  skeleton rows the reviewer fills. Every run logs to `ingestion_runs`;
+  every field records `model_id` — the eval seam the model extractor (M4)
+  plugs into.
+- **The human ratifies as a state transition** — needs_review (flags or
+  gaps) -> extracted (machine done, human not) -> confirmed (every required
+  field carries a reviewed, accepted value) -> applied. Field-level
+  accept/correct/reject; corrections canonicalise against the spec datatype;
+  a rejected field contributes nothing, ever. Reviewed rows survive
+  re-extraction.
+- **Apply is one audited transaction behind a compare-and-set** — the gate
+  is a single UPDATE ... WHERE status='confirmed'; the loser of a race gets
+  a 409, and any later failure rolls the gate back with the transaction
+  (the module-014 lesson, reused). It writes: a provenance row
+  (kind='document', the source document linked), `price_allocations` (basis
+  = sale price + capitalizable costs; the land split is the OWNER'S call,
+  with a server-computed, cited assessor-ratio suggestion when an
+  assessment is on file), acquired_on/parcel_number only where unset (a
+  recorded fact is never clobbered — the statement's disagreement lands as
+  a note), and one `acquisition_cost` ledger event carrying the document.
+  The loan amount is surfaced but never applied: a statement has no rate or
+  term (debt entry is issue #37).
+- **Web** — /documents inbox + per-field review page; every number shown
+  (basis, suggestion) is computed by the API. The e2e smoke walks the
+  fixture end to end: upload -> ratify -> apply -> the purchase stands in
+  the register.
+- Fixture: `services/api/tests/fixtures/monmouth-closing.pdf`, a real
+  two-page text-layer PDF regenerable by the script beside it; every figure
+  foots.
+
+**The adversarial pass over C1** (four lenses, 32 findings, 24 confirmed by
+per-finding refutation) is folded in, each pinned by a regression:
+
+- **`applied` is terminal.** The status write carried no guard, so a review
+  that read the row before an apply committed would write `confirmed` back
+  over `applied` — and the same purchase could apply twice into an
+  append-only ledger. The UPDATE now refuses to demote, and review and
+  re-extract take `FOR UPDATE` so their status checks are decisions rather
+  than guesses.
+- **Accept goes through the same canonicaliser as correct.** A value the
+  parser flagged BECAUSE it would not normalise (an unreadable closing date)
+  could be ratified by one click and then explode at apply; it is now a 422
+  that steers the reviewer to correct it.
+- **Non-finite money is refused.** `Decimal` parses `NaN` and `Infinity`
+  happily, and either would poison every total and make the document's own
+  detail unrenderable.
+- **The parser's work is bounded.** The upload cap bounds COMPRESSED bytes;
+  a FlateDecode stream amplifies hundreds of times, and extraction runs
+  inside the upload's open transaction. Page count and decompressed
+  content-stream length are now capped, and the money-line regex is anchored
+  at the amount — the old label-first form re-scanned the column gap at every
+  offset, quadratic on a long line and reachable from any upload (a hostile
+  line went from ~26s to 0.1ms).
+- **The inbox stopped fanning out.** `document_properties` and
+  `extracted_fields` are independent one-to-many joins; their cross product
+  multiplied both counts and repeated every label — the same defect class as
+  the balance fan-out module 014 fixed.
+- **The land suggestion is contemporaneous and deterministic**: the
+  assessment nearest the closing year, ties broken explicitly — a 2019
+  purchase allocated by a 2026 ratio is not defensible.
+- **Uploads race to a 409, not a 500** (the content-addressed unique index
+  decides), and a double-clicked correction upserts instead of colliding.
+- **The stored original cannot run on our origin**: the uploader picks the
+  mime type, so only an allowlist renders inline, everything else downloads
+  as untyped bytes under `nosniff`, and the filename is sanitised for the
+  header (a CRLF made the response unsendable — a permanent 500 on that
+  document).
+- **The size cap is checked BEFORE the body is read**, not after the memory
+  it was meant to protect is already allocated.
+- Web: the inbox dates by the operator's clock, guards its fetch race, and
+  takes its kind/status vocabularies FROM the contract; the apply panel
+  tracks where the land figure came from rather than copying the citation,
+  so the method can never name a ratio that does not produce the number.
+
 ## Review hardening (2026-08-26) — the adversarial pass over increments 2–4
 
 A four-lens adversarial review (money-path correctness, concurrency,

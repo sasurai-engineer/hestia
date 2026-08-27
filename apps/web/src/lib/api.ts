@@ -4,7 +4,7 @@
  * a served field the client dereferences is a compile error the moment the
  * contract changes — typed end to end, no hand-copied interfaces.
  */
-import type { components } from './api-schema';
+import type { components, operations } from './api-schema';
 
 export type EntityOut = components['schemas']['EntityOut'];
 export type PropertyOut = components['schemas']['PropertyOut'];
@@ -41,6 +41,19 @@ export type ReceiptIn = components['schemas']['ReceiptIn'];
 export type ReceiptOut = components['schemas']['ReceiptOut'];
 export type RenewalContextOut = components['schemas']['RenewalContextOut'];
 export type CollectOut = components['schemas']['CollectOut'];
+export type DocumentSummary = components['schemas']['DocumentSummary'];
+export type DocumentDetail = components['schemas']['DocumentDetail'];
+export type DocumentField = components['schemas']['FieldOut'];
+export type ApplySuggestion = components['schemas']['ApplySuggestion'];
+export type DocumentReviewIn = components['schemas']['ReviewIn'];
+export type DocumentApplyIn = components['schemas']['ApplyIn'];
+export type DocumentApplyResult = components['schemas']['ApplyResult'];
+// The vocabularies themselves come from the contract, so a hand-kept option
+// list in a form can never drift from what the server accepts.
+export type DocumentKind = components['schemas']['Body_upload_document_documents_post']['kind'];
+export type DocumentStatus = NonNullable<
+  NonNullable<operations['list_documents_documents_get']['parameters']['query']>['status']
+>;
 
 export class ApiError extends Error {
   readonly status: number;
@@ -108,6 +121,47 @@ export const api = {
   listBankAccounts: () => request<BankAccountOut[]>('/bank/accounts'),
   createBankAccount: (body: BankAccountIn) =>
     request<BankAccountOut>('/bank/accounts', { method: 'POST', body: JSON.stringify(body) }),
+  listDocuments: (status?: DocumentStatus) =>
+    request<DocumentSummary[]>(`/documents${status ? `?status=${status}` : ''}`),
+  documentDetail: (documentId: string) => request<DocumentDetail>(`/documents/${documentId}`),
+  documentContentUrl: (documentId: string) => `${apiBase()}/documents/${documentId}/content`,
+  reviewDocumentField: (documentId: string, body: DocumentReviewIn) =>
+    request<DocumentDetail>(`/documents/${documentId}/review`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  reExtractDocument: (documentId: string) =>
+    request<DocumentDetail>(`/documents/${documentId}/extract`, { method: 'POST' }),
+  applyDocument: (documentId: string, body: DocumentApplyIn) =>
+    request<DocumentApplyResult>(`/documents/${documentId}/apply`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  uploadDocument: async (
+    kind: DocumentKind,
+    propertyId: string,
+    file: File,
+  ): Promise<DocumentDetail> => {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('kind', kind);
+    form.append('property_id', propertyId);
+    const response = await fetch(`${apiBase()}/documents`, {
+      method: 'POST',
+      body: form, // multipart: the browser sets the boundary header itself
+    });
+    if (!response.ok) {
+      let detail = `HTTP ${String(response.status)}`;
+      try {
+        const body = (await response.json()) as { detail?: unknown };
+        if (typeof body.detail === 'string') detail = body.detail;
+      } catch {
+        // a non-JSON error body keeps the status-line message
+      }
+      throw new ApiError(response.status, detail);
+    }
+    return (await response.json()) as DocumentDetail;
+  },
   importStatement: async (accountId: string, file: File): Promise<ImportSummary> => {
     const form = new FormData();
     form.append('file', file);

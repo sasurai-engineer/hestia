@@ -8,6 +8,7 @@ dependencies = [
   "hestia-ingest",
   "hestia-sim",
   "psycopg[binary]>=3.2",
+  "pypdf>=5",
   "python-multipart>=0.0.18",
   "uvicorn>=0.30",
 ]

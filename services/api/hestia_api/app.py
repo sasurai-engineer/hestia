@@ -20,6 +20,7 @@ from fastapi import (
     Depends,
     FastAPI,
     File,
+    Form,
     Header,
     HTTPException,
     Query,
@@ -35,6 +36,7 @@ from hestia_api import (
     config,
     coverage,
     db,
+    documents,
     dossier,
     jurisdiction,
     ledger,
@@ -1210,3 +1212,214 @@ def sweep_deadlines(
     return SweepOut(
         as_of=effective, inserted=result.inserted, total=result.total, coverage_gaps=gaps
     )
+
+
+# ---------------------------------------------------------------------------
+# Documents: upload -> extract -> review -> apply
+# ---------------------------------------------------------------------------
+
+DOCUMENT_KINDS = Literal[
+    "settlement_statement",
+    "deed",
+    "lease",
+    "lease_amendment",
+    "insurance_declaration",
+    "mortgage_note",
+    "mortgage_statement",
+    "assessment_notice",
+    "tax_bill",
+    "inspection_report",
+    "appraisal",
+    "permit",
+    "invoice",
+    "receipt",
+    "estoppel",
+    "photo",
+    "other",
+]
+
+
+@app.post("/documents", response_model=documents.DocumentDetail, status_code=201)
+async def upload_document(
+    conn: Conn,
+    request: Request,
+    file: Annotated[UploadFile, File()],
+    kind: Annotated[DOCUMENT_KINDS, Form()],
+    property_id: Annotated[uuid.UUID, Form()],
+    document_date: Annotated[dt.date | None, Form()] = None,
+    actor: Actor = "system",
+) -> documents.DocumentDetail:
+    # BEFORE the read: `await file.read()` allocates whatever the uploader
+    # sent, so a cap checked afterwards protects nothing. The domain-level
+    # check in documents.upload stays as the backstop for non-HTTP callers.
+    if file.size is not None and file.size > documents.MAX_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"{file.size} bytes exceeds the {documents.MAX_BYTES} cap",
+        )
+    content = await file.read()
+    try:
+        detail = documents.upload(
+            conn,
+            kind=kind,
+            property_id=str(property_id),
+            filename=file.filename or "document",
+            content=content,
+            mime_type=file.content_type,
+            document_date=document_date,
+            uploaded_by=actor,
+        )
+    except documents.UnknownProperty as error:
+        raise HTTPException(status_code=404, detail="property not found") from error
+    except documents.DuplicateDocument as error:
+        raise HTTPException(
+            status_code=409, detail=f"these exact bytes are already document {error}"
+        ) from error
+    except documents.DocumentTooLarge as error:
+        raise HTTPException(status_code=413, detail=str(error)) from error
+    except documents.extraction_parse.UnreadableDocument as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    db.record_audit(
+        conn,
+        actor=actor,
+        action="documents.upload",
+        request_id=request.state.request_id,
+        table_name="source_documents",
+        record_id=detail.id,
+        after_value={"kind": detail.kind, "status": detail.status},
+    )
+    return detail
+
+
+@app.get("/documents", response_model=list[documents.DocumentSummary])
+def list_documents(
+    conn: Conn,
+    status: Annotated[
+        Literal["pending", "extracted", "needs_review", "confirmed", "rejected", "applied"] | None,
+        Query(),
+    ] = None,
+) -> list[documents.DocumentSummary]:
+    return documents.list_documents(conn, status)
+
+
+@app.get("/documents/{document_id}", response_model=documents.DocumentDetail)
+def document_detail(document_id: uuid.UUID, conn: Conn) -> documents.DocumentDetail:
+    try:
+        return documents.detail(conn, str(document_id))
+    except documents.UnknownDocument as error:
+        raise HTTPException(status_code=404, detail="document not found") from error
+
+
+@app.get("/documents/{document_id}/content")
+def document_content(document_id: uuid.UUID, conn: Conn) -> Response:
+    try:
+        disposition, mime_type, content = documents.get_content(conn, str(document_id))
+    except documents.UnknownDocument as error:
+        raise HTTPException(status_code=404, detail="no stored content") from error
+    return Response(
+        content=content,
+        media_type=mime_type,
+        headers={
+            "content-disposition": disposition,
+            # The uploader picked the type; never let a browser pick a better one.
+            "x-content-type-options": "nosniff",
+        },
+    )
+
+
+@app.post("/documents/{document_id}/review", response_model=documents.DocumentDetail)
+def review_document_field(
+    document_id: uuid.UUID,
+    body: documents.ReviewIn,
+    conn: Conn,
+    request: Request,
+    actor: Actor = "system",
+) -> documents.DocumentDetail:
+    try:
+        detail = documents.review_field(conn, str(document_id), body, actor)
+    except documents.UnknownDocument as error:
+        raise HTTPException(status_code=404, detail="document not found") from error
+    except documents.AlreadyApplied as error:
+        raise HTTPException(
+            status_code=409, detail="already applied; review is not re-made"
+        ) from error
+    except (
+        documents.UnknownField,
+        documents.InvalidValue,
+        documents.NothingToAccept,
+    ) as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    db.record_audit(
+        conn,
+        actor=actor,
+        action=f"documents.review.{body.action}",
+        request_id=request.state.request_id,
+        table_name="extracted_fields",
+        after_value={"document_id": str(document_id), "field_path": body.field_path},
+    )
+    return detail
+
+
+@app.post("/documents/{document_id}/extract", response_model=documents.DocumentDetail)
+def re_extract_document(
+    document_id: uuid.UUID, conn: Conn, request: Request, actor: Actor = "system"
+) -> documents.DocumentDetail:
+    try:
+        detail = documents.re_extract(conn, str(document_id))
+    except documents.UnknownDocument as error:
+        raise HTTPException(status_code=404, detail="document not found") from error
+    except documents.AlreadyApplied as error:
+        raise HTTPException(
+            status_code=409, detail="already applied; the record is closed"
+        ) from error
+    except documents.extraction_parse.UnreadableDocument as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    db.record_audit(
+        conn,
+        actor=actor,
+        action="documents.extract",
+        request_id=request.state.request_id,
+        table_name="source_documents",
+        record_id=detail.id,
+        after_value={"status": detail.status},
+    )
+    return detail
+
+
+@app.post(
+    "/documents/{document_id}/apply",
+    response_model=documents.ApplyResult,
+    status_code=201,
+)
+def apply_document(
+    document_id: uuid.UUID,
+    body: documents.ApplyIn,
+    conn: Conn,
+    request: Request,
+    actor: Actor = "system",
+) -> documents.ApplyResult:
+    try:
+        result = documents.apply_document(conn, str(document_id), body, actor)
+    except documents.UnknownDocument as error:
+        raise HTTPException(status_code=404, detail="document not found") from error
+    except documents.AlreadyApplied as error:
+        raise HTTPException(
+            status_code=409, detail="already applied; a document applies exactly once"
+        ) from error
+    except documents.NotConfirmed as error:
+        raise HTTPException(
+            status_code=409,
+            detail=f"apply requires status confirmed; the document is {error}",
+        ) from error
+    except (documents.NotExactlyOneProperty, documents.InvalidAllocation) as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    db.record_audit(
+        conn,
+        actor=actor,
+        action="documents.apply",
+        request_id=request.state.request_id,
+        table_name="source_documents",
+        record_id=str(document_id),
+        after_value=result.model_dump(mode="json"),
+    )
+    return result

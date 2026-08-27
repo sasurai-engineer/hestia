@@ -13,3 +13,4 @@
 \ir 012_reporting.sql
 \ir 013_rent_charges.sql
 \ir 014_review_hardening.sql
+\ir 015_document_extraction.sql
