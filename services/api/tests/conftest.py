@@ -156,6 +156,11 @@ def clean(conn: psycopg.Connection[Any]) -> None:
     world rather than to a globally empty one."""
     for table in (
         "deadlines",
+        # Not reached by the properties CASCADE below: a property pinned by a
+        # ledger row survives the clean, and its assessments survived with it
+        # — then collided with the next test's own 2026 notice on the unique
+        # key, turning a 201 into a 409 depending on test order.
+        "assessments",
         "exchanges",
         "debt_instruments",
         "policies",

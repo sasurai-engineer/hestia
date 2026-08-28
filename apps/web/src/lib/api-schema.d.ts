@@ -4,6 +4,23 @@
  */
 
 export interface paths {
+    "/assessments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Assessment */
+        post: operations["create_assessment_assessments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/bank/accounts": {
         parameters: {
             query?: never;
@@ -290,6 +307,23 @@ export interface paths {
         put?: never;
         /** Apply Document */
         post: operations["apply_document_documents__document_id__apply_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/documents/{document_id}/apply-assessment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Apply Assessment Notice */
+        post: operations["apply_assessment_notice_documents__document_id__apply_assessment_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1155,6 +1189,76 @@ export interface components {
             /** Total Basis */
             total_basis: string;
         };
+        /**
+         * AssessmentIn
+         * @description A notice typed off the paper.
+         */
+        AssessmentIn: {
+            /** Assessed Improvement */
+            assessed_improvement?: number | string | null;
+            /** Assessed Land */
+            assessed_land?: number | string | null;
+            /** Assessed Total */
+            assessed_total: number | string;
+            /** Jurisdiction Id */
+            jurisdiction_id?: string | null;
+            /** Notice Received On */
+            notice_received_on?: string | null;
+            /**
+             * Property Id
+             * Format: uuid
+             */
+            property_id: string;
+            /** Tax Year */
+            tax_year: number;
+            /**
+             * Value Basis
+             * @enum {string}
+             */
+            value_basis: "market" | "taxable";
+        };
+        /** AssessmentOut */
+        AssessmentOut: {
+            /** Assessed Improvement */
+            assessed_improvement: string | null;
+            /** Assessed Land */
+            assessed_land: string | null;
+            /** Assessed Total */
+            assessed_total: string;
+            /** Change From Prior */
+            change_from_prior: string | null;
+            /** Confidence */
+            confidence: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Id */
+            id: string;
+            /** Jurisdiction */
+            jurisdiction: string;
+            /** Jurisdiction Id */
+            jurisdiction_id: string;
+            /** Land Share */
+            land_share: string | null;
+            /** Notice Received On */
+            notice_received_on: string | null;
+            /** Prior Tax Year */
+            prior_tax_year: number | null;
+            /** Property Id */
+            property_id: string;
+            /** Provenance Kind */
+            provenance_kind: string;
+            /** Source Document Id */
+            source_document_id: string | null;
+            /** Source Label */
+            source_label: string | null;
+            /** Tax Year */
+            tax_year: number;
+            /** Value Basis */
+            value_basis: string;
+        };
         /** BankAccountIn */
         BankAccountIn: {
             /** Account Last4 */
@@ -1274,6 +1378,8 @@ export interface components {
         };
         /** ChainLink */
         ChainLink: {
+            /** Id */
+            id: string;
             /** Level */
             level: string;
             /** Name */
@@ -1870,6 +1976,8 @@ export interface components {
         };
         /** DossierView */
         DossierView: {
+            /** Assessments */
+            assessments: components["schemas"]["AssessmentOut"][];
             /** City */
             city: string;
             /** Components */
@@ -2310,6 +2418,15 @@ export interface components {
             occurred_on: string;
             /** Reason */
             reason: string;
+        };
+        /**
+         * NoticeApplyIn
+         * @description The one decision applying a notice asks for; every number comes off the
+         *     reviewed document.
+         */
+        NoticeApplyIn: {
+            /** Jurisdiction Id */
+            jurisdiction_id?: string | null;
         };
         /** NoticeIn */
         NoticeIn: {
@@ -3234,6 +3351,41 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    create_assessment_assessments_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssessmentIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssessmentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_bank_accounts_bank_accounts_get: {
         parameters: {
             query?: never;
@@ -3882,6 +4034,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApplyResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    apply_assessment_notice_documents__document_id__apply_assessment_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoticeApplyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssessmentOut"];
                 };
             };
             /** @description Validation Error */

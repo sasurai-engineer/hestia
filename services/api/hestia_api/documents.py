@@ -690,11 +690,24 @@ def get_content(conn: Conn, doc_id: str) -> tuple[str, str, bytes]:
     )
 
 
-def apply_document(conn: Conn, doc_id: str, body: ApplyIn, actor: str) -> ApplyResult:
-    # The compare-and-set IS the idempotency guarantee: of two concurrent
-    # applies, exactly one sees 'confirmed'. Any later failure in this
-    # function raises, the endpoint transaction rolls back, and the gate
-    # resets with it — the module-014 transport lesson, reused.
+class WrongApplyKind(Exception):
+    """This document's kind applies through another door."""
+
+
+def claim_for_apply(conn: Conn, doc_id: str, actor: str) -> dict[str, Any]:
+    """Flip a confirmed document to 'applied', exactly once, or say why not.
+
+    THE compare-and-set. Of two concurrent applies exactly one sees
+    'confirmed': the second blocks on the row lock, re-evaluates its WHERE
+    against the committed 'applied', matches zero rows, and the miss is then
+    diagnosed into three distinct errors. Any later failure in the caller
+    raises, the endpoint transaction rolls back, and this UPDATE rolls back
+    with it — so a refused apply leaves the document confirmed and appliable.
+
+    Both doors come through here — the settlement statement's allocation step
+    and the assessment notice's record step — so "a document's facts enter the
+    domain exactly once" has one implementation rather than two.
+    """
     gate = conn.execute(
         """
         UPDATE source_documents
@@ -713,6 +726,30 @@ def apply_document(conn: Conn, doc_id: str, body: ApplyIn, actor: str) -> ApplyR
         if current["status"] == "applied":
             raise AlreadyApplied(doc_id)
         raise NotConfirmed(current["status"])
+    return gate
+
+
+def effective_values(conn: Conn, doc_id: str) -> dict[str, str | None]:
+    """{field_path: the value apply would use}, shared by both doors so they
+    cannot come to disagree about what "the reviewed value" means."""
+    rows = conn.execute(
+        "SELECT field_path, normalised_value, accepted_value, needs_review, reviewed_at"
+        " FROM extracted_fields WHERE document_id = %s",
+        (doc_id,),
+    ).fetchall()
+    return {row["field_path"]: _effective(row) for row in rows}
+
+
+def apply_document(conn: Conn, doc_id: str, body: ApplyIn, actor: str) -> ApplyResult:
+    gate = claim_for_apply(conn, doc_id, actor)
+    # The kind test this function never needed while one kind had registry
+    # rows. Seeding assessment_notice specs makes a notice reachable to
+    # 'confirmed', and without this line the settlement subscripts below are a
+    # KeyError that escapes the endpoint's except list as a 500 — on what is
+    # really a rule refusal. Refused before anything is written, and the gate
+    # rolls back with it.
+    if gate["kind"] != "settlement_statement":
+        raise WrongApplyKind(f"a {gate['kind']} does not apply as a settlement statement")
     # FOR UPDATE OF p, because the acquired_on / parcel_number decisions below
     # are read-then-write: unlocked, two applies of two documents for the SAME
     # property both read NULL, both write, and the second silently clobbers the
@@ -734,12 +771,7 @@ def apply_document(conn: Conn, doc_id: str, body: ApplyIn, actor: str) -> ApplyR
     if len(links) != 1:
         raise NotExactlyOneProperty(str(len(links)))
     prop = links[0]
-    field_rows = conn.execute(
-        "SELECT field_path, normalised_value, accepted_value, needs_review, reviewed_at"
-        " FROM extracted_fields WHERE document_id = %s",
-        (doc_id,),
-    ).fetchall()
-    values = {row["field_path"]: _effective(row) for row in field_rows}
+    values = effective_values(conn, doc_id)
     closing_date = dt.date.fromisoformat(values["settlement.closing_date"])  # type: ignore[arg-type]
     total_basis = Decimal(values["settlement.sale_price"]) + Decimal(  # type: ignore[arg-type]
         values["settlement.capitalizable_closing_costs"]  # type: ignore[arg-type]
