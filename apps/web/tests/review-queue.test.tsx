@@ -76,3 +76,107 @@ describe('ReviewQueueTable', () => {
     expect(screen.getByText(/Queue clear/)).toBeDefined();
   });
 });
+
+describe('ReviewQueueTable — the engine split offer', () => {
+  const SPLIT = {
+    debtId: 'n1',
+    lender: 'First Federal',
+    interest: '985.61',
+    principal: '184.18',
+    payment: '1169.79',
+    citation: 'engine',
+  };
+  const mortgageRow = () =>
+    staged({
+      id: 'm1',
+      description: 'FIRST FEDERAL MTG',
+      amount: '-1169.79',
+      suggested_category: 'mortgage_interest',
+      suggested_property_id: 'p1',
+    });
+
+  it('an exact match offers the pair and hands back the note', () => {
+    const onAcceptSplit = vi.fn();
+    render(
+      <ReviewQueueTable
+        rows={[mortgageRow()]}
+        onAccept={vi.fn()}
+        onExclude={vi.fn()}
+        noteSplits={() => [SPLIT]}
+        onAcceptSplit={onAcceptSplit}
+      />,
+    );
+    expect(
+      screen.getByText(/engine split: \$985\.61 interest · \$184\.18 principal — First Federal/),
+    ).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: 'Accept as engine split' }));
+    expect(onAcceptSplit).toHaveBeenCalledWith(expect.objectContaining({ id: 'm1' }), SPLIT);
+  });
+
+  it('two exact notes make the operator choose', () => {
+    const twin = { ...SPLIT, debtId: 'n2', lender: 'Second Street' };
+    const onAcceptSplit = vi.fn();
+    render(
+      <ReviewQueueTable
+        rows={[mortgageRow()]}
+        onAccept={vi.fn()}
+        onExclude={vi.fn()}
+        noteSplits={() => [SPLIT, twin]}
+        onAcceptSplit={onAcceptSplit}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText('note for FIRST FEDERAL MTG'), {
+      target: { value: '1' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Accept as engine split' }));
+    expect(onAcceptSplit).toHaveBeenCalledWith(expect.anything(), twin);
+  });
+
+  it('an impound remainder explains itself instead of guessing a category', () => {
+    render(
+      <ReviewQueueTable
+        rows={[
+          staged({
+            id: 'm2',
+            description: 'FIRST FEDERAL MTG',
+            amount: '-1218.55',
+            suggested_category: 'mortgage_interest',
+            suggested_property_id: 'p1',
+          }),
+        ]}
+        onAccept={vi.fn()}
+        onExclude={vi.fn()}
+        noteSplits={() => [SPLIT]}
+        onAcceptSplit={vi.fn()}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: 'Accept as engine split' })).toBeNull();
+    expect(screen.getByText(/\$48\.76 above First Federal.s scheduled payment/)).toBeDefined();
+    expect(
+      screen.getByText(/no ledger category exists for money a servicer merely holds/),
+    ).toBeDefined();
+  });
+
+  it('a short row and a non-mortgage category offer nothing', () => {
+    render(
+      <ReviewQueueTable
+        rows={[
+          staged({
+            id: 's1',
+            description: 'SHORT ROW',
+            amount: '-10.00',
+            suggested_category: 'mortgage_interest',
+            suggested_property_id: 'p1',
+          }),
+          staged({}),
+        ]}
+        onAccept={vi.fn()}
+        onExclude={vi.fn()}
+        noteSplits={() => [SPLIT]}
+        onAcceptSplit={vi.fn()}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: 'Accept as engine split' })).toBeNull();
+    expect(screen.queryByText(/engine split/)).toBeNull();
+  });
+});

@@ -269,6 +269,85 @@ test('the debt record: a mortgage, the engine split, and the counters move', asy
   await expect(card.getByText(/of interest over the remaining term/)).toBeVisible();
 });
 
+test('the mortgage split: one entry, one bank row, both land as the engine pair', async ({
+  page,
+}) => {
+  // This walk OWNS its note, its bank account and its bank row — unique
+  // names throughout, every assertion scoped to them.
+  const stamp = String(Date.now());
+  const lender = `Split Federal ${stamp}`;
+  await page.goto('/');
+  await page.getByText('998 Monmouth St, Newport, KY 41071').first().click();
+  await expect(page.getByRole('heading', { name: '998 Monmouth St' })).toBeVisible();
+  const propertyId = /property\/([0-9a-f-]+)/.exec(page.url())?.[1];
+  if (!propertyId) throw new Error(`no property id in ${page.url()}`);
+  await page.getByLabel('Lender').fill(lender);
+  await page.getByLabel('Original principal').fill('200000.00');
+  await page.getByLabel(/Annual rate/).fill('0.055');
+  await page.getByLabel('Term (months)').fill('360');
+  await page.getByLabel('Originated').fill('2025-01-01');
+  await page.getByRole('button', { name: 'Record the mortgage' }).click();
+  const noteCard = page.locator('.debt-panel .card', { hasText: lender });
+  // The engine's scheduled payment, read off the record — the walk carries
+  // the engine's own figure forward instead of hand-computing one.
+  await expect(noteCard.getByText(/\/mo$/)).toBeVisible();
+  const perMonth = await noteCard.getByText(/\/mo$/).textContent();
+  const payment = /\$([\d,]+\.\d\d)\/mo/.exec(perMonth ?? '')?.[1]?.replaceAll(',', '');
+  if (!payment) throw new Error(`no scheduled payment read from: ${perMonth ?? 'nothing'}`);
+
+  // Entry surface: the transaction form recognizes a note payment and
+  // routes it through the note — the register receives the linked pair.
+  await page.goto('/transactions');
+  await page.getByLabel('Date').fill('2026-08-05');
+  await page.getByLabel('Category').selectOption('mortgage_interest');
+  await page.locator('#tx-property').selectOption(propertyId);
+  await expect(page.getByText('This is a note payment.')).toBeVisible();
+  // A long-lived database holds notes from other runs: pick ours by name.
+  const whichNote = page.getByLabel('Which note');
+  if (await whichNote.isVisible().catch(() => false)) {
+    const value = await whichNote.locator('option', { hasText: lender }).getAttribute('value');
+    await whichNote.selectOption(value ?? '');
+  }
+  await page.getByRole('button', { name: `Record through ${lender}` }).click();
+  const formPair = page.locator('tr', { hasText: `${lender} payment` }).first();
+  await expect(formPair.getByText('Mortgage Payment')).toBeVisible();
+  await expect(formPair.getByText(/interest −\$[\d,.]+ · principal −\$[\d,.]+/)).toBeVisible();
+
+  // Bank surface: an account tied to the property, a statement row equal to
+  // the scheduled payment, and the engine split offered at review.
+  const entities = (await (await page.request.get('http://localhost:8000/entities')).json()) as {
+    id: string;
+  }[];
+  const accountResponse = await page.request.post('http://localhost:8000/bank/accounts', {
+    data: {
+      entity_id: (entities[0] as { id: string }).id,
+      property_id: propertyId,
+      nickname: `Mortgage Ops ${stamp}`,
+      kind: 'checking',
+    },
+  });
+  expect(accountResponse.ok()).toBe(true);
+
+  const description = `SPLIT FEDERAL MORTGAGE ${stamp}`;
+  await page.goto('/transactions/import');
+  await page.getByLabel('Bank account').selectOption({ label: `Mortgage Ops ${stamp}` });
+  await page.getByLabel('Statement file (.csv / .ofx / .qfx)').setInputFiles({
+    name: 'mortgage.csv',
+    mimeType: 'text/csv',
+    buffer: Buffer.from(`Date,Description,Amount\n2026-08-20,${description},-${payment}\n`),
+  });
+  await page.getByRole('button', { name: 'Import' }).click();
+  const queueRow = page.locator('tr', { hasText: description });
+  await expect(queueRow.getByText(/engine split: \$[\d,.]+ interest/)).toBeVisible();
+  await queueRow.getByRole('button', { name: 'Accept as engine split' }).click();
+
+  // The register folds the accepted row into one payment, split beneath.
+  await page.goto('/transactions');
+  const bankPair = page.locator('tr', { hasText: description }).first();
+  await expect(bankPair.getByText('Mortgage Payment')).toBeVisible();
+  await expect(bankPair.getByText(/interest −\$[\d,.]+ · principal −\$[\d,.]+/)).toBeVisible();
+});
+
 test('a work order completes and the vendor calendar knows its certificate', async ({ page }) => {
   // A vendor with a certificate that expires: the day it lapses is a deadline.
   await page.goto('/vendors');

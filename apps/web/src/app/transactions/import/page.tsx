@@ -10,6 +10,7 @@ import {
   type ImportSummary,
   type StagedTransaction,
 } from '../../../lib/api';
+import { acceptSplits, type NoteSplit, noteSplit } from '../../../lib/mortgage-split';
 
 export default function ImportPage() {
   const [accounts, setAccounts] = useState<BankAccountOut[]>([]);
@@ -39,6 +40,37 @@ export default function ImportPage() {
   const refreshQueue = useCallback(async (batchId: string) => {
     setQueue(await api.reviewQueue(batchId, 'pending'));
   }, []);
+
+  // The engine splits for each property in the queue, fetched once per
+  // property. A property with no live amortizing note maps to an empty
+  // list, which is the honest no-offer state.
+  const [splitsByProperty, setSplitsByProperty] = useState<Record<string, NoteSplit[]>>({});
+  useEffect(() => {
+    const pending = [
+      ...new Set(
+        queue
+          .map((row) => row.suggested_property_id)
+          .filter((id): id is string => id !== null && id !== undefined),
+      ),
+    ].filter((id) => !(id in splitsByProperty));
+    for (const propertyId of pending) {
+      void (async () => {
+        try {
+          const debts = await api.listDebts({ propertyId });
+          const loaded: NoteSplit[] = [];
+          for (const debt of debts) {
+            if (debt.paid_off_on !== null || debt.scheduled_payment === null) continue;
+            const split = noteSplit(debt, await api.debtSchedule(debt.id));
+            if (split) loaded.push(split);
+          }
+          setSplitsByProperty((current) => ({ ...current, [propertyId]: loaded }));
+        } catch {
+          // No offer is an honest state; plain accept still works.
+          setSplitsByProperty((current) => ({ ...current, [propertyId]: [] }));
+        }
+      })();
+    }
+  }, [queue, splitsByProperty]);
 
   const upload = async () => {
     if (!file) return;
@@ -181,6 +213,17 @@ export default function ImportPage() {
             }}
             onExclude={(txnId) => {
               void decide(() => api.excludeBankTransaction(txnId));
+            }}
+            noteSplits={(row) =>
+              row.suggested_property_id ? (splitsByProperty[row.suggested_property_id] ?? []) : []
+            }
+            onAcceptSplit={(row, split) => {
+              void decide(() =>
+                api.acceptBankTransaction(row.id, {
+                  splits: acceptSplits(row.amount, split),
+                  ...(row.suggested_property_id ? { property_id: row.suggested_property_id } : {}),
+                }),
+              );
             }}
           />
         </section>

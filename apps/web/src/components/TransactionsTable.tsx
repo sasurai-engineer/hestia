@@ -1,5 +1,6 @@
 import type { LedgerEventOut } from '../lib/api';
 import { formatDate, titleCase } from '../lib/format';
+import { pairMortgageEvents } from '../lib/mortgage-split';
 
 const formatMoney = (amount: string): string => {
   const value = Number(amount);
@@ -38,16 +39,73 @@ export function TransactionsTable({
           </tr>
         </thead>
         <tbody>
-          {events.map((event) => (
-            <TransactionRow
-              key={event.event_uuid}
-              event={event}
-              {...(onReverse ? { onReverse } : {})}
-            />
-          ))}
+          {pairMortgageEvents(events).map((line) =>
+            line.kind === 'pair' ? (
+              <PairRow
+                key={line.interest.event_uuid}
+                line={line}
+                {...(onReverse ? { onReverse } : {})}
+              />
+            ) : (
+              <TransactionRow
+                key={line.event.event_uuid}
+                event={line.event}
+                {...(onReverse ? { onReverse } : {})}
+              />
+            ),
+          )}
         </tbody>
       </table>
     </div>
+  );
+}
+
+/** One payment, visually: the pair the engine split, summed on its line
+ * with the split stated beneath. It reverses as a payment — both events —
+ * because half a reversed mortgage payment is not a position anyone took;
+ * once either member is struck the two stand alone again in the register. */
+function PairRow({
+  line,
+  onReverse,
+}: {
+  line: { total: string; interest: LedgerEventOut; principal: LedgerEventOut };
+  onReverse?: (eventUuid: string) => void;
+}) {
+  const { interest, principal } = line;
+  return (
+    <tr>
+      <td>{formatDate(interest.occurred_on)}</td>
+      <td>
+        <span className="pill">Mortgage Payment</span>
+      </td>
+      <td>
+        <span>{interest.memo ?? '—'}</span>
+        {interest.counterparty ? <div className="faint">{interest.counterparty}</div> : null}
+        <div className="faint">
+          interest {formatMoney(interest.amount)} · principal {formatMoney(principal.amount)}
+        </div>
+      </td>
+      <td
+        style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}
+        className={Number(line.total) < 0 ? 'muted' : ''}
+      >
+        {formatMoney(line.total)}
+      </td>
+      <td>
+        {onReverse ? (
+          <button
+            className="button button--quiet"
+            type="button"
+            onClick={() => {
+              onReverse(interest.event_uuid);
+              onReverse(principal.event_uuid);
+            }}
+          >
+            Reverse
+          </button>
+        ) : null}
+      </td>
+    </tr>
   );
 }
 

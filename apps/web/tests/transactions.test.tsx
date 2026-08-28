@@ -96,3 +96,68 @@ describe('TransactionsTable', () => {
     expect(screen.getByText(/record one below/i)).toBeDefined();
   });
 });
+
+describe('the register folds a mortgage pair into one payment', () => {
+  const pair = (): LedgerEventOut[] => [
+    event({
+      event_uuid: 'mi1',
+      category: 'mortgage_interest',
+      amount: '-985.61',
+      memo: 'First Federal payment',
+      counterparty: 'First Federal',
+    }),
+    event({
+      event_uuid: 'mp1',
+      category: 'mortgage_principal',
+      amount: '-184.18',
+      memo: 'First Federal payment',
+      counterparty: 'First Federal',
+    }),
+  ];
+
+  it('one line, the exact total, the split stated beneath', () => {
+    render(<TransactionsTable events={pair()} />);
+    expect(screen.getByText('Mortgage Payment')).toBeDefined();
+    expect(screen.getByText('−$1,169.79')).toBeDefined();
+    expect(screen.getByText(/interest −\$985\.61 · principal −\$184\.18/)).toBeDefined();
+    // The pair reads as ONE payment: neither category pill stands alone.
+    expect(screen.queryByText('Mortgage Interest')).toBeNull();
+    expect(screen.queryByText('Mortgage Principal')).toBeNull();
+  });
+
+  it('reverses as a payment: both events, one click', () => {
+    const onReverse = vi.fn();
+    render(<TransactionsTable events={pair()} onReverse={onReverse} />);
+    screen.getByText('Reverse').click();
+    expect(onReverse).toHaveBeenCalledWith('mi1');
+    expect(onReverse).toHaveBeenCalledWith('mp1');
+  });
+
+  it('a pair with no memo or counterparty still reads as one payment', () => {
+    const bare = pair().map((entry) => ({ ...entry, memo: null, counterparty: null }));
+    render(<TransactionsTable events={bare} />);
+    expect(screen.getByText('Mortgage Payment')).toBeDefined();
+    expect(screen.getByText('—')).toBeDefined();
+  });
+
+  it('an inflow pair keeps its ink: only outflows mute', () => {
+    const inflow = pair().map((entry) => ({
+      ...entry,
+      amount: entry.amount.replace('-', ''),
+    }));
+    render(<TransactionsTable events={inflow} />);
+    expect(screen.getByText('$1,169.79').className).not.toContain('muted');
+  });
+
+  it('a struck member unfolds the pair back into two honest rows', () => {
+    const [interest, principal] = pair();
+    render(
+      <TransactionsTable
+        events={[{ ...(interest as LedgerEventOut), reversed: true }, principal as LedgerEventOut]}
+      />,
+    );
+    expect(screen.queryByText('Mortgage Payment')).toBeNull();
+    expect(screen.getByText('Mortgage Interest')).toBeDefined();
+    expect(screen.getByText('Mortgage Principal')).toBeDefined();
+  });
+});

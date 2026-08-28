@@ -2,6 +2,7 @@
 
 import { Skeleton } from '@hestia/design';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { MortgagePaymentOffer } from '../../components/MortgagePaymentOffer';
 import { TransactionsTable } from '../../components/TransactionsTable';
 import { api, type LedgerEntryIn, type LedgerRegister, type PropertySummary } from '../../lib/api';
 
@@ -161,6 +162,17 @@ export default function TransactionsPage() {
 
       <section className="section">
         <h2 className="section__title">Record a transaction</h2>
+        {(category === 'mortgage_interest' || category === 'mortgage_principal') &&
+        propertyId !== '' ? (
+          <MortgagePaymentOffer
+            key={propertyId}
+            propertyId={propertyId}
+            occurredOn={occurredOn}
+            onRecorded={() => {
+              void load();
+            }}
+          />
+        ) : null}
         <form
           className="card"
           onSubmit={(event) => {
