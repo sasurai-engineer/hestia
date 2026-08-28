@@ -21,6 +21,9 @@ DECLARE
   conformity TEXT;
   cap NUMERIC;
   phaseout NUMERIC;
+  ratio NUMERIC;
+  ratio_citation TEXT;
+  distinct_ratios INT;
 BEGIN
   -- The load-bearing URLTA contrast: one street across the Newport line is a
   -- different legal regime.
@@ -95,4 +98,39 @@ BEGIN
     RAISE EXCEPTION 'the federal 100 percent bonus row (899_federal.sql) is missing';
   END IF;
   RAISE NOTICE '  ok      the shared federal tier is installed beneath the pack';
+
+  -- One hundred percent, and it is transcription rather than inference: KRS
+  -- 132.191(1) states the standard in those words. A detector comparing an
+  -- assessment against market divides by this, so an ABSENT row and a row of
+  -- zero are one keystroke apart — which is why the pack now carries it.
+  SELECT r.value_numeric, r.citation INTO ratio, ratio_citation
+  FROM jurisdiction_rules r JOIN jurisdictions j ON j.id = r.jurisdiction_id
+  WHERE j.name = 'Kentucky' AND r.code = 'assessment.ratio' AND r.superseded_by IS NULL;
+  IF ratio IS DISTINCT FROM 1.000000::NUMERIC THEN
+    RAISE EXCEPTION 'Kentucky assesses at %, expected 1.0 of fair cash value', ratio;
+  END IF;
+  IF ratio_citation NOT LIKE '%132.191%' THEN
+    RAISE EXCEPTION 'the Kentucky ratio does not cite the statute that states it '
+      'as a percentage: %', ratio_citation;
+  END IF;
+  -- The sales-assessment ratio study's 90 percent is a COUNTY compliance band
+  -- from Department of Revenue manual policy, not a parcel's standard. If it
+  -- ever lands in this field every Kentucky assessment is understated by
+  -- seven percent, so the value is pinned exactly rather than by a range.
+  IF ratio < 1.000000 THEN
+    RAISE EXCEPTION 'Kentucky ratio is below 1.0 — the ratio-study compliance '
+      'band is not the assessment standard';
+  END IF;
+  RAISE NOTICE '  ok      Kentucky assesses at 100 percent, and cites the words';
+
+  -- Three states, three ratios. This is the whole reason the detector cannot
+  -- compare an assessment to a market value without asking the pack first.
+  SELECT count(DISTINCT r.value_numeric) INTO distinct_ratios
+  FROM jurisdiction_rules r JOIN jurisdictions j ON j.id = r.jurisdiction_id
+  WHERE j.name IN ('Kentucky', 'Ohio', 'Tennessee')
+    AND r.code = 'assessment.ratio' AND r.superseded_by IS NULL;
+  IF distinct_ratios <> 3 THEN
+    RAISE EXCEPTION 'expected three distinct assessment ratios, found %', distinct_ratios;
+  END IF;
+  RAISE NOTICE '  ok      100, 35 and 25 percent: three states, three ratios';
 END $$;

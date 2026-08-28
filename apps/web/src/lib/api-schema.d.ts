@@ -657,6 +657,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/properties/{property_id}/appeal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Property Appeal
+         * @description 404 is the only error this can return. Every "we cannot answer" is a
+         *     named gap inside a 200, because a card that vanishes tells the owner
+         *     nothing about why.
+         */
+        get: operations["property_appeal_properties__property_id__appeal_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/properties/{property_id}/capex-forecast": {
         parameters: {
             query?: never;
@@ -1139,6 +1161,53 @@ export interface components {
             /** Splits */
             splits?: components["schemas"]["SplitIn"][] | null;
         };
+        /** AppealCase */
+        AppealCase: {
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** Findings */
+            findings: components["schemas"]["AssessmentFinding"][];
+            /** Gaps */
+            gaps: components["schemas"]["AppealGap"][];
+            market_opinion: components["schemas"]["MarketOpinionOut"] | null;
+            /**
+             * Pairing
+             * @enum {string}
+             */
+            pairing: "contests_this_assessment" | "contests_a_different_year" | "unknown";
+            /** Property Id */
+            property_id: string;
+            /** Ratio Notes */
+            ratio_notes: components["schemas"]["RuleTextOut"][];
+            /** State */
+            state: string;
+            /** Tax Year */
+            tax_year: number | null;
+            window: components["schemas"]["WindowOut"] | null;
+        };
+        /**
+         * AppealGap
+         * @description A question this chain cannot answer. Named, never defaulted.
+         *
+         *     Field-identical to deposit.GapOut and deliberately NOT shared: hoisting
+         *     that model would rename its published schema and churn the generated
+         *     client for no gain. Named differently, though — two classes called GapOut
+         *     make FastAPI qualify BOTH into hestia_api__deposit__GapOut and
+         *     hestia_api__appeal__GapOut, which renames the very schema the separation
+         *     was meant to protect. A third occurrence is when to hoist one shared
+         *     model; the second one just needs its own name.
+         */
+        AppealGap: {
+            /** Code */
+            code: string;
+            /** Detail */
+            detail: string;
+            /** Reason */
+            reason: string;
+        };
         /** ApplyIn */
         ApplyIn: {
             /** Land Value */
@@ -1188,6 +1257,27 @@ export interface components {
             suggestion_citation: string | null;
             /** Total Basis */
             total_basis: string;
+        };
+        /**
+         * AssessmentFinding
+         * @description One assessing body's claim about this property in one tax year, tested.
+         *
+         *     `assessment` is the SAME projection the dossier renders, so the card and
+         *     the dossier can never disagree about what the notice said.
+         */
+        AssessmentFinding: {
+            assessment: components["schemas"]["AssessmentOut"];
+            /** Gaps */
+            gaps: components["schemas"]["AppealGap"][];
+            /** Implied Market Value */
+            implied_market_value: string | null;
+            /** Over Assessed */
+            over_assessed: boolean | null;
+            /** Over Market Amount */
+            over_market_amount: string | null;
+            /** Over Market Pct */
+            over_market_pct: string | null;
+            ratio: components["schemas"]["RatioOut"] | null;
         };
         /**
          * AssessmentIn
@@ -2378,6 +2468,30 @@ export interface components {
             /** Total Out */
             total_out: string;
         };
+        /** MarketOpinionOut */
+        MarketOpinionOut: {
+            /** Age Days */
+            age_days: number;
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** Confidence */
+            confidence: number;
+            /** High Estimate */
+            high_estimate: string | null;
+            /** Low Estimate */
+            low_estimate: string | null;
+            /** Provenance Kind */
+            provenance_kind: string;
+            /** Source */
+            source: string;
+            /** Source Label */
+            source_label: string | null;
+            /** Value */
+            value: string;
+        };
         /** MatchIn */
         MatchIn: {
             /**
@@ -2648,6 +2762,26 @@ export interface components {
             /** Year Built */
             year_built: number | null;
         };
+        /**
+         * RatioOut
+         * @description The pack's ratio, and whether this row's BASIS called for it.
+         */
+        RatioOut: {
+            /** Applied */
+            applied: boolean;
+            /** Applied Reason */
+            applied_reason: string;
+            /** Citation */
+            citation: string;
+            /** Class Text */
+            class_text: string | null;
+            /** Code */
+            code: string;
+            /** Source */
+            source: string;
+            /** Value */
+            value: string;
+        };
         /** Readiness */
         Readiness: {
             /** Migrations */
@@ -2834,6 +2968,26 @@ export interface components {
             field_path: string;
             /** Value */
             value?: string | null;
+        };
+        /**
+         * RuleTextOut
+         * @description A pack rule carried verbatim — the pack's own words and authority.
+         *
+         *     Not parsed. `appeal.conference_required` reads "true; PVA conference ..."
+         *     in Kentucky and "false; no conference prerequisite ..." in Ohio, and the
+         *     leading-token convention already has two implementations that must agree.
+         *     A third copy would be a third place for three readers to disagree, so this
+         *     card prints what the pack wrote and lets the reader read it.
+         */
+        RuleTextOut: {
+            /** Citation */
+            citation: string;
+            /** Code */
+            code: string;
+            /** Source */
+            source: string;
+            /** Text */
+            text: string | null;
         };
         /** ScheduleELine */
         ScheduleELine: {
@@ -3246,6 +3400,28 @@ export interface components {
         WaiveIn: {
             /** Reason */
             reason: string;
+        };
+        /**
+         * WindowOut
+         * @description The next appeal window, as the sweep wrote it, plus the paperwork.
+         */
+        WindowOut: {
+            /** Citation */
+            citation: string;
+            /**
+             * Closes On
+             * Format: date
+             */
+            closes_on: string;
+            conference: components["schemas"]["RuleTextOut"] | null;
+            /** Contests Tax Year */
+            contests_tax_year: number | null;
+            /** Contests Tax Year Citation */
+            contests_tax_year_citation: string | null;
+            form: components["schemas"]["RuleTextOut"] | null;
+            instructions: components["schemas"]["RuleTextOut"] | null;
+            /** Opens On */
+            opens_on: string | null;
         };
         /** WorkOrderIn */
         WorkOrderIn: {
@@ -4801,6 +4977,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PropertyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    property_appeal_properties__property_id__appeal_get: {
+        parameters: {
+            query?: {
+                as_of?: string | null;
+            };
+            header?: never;
+            path: {
+                property_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppealCase"];
                 };
             };
             /** @description Validation Error */

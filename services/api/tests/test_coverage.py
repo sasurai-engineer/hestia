@@ -52,7 +52,13 @@ def test_the_report_answers_every_domain(
     ltl = covered["domains"]["landlord_tenant_act"]
     assert ltl["status"] == "covered"
     assert ltl["source"] == "Newport"  # the municipal adoption row wins over the state
-    assert covered["domains"]["assessment_ratio"]["status"] == "no_rules_loaded"
+    # Kentucky's 100% ratio is seeded now (seed/950). It was absent for as long
+    # as nothing divided by it, and "obvious" is exactly why it went missing:
+    # Ohio's 35% and Tennessee's 25% were seeded because they surprise.
+    ratio = covered["domains"]["assessment_ratio"]
+    assert ratio["status"] == "covered"
+    assert ratio["source"] == "Kentucky"
+    assert "s.172" in ratio["citation"]
 
     # The enum drives the domain list: every member is answered, none invented.
     enum_domains = {
