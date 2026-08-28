@@ -32,6 +32,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from hestia_api import (
+    appeal,
     assessments,
     bank_import,
     config,
@@ -902,6 +903,21 @@ def cash_flow_report(
 @app.get("/reports/rent-roll", response_model=list[reports.RentRollRow])
 def rent_roll_report(conn: Conn) -> list[reports.RentRollRow]:
     return reports.rent_roll(conn)
+
+
+@app.get("/properties/{property_id}/appeal", response_model=appeal.AppealCase)
+def property_appeal(
+    property_id: uuid.UUID,
+    conn: Conn,
+    as_of: Annotated[dt.date | None, Query()] = None,
+) -> appeal.AppealCase:
+    """404 is the only error this can return. Every "we cannot answer" is a
+    named gap inside a 200, because a card that vanishes tells the owner
+    nothing about why."""
+    _require_property(conn, property_id)
+    return appeal.read(
+        conn, str(property_id), as_of=as_of if as_of is not None else dt.date.today()
+    )
 
 
 @app.get("/properties/{property_id}/financials", response_model=reports.Financials)

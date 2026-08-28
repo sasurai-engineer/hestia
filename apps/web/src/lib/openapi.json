@@ -100,6 +100,122 @@
         "title": "AcceptIn",
         "type": "object"
       },
+      "AppealCase": {
+        "properties": {
+          "as_of": {
+            "format": "date",
+            "title": "As Of",
+            "type": "string"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/AssessmentFinding"
+            },
+            "title": "Findings",
+            "type": "array"
+          },
+          "gaps": {
+            "items": {
+              "$ref": "#/components/schemas/AppealGap"
+            },
+            "title": "Gaps",
+            "type": "array"
+          },
+          "market_opinion": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MarketOpinionOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pairing": {
+            "enum": [
+              "contests_this_assessment",
+              "contests_a_different_year",
+              "unknown"
+            ],
+            "title": "Pairing",
+            "type": "string"
+          },
+          "property_id": {
+            "title": "Property Id",
+            "type": "string"
+          },
+          "ratio_notes": {
+            "items": {
+              "$ref": "#/components/schemas/RuleTextOut"
+            },
+            "title": "Ratio Notes",
+            "type": "array"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "tax_year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tax Year"
+          },
+          "window": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WindowOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "property_id",
+          "state",
+          "as_of",
+          "tax_year",
+          "findings",
+          "market_opinion",
+          "ratio_notes",
+          "window",
+          "pairing",
+          "gaps"
+        ],
+        "title": "AppealCase",
+        "type": "object"
+      },
+      "AppealGap": {
+        "description": "A question this chain cannot answer. Named, never defaulted.\n\nField-identical to deposit.GapOut and deliberately NOT shared: hoisting\nthat model would rename its published schema and churn the generated\nclient for no gain. Named differently, though \u2014 two classes called GapOut\nmake FastAPI qualify BOTH into hestia_api__deposit__GapOut and\nhestia_api__appeal__GapOut, which renames the very schema the separation\nwas meant to protect. A third occurrence is when to hoist one shared\nmodel; the second one just needs its own name.",
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "reason",
+          "detail"
+        ],
+        "title": "AppealGap",
+        "type": "object"
+      },
       "ApplyIn": {
         "properties": {
           "land_value": {
@@ -251,6 +367,89 @@
           "address_matches"
         ],
         "title": "ApplySuggestion",
+        "type": "object"
+      },
+      "AssessmentFinding": {
+        "description": "One assessing body's claim about this property in one tax year, tested.\n\n`assessment` is the SAME projection the dossier renders, so the card and\nthe dossier can never disagree about what the notice said.",
+        "properties": {
+          "assessment": {
+            "$ref": "#/components/schemas/AssessmentOut"
+          },
+          "gaps": {
+            "items": {
+              "$ref": "#/components/schemas/AppealGap"
+            },
+            "title": "Gaps",
+            "type": "array"
+          },
+          "implied_market_value": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Implied Market Value"
+          },
+          "over_assessed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Over Assessed"
+          },
+          "over_market_amount": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Over Market Amount"
+          },
+          "over_market_pct": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Over Market Pct"
+          },
+          "ratio": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RatioOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "assessment",
+          "ratio",
+          "implied_market_value",
+          "over_market_amount",
+          "over_market_pct",
+          "over_assessed",
+          "gaps"
+        ],
+        "title": "AssessmentFinding",
         "type": "object"
       },
       "AssessmentIn": {
@@ -4185,6 +4384,84 @@
         "title": "LedgerRegister",
         "type": "object"
       },
+      "MarketOpinionOut": {
+        "properties": {
+          "age_days": {
+            "title": "Age Days",
+            "type": "integer"
+          },
+          "as_of": {
+            "format": "date",
+            "title": "As Of",
+            "type": "string"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          },
+          "high_estimate": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "High Estimate"
+          },
+          "low_estimate": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Low Estimate"
+          },
+          "provenance_kind": {
+            "title": "Provenance Kind",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "source_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Label"
+          },
+          "value": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "value",
+          "source",
+          "as_of",
+          "age_days",
+          "low_estimate",
+          "high_estimate",
+          "provenance_kind",
+          "confidence",
+          "source_label"
+        ],
+        "title": "MarketOpinionOut",
+        "type": "object"
+      },
       "MatchIn": {
         "properties": {
           "event_uuid": {
@@ -4985,6 +5262,58 @@
         "title": "PropertySummary",
         "type": "object"
       },
+      "RatioOut": {
+        "description": "The pack's ratio, and whether this row's BASIS called for it.",
+        "properties": {
+          "applied": {
+            "title": "Applied",
+            "type": "boolean"
+          },
+          "applied_reason": {
+            "title": "Applied Reason",
+            "type": "string"
+          },
+          "citation": {
+            "title": "Citation",
+            "type": "string"
+          },
+          "class_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Class Text"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "value": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "value",
+          "class_text",
+          "citation",
+          "source",
+          "applied",
+          "applied_reason"
+        ],
+        "title": "RatioOut",
+        "type": "object"
+      },
       "Readiness": {
         "properties": {
           "migrations": {
@@ -5615,6 +5944,42 @@
           "field_path"
         ],
         "title": "ReviewIn",
+        "type": "object"
+      },
+      "RuleTextOut": {
+        "description": "A pack rule carried verbatim \u2014 the pack's own words and authority.\n\nNot parsed. `appeal.conference_required` reads \"true; PVA conference ...\"\nin Kentucky and \"false; no conference prerequisite ...\" in Ohio, and the\nleading-token convention already has two implementations that must agree.\nA third copy would be a third place for three readers to disagree, so this\ncard prints what the pack wrote and lets the reader read it.",
+        "properties": {
+          "citation": {
+            "title": "Citation",
+            "type": "string"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text"
+          }
+        },
+        "required": [
+          "code",
+          "text",
+          "citation",
+          "source"
+        ],
+        "title": "RuleTextOut",
         "type": "object"
       },
       "ScheduleELine": {
@@ -6965,6 +7330,96 @@
           "reason"
         ],
         "title": "WaiveIn",
+        "type": "object"
+      },
+      "WindowOut": {
+        "description": "The next appeal window, as the sweep wrote it, plus the paperwork.",
+        "properties": {
+          "citation": {
+            "title": "Citation",
+            "type": "string"
+          },
+          "closes_on": {
+            "format": "date",
+            "title": "Closes On",
+            "type": "string"
+          },
+          "conference": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RuleTextOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "contests_tax_year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contests Tax Year"
+          },
+          "contests_tax_year_citation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contests Tax Year Citation"
+          },
+          "form": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RuleTextOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "instructions": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RuleTextOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "opens_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Opens On"
+          }
+        },
+        "required": [
+          "opens_on",
+          "closes_on",
+          "citation",
+          "instructions",
+          "form",
+          "conference",
+          "contests_tax_year",
+          "contests_tax_year_citation"
+        ],
+        "title": "WindowOut",
         "type": "object"
       },
       "WorkOrderIn": {
@@ -9616,6 +10071,64 @@
           }
         },
         "summary": "Get Property"
+      }
+    },
+    "/properties/{property_id}/appeal": {
+      "get": {
+        "description": "404 is the only error this can return. Every \"we cannot answer\" is a\nnamed gap inside a 200, because a card that vanishes tells the owner\nnothing about why.",
+        "operationId": "property_appeal_properties__property_id__appeal_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "property_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Property Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "as_of",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "As Of"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppealCase"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Property Appeal"
       }
     },
     "/properties/{property_id}/capex-forecast": {
