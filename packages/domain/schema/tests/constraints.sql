@@ -744,10 +744,29 @@ END $$;
 \echo 'tax profiles, elections, disclosures'
 SELECT assert_accepted(
   $$INSERT INTO tax_profiles (entity_id, tax_year, treatment, filing_status,
-      magi_estimate, federal_marginal_rate, state_marginal_rate)
+      magi_estimate, federal_marginal_rate, federal_capital_gains_rate)
     VALUES ('11111111-1111-1111-1111-111111111111', 2026, 'disregarded',
-            'married_filing_jointly', 165000, 0.32, 0.035)$$,
-  'a profile carrying the rates every tax card must cite');
+            'married_filing_jointly', 165000, 0.32, 0.15)$$,
+  'a profile carrying the FEDERAL rates, which are all a profile may carry');
+-- The subtraction module 020 made, asserted as an effect rather than assumed.
+-- The old assertion here carried state_marginal_rate 0.035 — the same figure
+-- as Kentucky's own pack row for the same year, in a second place, with no
+-- job comparing them. A rate belonging to a government now has exactly one
+-- home, and an INSERT naming the old column fails to parse rather than
+-- quietly writing a number no reader can attribute to a state.
+DO $$
+BEGIN
+  BEGIN
+    EXECUTE $q$INSERT INTO tax_profiles (entity_id, tax_year, treatment,
+                                         state_marginal_rate)
+               VALUES ('11111111-1111-1111-1111-111111111111', 2029,
+                       'disregarded', 0.035)$q$;
+    RAISE EXCEPTION 'COLUMN STILL PRESENT: a state rate can be written to a '
+      'profile again, where nothing can say which state it means';
+  EXCEPTION WHEN undefined_column THEN
+    RAISE NOTICE '  ok      a state rate has no home on an entity profile';
+  END;
+END $$;
 SELECT assert_rejected(
   $$INSERT INTO tax_profiles (entity_id, tax_year, treatment)
     VALUES ('11111111-1111-1111-1111-111111111111', 2026, 'partnership')$$,

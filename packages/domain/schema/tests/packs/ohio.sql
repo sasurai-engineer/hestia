@@ -22,6 +22,7 @@ DECLARE
   ky_key TEXT;
   ky_citation TEXT;
   oh_citation TEXT;
+  municipal NUMERIC;
 BEGIN
   -- Cincinnati -> Hamilton County -> Ohio -> United States.
   SELECT count(*) INTO chain_len
@@ -97,4 +98,33 @@ BEGIN
     RAISE EXCEPTION 'Newport resolves %, expected us-ky.open-inspection', ky_key;
   END IF;
   RAISE NOTICE '  ok      one bridge, two regimes: Newport and Cincinnati diverge';
+
+  -- TWO GOVERNMENTS, ONE DOLLAR. Kentucky's chain answers income tax once;
+  -- Cincinnati's answers at the city while the state row states no rate at
+  -- all. A reader that collapsed the chain to one winner per code — which is
+  -- right for an appeal window, where one body governs — would drop whichever
+  -- of these lost, so the shape is pinned here rather than only in the API.
+  IF (SELECT count(*) FROM jurisdiction_chain(
+        (SELECT id FROM jurisdictions WHERE name = 'Cincinnati'
+          AND level = 'municipality')) c
+      JOIN jurisdiction_rules r ON r.jurisdiction_id = c.jurisdiction_id
+      WHERE r.domain = 'income_tax' AND r.superseded_by IS NULL) < 2 THEN
+    RAISE EXCEPTION 'the Cincinnati chain carries fewer than two income_tax rows';
+  END IF;
+  SELECT r.value_numeric INTO municipal
+  FROM jurisdiction_rules r JOIN jurisdictions j ON j.id = r.jurisdiction_id
+  WHERE j.name = 'Cincinnati' AND r.code = 'income.municipal_rate'
+    AND r.superseded_by IS NULL;
+  IF municipal IS DISTINCT FROM 0.018000::NUMERIC THEN
+    RAISE EXCEPTION 'Cincinnati municipal income tax is %, expected 0.018', municipal;
+  END IF;
+  -- Ohio's own state row states a KIND and no number, on purpose. A reader
+  -- that treated it as a rate would be inventing one.
+  IF (SELECT r.value_numeric FROM jurisdiction_rules r
+      JOIN jurisdictions j ON j.id = r.jurisdiction_id
+      WHERE j.name = 'Ohio' AND r.code = 'income.type'
+        AND r.superseded_by IS NULL) IS NOT NULL THEN
+    RAISE EXCEPTION 'the Ohio income.type row carries a number; it states a kind';
+  END IF;
+  RAISE NOTICE '  ok      two governments tax one Cincinnati dollar, and only one states a rate';
 END $$;

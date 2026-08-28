@@ -69,6 +69,8 @@ class TestContract:
             "/assessments",
             "/documents/{document_id}/apply-assessment",
             "/properties/{property_id}/appeal",
+            "/properties/{property_id}/tax-rates",
+            "/entities/{entity_id}/tax-rates",
         ):
             assert path in spec["paths"], path
         # Two gap models exist on purpose (sweep vs coverage); both must keep
