@@ -160,6 +160,19 @@ describe('CapexFanChart', () => {
     expect(screen.queryByText(/Not simulated/)).toBeNull();
   });
 
+  it('shades the years a thin reserve cannot cover, and says which', () => {
+    const { container, rerender } = render(<CapexFanChart forecast={forecast} />);
+    // $200/mo outruns this median plan: no wash, the funded sentence.
+    expect(container.querySelectorAll('.chart__shade')).toHaveLength(0);
+    expect(screen.getByText(/funds the median plan through year 3/)).toBeDefined();
+    rerender(<CapexFanChart forecast={forecast} />);
+    fireEvent.change(screen.getByRole('slider', { name: 'Monthly reserve' }), {
+      target: { value: '25' },
+    });
+    expect(container.querySelectorAll('.chart__shade')).toHaveLength(2);
+    expect(screen.getByText(/Year 2 runs \$250\.00 short of the median plan/)).toBeDefined();
+  });
+
   it('points at the dossier when the inventory is empty', () => {
     render(
       <CapexFanChart

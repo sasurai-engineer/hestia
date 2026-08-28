@@ -131,6 +131,11 @@
     opacity: 0.5;
   }
 
+  /* An underfunded stretch wears the failure tint, faintly. */
+  .chart__shade {
+    fill: rgb(143 45 60 / 8%);
+  }
+
   /* The hurdle: the bar a return must clear, drawn in the second ink. */
   .chart__hurdle {
     stroke: var(--graphite);

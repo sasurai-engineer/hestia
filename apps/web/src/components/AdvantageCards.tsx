@@ -4,6 +4,7 @@ import { type Authority, DecisionCard, FanChart, KeyValue, RangeField } from '@h
 import { useState } from 'react';
 import { holdSellView, insuranceView } from '../lib/advantage';
 import type { CapexForecastOut, Financials } from '../lib/api';
+import { firstShortfall, reserveCoverage } from '../lib/reserve';
 import { formatMoney } from './TransactionsTable';
 
 const HOLDSELL_ENGINE: Authority = {
@@ -150,8 +151,10 @@ export function InsuranceCard({ financials }: { financials: Financials }) {
 }
 
 /** The Weibull capex forecast as the package fan: p10–p90 band, traced p50
- * line. The geometry lives in @hestia/design, tested like the engines. */
+ * line — and the reserve line: drag a monthly figure and the years the
+ * reserve cannot cover wear the failure tint. */
 export function CapexFanChart({ forecast }: { forecast: CapexForecastOut }) {
+  const [reserve, setReserve] = useState(200);
   if (forecast.components_simulated === 0) {
     return (
       <div className="card">
@@ -166,6 +169,9 @@ export function CapexFanChart({ forecast }: { forecast: CapexForecastOut }) {
     mid: Number(band.p50),
     high: Number(band.p90),
   }));
+  const coverage = reserveCoverage(forecast, reserve);
+  const short = firstShortfall(coverage);
+  const shaded = coverage.filter((year) => !year.funded).map((year) => String(year.year));
   return (
     <div className="card">
       <strong>Capital forecast</strong>{' '}
@@ -175,12 +181,30 @@ export function CapexFanChart({ forecast }: { forecast: CapexForecastOut }) {
       <div style={{ marginTop: 8 }}>
         <FanChart
           bands={bands}
+          shaded={shaded}
           label={`Expected capital spend over ${forecast.horizon_years} years with confidence bands`}
         />
       </div>
+      <div className="form-row">
+        <RangeField
+          label="Monthly reserve"
+          value={reserve}
+          min={0}
+          max={1000}
+          step={25}
+          onChange={setReserve}
+          format={(value) => `$${value}/mo`}
+        />
+      </div>
+      <p>
+        {short === null
+          ? `A ${formatMoney(String(reserve))} monthly reserve funds the median plan through year ${forecast.horizon_years}.`
+          : `Year ${short.year} runs ${formatMoney(short.shortfall)} short of the median plan at ${formatMoney(String(reserve))} a month.`}
+      </p>
       <p className="faint">
         Weibull Monte Carlo over the live component inventory ({forecast.components_simulated}{' '}
-        components); band is p10–p90, line is the median.
+        components); band is p10–p90, line is the median; washed years are where the cumulative
+        reserve underruns the cumulative median.
         {forecast.components_without_cost.length > 0
           ? ` Not simulated (no cost on record): ${forecast.components_without_cost.join(', ')}.`
           : ''}

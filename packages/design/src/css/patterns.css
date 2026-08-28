@@ -323,4 +323,17 @@
     color: var(--madder);
     font-weight: 600;
   }
+
+  /* ---- the amortization explorer ---- */
+
+  .explorer__head {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+    margin-bottom: var(--space-2);
+  }
+
+  .explorer > .card {
+    margin-top: var(--space-3);
+  }
 }

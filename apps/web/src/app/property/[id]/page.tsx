@@ -2,6 +2,7 @@
 
 import { use, useCallback, useEffect, useState } from 'react';
 import { CapexFanChart, HoldSellCard, InsuranceCard } from '../../../components/AdvantageCards';
+import { AmortizationExplorer } from '../../../components/AmortizationExplorer';
 import { ComponentsTable } from '../../../components/ComponentsTable';
 import { DeadlineList } from '../../../components/DeadlineList';
 import { DefectRegister } from '../../../components/DefectRegister';
@@ -110,6 +111,13 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
           <ExitTimeline financials={financials} today={today} />
         </section>
       )}
+
+      {financials !== null && financials.debts.length > 0 ? (
+        <section className="section">
+          <h2 className="section__title">The debt</h2>
+          <AmortizationExplorer debts={financials.debts} today={today} />
+        </section>
+      ) : null}
 
       <button
         className="button"

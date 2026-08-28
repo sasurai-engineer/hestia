@@ -41,6 +41,20 @@ describe('FanChart', () => {
     expect(screen.getAllByText(/^[123]$/)).toHaveLength(3);
   });
 
+  it('washes only the shaded bands, edges clamped', () => {
+    const { container, rerender } = render(
+      <FanChart bands={BANDS} label="Shaded fan" shaded={['1', '3']} />,
+    );
+    const shades = container.querySelectorAll('.chart__shade');
+    expect(shades).toHaveLength(2);
+    // The first band's wash starts at the left clamp, before its center.
+    expect(Number(shades[0]?.getAttribute('x'))).toBeLessThan(30);
+    rerender(<FanChart bands={BANDS} label="Shaded fan" shaded={['2']} />);
+    expect(container.querySelectorAll('.chart__shade')).toHaveLength(1);
+    rerender(<FanChart bands={BANDS} label="Shaded fan" />);
+    expect(container.querySelectorAll('.chart__shade')).toHaveLength(0);
+  });
+
   it('renders an honest empty frame when there are no bands', () => {
     const { container } = render(<FanChart bands={[]} label="Nothing simulated" />);
     expect(screen.getByRole('img', { name: 'Nothing simulated' })).toBeDefined();
