@@ -2,14 +2,24 @@
 
 import { use, useCallback, useEffect, useState } from 'react';
 import { RenewalCard } from '../../../components/RenewalCard';
+import { ScreeningPanel } from '../../../components/ScreeningPanel';
 import { formatMoney } from '../../../components/TransactionsTable';
-import { ApiError, api, type LeaseDetail, type RenewalContextOut } from '../../../lib/api';
+import {
+  ApiError,
+  api,
+  type DecisionIn,
+  type LeaseDetail,
+  type NoticeIn,
+  type RenewalContextOut,
+  type ScreeningOut,
+} from '../../../lib/api';
 import { formatDate, localIsoDate } from '../../../lib/format';
 
 export default function LeasePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [detail, setDetail] = useState<LeaseDetail | null>(null);
   const [context, setContext] = useState<RenewalContextOut | null>(null);
+  const [screenings, setScreenings] = useState<ScreeningOut[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [amount, setAmount] = useState('');
@@ -22,8 +32,13 @@ export default function LeasePage({ params }: { params: Promise<{ id: string }> 
         api.leaseDetail(id),
         api.renewalContext(id),
       ]);
+      // Screenings are property-scoped: an applicant who was denied is,
+      // by definition, not a resident on this lease — and the adverse-action
+      // duty is owed to exactly that person.
+      const screeningList = await api.listScreenings({ propertyId: leaseDetail.property_id });
       setDetail(leaseDetail);
       setContext(renewalContext);
+      setScreenings(screeningList);
       setError(null);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught));
@@ -76,6 +91,26 @@ export default function LeasePage({ params }: { params: Promise<{ id: string }> 
       }
     } finally {
       setCollecting(false);
+    }
+  };
+
+  const decide = async (screeningId: string, body: DecisionIn) => {
+    setError(null);
+    try {
+      await api.decideScreening(screeningId, body);
+      await load();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught));
+    }
+  };
+
+  const recordNotice = async (screeningId: string, body: NoticeIn) => {
+    setError(null);
+    try {
+      await api.recordAdverseAction(screeningId, body);
+      await load();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught));
     }
   };
 
@@ -227,6 +262,21 @@ export default function LeasePage({ params }: { params: Promise<{ id: string }> 
             context={context}
             onOffer={(newRent) => {
               void offer(newRent);
+            }}
+          />
+        </section>
+      ) : null}
+
+      {screenings.length > 0 ? (
+        <section className="section">
+          <h2 className="section__title">Applicant screening</h2>
+          <ScreeningPanel
+            screenings={screenings}
+            onDecide={(screeningId, body) => {
+              void decide(screeningId, body);
+            }}
+            onNotice={(screeningId, body) => {
+              void recordNotice(screeningId, body);
             }}
           />
         </section>

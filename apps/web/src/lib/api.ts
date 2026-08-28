@@ -41,6 +41,10 @@ export type ReceiptIn = components['schemas']['ReceiptIn'];
 export type ReceiptOut = components['schemas']['ReceiptOut'];
 export type RenewalContextOut = components['schemas']['RenewalContextOut'];
 export type CollectOut = components['schemas']['CollectOut'];
+export type ScreeningOut = components['schemas']['ScreeningOut'];
+export type ScreeningIn = components['schemas']['ScreeningIn'];
+export type DecisionIn = components['schemas']['DecisionIn'];
+export type NoticeIn = components['schemas']['NoticeIn'];
 export type DocumentSummary = components['schemas']['DocumentSummary'];
 export type DocumentDetail = components['schemas']['DocumentDetail'];
 export type DocumentField = components['schemas']['FieldOut'];
@@ -277,5 +281,26 @@ export const api = {
     request<CollectOut>(`/leases/${leaseId}/collect`, {
       method: 'POST',
       body: JSON.stringify({}),
+    }),
+  listScreenings: (params?: { propertyId?: string; residentId?: string; noticeOwed?: boolean }) => {
+    const query = new URLSearchParams();
+    if (params?.propertyId) query.set('property_id', params.propertyId);
+    if (params?.residentId) query.set('resident_id', params.residentId);
+    if (params?.noticeOwed) query.set('notice_owed', 'true');
+    const suffix = query.size > 0 ? `?${query.toString()}` : '';
+    return request<ScreeningOut[]>(`/screening${suffix}`);
+  },
+  openScreening: (body: ScreeningIn) =>
+    request<ScreeningOut>('/screening', { method: 'POST', body: JSON.stringify(body) }),
+  readScreening: (screeningId: string) => request<ScreeningOut>(`/screening/${screeningId}`),
+  decideScreening: (screeningId: string, body: DecisionIn) =>
+    request<ScreeningOut>(`/screening/${screeningId}/decision`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  recordAdverseAction: (screeningId: string, body: NoticeIn) =>
+    request<ScreeningOut>(`/screening/${screeningId}/adverse-action`, {
+      method: 'POST',
+      body: JSON.stringify(body),
     }),
 };

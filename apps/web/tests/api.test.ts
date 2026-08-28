@@ -310,6 +310,51 @@ describe('the API client', () => {
     expect(api.documentContentUrl('d1')).toBe('http://localhost:8000/documents/d1/content');
   });
 
+  it('walks the screening paths against the contract', async () => {
+    const fetchMock = vi.fn().mockImplementation(jsonResponse(200, []));
+    vi.stubGlobal('fetch', fetchMock);
+    await api.listScreenings();
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/screening',
+      expect.anything(),
+    );
+    await api.listScreenings({ propertyId: 'p1' });
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/screening?property_id=p1',
+      expect.anything(),
+    );
+    await api.listScreenings({ residentId: 'r1', noticeOwed: true });
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/screening?resident_id=r1&notice_owed=true',
+      expect.anything(),
+    );
+    await api.openScreening({ resident_id: 'r1', property_id: 'p1' });
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/screening',
+      expect.objectContaining({ method: 'POST' }),
+    );
+    await api.readScreening('s1');
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/screening/s1',
+      expect.anything(),
+    );
+    await api.decideScreening('s1', {
+      decision: 'denied',
+      decided_on: '2026-08-28',
+      decision_basis: 'income below threshold',
+      based_on_consumer_report: true,
+    });
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/screening/s1/decision',
+      expect.objectContaining({ method: 'POST' }),
+    );
+    await api.recordAdverseAction('s1', { sent_on: '2026-08-28' });
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/screening/s1/adverse-action',
+      expect.objectContaining({ method: 'POST' }),
+    );
+  });
+
   it('uploads documents as multipart and surfaces refusals', async () => {
     const file = new File(['%PDF fake'], 'closing.pdf', { type: 'application/pdf' });
     const fetchMock = vi

@@ -180,6 +180,64 @@ test('a closing statement walks upload, ratification and apply', async ({ page }
   await expect(page.getByRole('row', { name: /Acquisition Cost/ }).first()).toBeVisible();
 });
 
+test('screening: the decision is recorded once and the FCRA checklist appears', async ({
+  page,
+}) => {
+  // This walk OWNS its applicant and its screening. The resident and the
+  // screening are arranged through the API because the web deliberately has
+  // no "open screening" affordance yet: no read surface exposes resident ids
+  // (noted to the API side). An applicant who is denied is, by definition,
+  // not a resident on any lease — the panel lists by property.
+  const properties = await (await page.request.get('http://localhost:8000/properties')).json();
+  const propertyId = (properties as { id: string }[])[0]?.id;
+  if (!propertyId) throw new Error('the portfolio walk runs first and creates a property');
+  const applicant = `Avery Applicant ${String(Date.now())}`;
+  const residentResponse = await page.request.post('http://localhost:8000/residents', {
+    data: { full_name: applicant },
+  });
+  expect(residentResponse.ok()).toBe(true);
+  const resident = (await residentResponse.json()) as { id: string };
+  const screeningResponse = await page.request.post('http://localhost:8000/screening', {
+    data: { resident_id: resident.id, property_id: propertyId },
+  });
+  expect(screeningResponse.ok()).toBe(true);
+
+  // The lease is created through the UI, on the SAME property the screening
+  // is on — picked by id, not by whatever order the select happens to hold.
+  await page.goto('/leases');
+  const unitLabel = `Screening Walk ${String(Date.now())}`;
+  await page.locator('#ls-property').selectOption(propertyId);
+  await page.getByLabel('Unit label').fill(unitLabel);
+  await page.getByLabel('Starts').fill('2026-08-01');
+  await page.getByLabel('Monthly rent').fill('1200.00');
+  await page.getByRole('button', { name: 'Add lease & bill this month' }).click();
+  await page
+    .getByRole('row', { name: new RegExp(unitLabel) })
+    .getByRole('link')
+    .click();
+
+  // The applicant's card, scoped: a long-lived database may hold others.
+  const card = page.locator('.screening .card', { hasText: applicant });
+  await expect(card.getByText('pending')).toBeVisible();
+  await card.getByLabel('Decision').selectOption('denied');
+  await card.getByLabel('Basis').fill('income below threshold');
+  await card.getByLabel(/Based on a consumer report/).check();
+  await card.getByRole('button', { name: 'Record the decision' }).click();
+
+  // Honest transition proof: the form leaves, the record takes its place,
+  // and the statute's checklist arrives with its stamps.
+  await expect(card.getByRole('button', { name: 'Record the decision' })).toHaveCount(0);
+  await expect(card.getByText(/income below threshold · based on a consumer report/)).toBeVisible();
+  await expect(card.getByText('adverse-action notice owed')).toBeVisible();
+  await expect(card.getByText('State the adverse action taken')).toBeVisible();
+  await expect(card.getByText('15 U.S.C. 1681m(a)').first()).toBeVisible();
+
+  await card.getByLabel('Sent on').fill('2026-08-28');
+  await card.getByRole('button', { name: 'Record the notice' }).click();
+  await expect(card.getByText(/notice sent Aug 28, 2026/)).toBeVisible();
+  await expect(card.getByText('State the adverse action taken')).toHaveCount(0);
+});
+
 test('a work order completes and the vendor calendar knows its certificate', async ({ page }) => {
   // A vendor with a certificate that expires: the day it lapses is a deadline.
   await page.goto('/vendors');
