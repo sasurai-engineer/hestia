@@ -69,6 +69,14 @@ export interface EngineFixtures {
     irrNear: string;
     irrTolerance: string;
   };
+  /** A 120-month par bond: coupon 0.5%/month priced at par, so the IRR is
+   * the coupon rate by construction — analytic truth, no engine circularity.
+   * The long-series case #68 made possible; the Python twin reads it too. */
+  readonly cashflowMonthly: {
+    flows: string[];
+    irrNear: string;
+    irrTolerance: string;
+  };
   readonly rent: ReadonlyArray<{
     currentRent: string;
     turnCost: string;

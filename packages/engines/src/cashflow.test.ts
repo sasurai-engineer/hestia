@@ -1,6 +1,13 @@
 import { isZero, money, rate, rateToString, subtractRate, toDecimalString } from '@hestia/domain';
 import { describe, expect, it } from 'vitest';
-import { holdingPeriodFlows, irr, MAX_PERIODS, npv } from './cashflow.js';
+import {
+  holdingPeriodFlows,
+  irr,
+  irrBracketCeiling,
+  irrBracketFloor,
+  MAX_PERIODS,
+  npv,
+} from './cashflow.js';
 import { EngineError } from './errors.js';
 import { loadFixtures } from './fixtures.js';
 
@@ -54,6 +61,80 @@ describe('irr', () => {
     expect(rateToString(one)).toBe('1.750075');
     expect(() => irr(flows, 0)).toThrow(/maxIterations/);
     expect(() => irr(flows, 1001)).toThrow(EngineError);
+  });
+});
+
+describe('irr over long series (#68)', () => {
+  it('solves the 120-month par bond to its exact coupon rate', () => {
+    const monthly = fixtures.cashflowMonthly.flows.map((f) => money(f));
+    const solved = irr(monthly);
+    const distance = subtractRate(solved, rate(fixtures.cashflowMonthly.irrNear));
+    expect(
+      distance.value.abs().lessThanOrEqualTo(rate(fixtures.cashflowMonthly.irrTolerance).value),
+    ).toBe(true);
+    expect(isZero(npv(solved, monthly))).toBe(true);
+  });
+
+  // 120 bisections over 600 exact terms outlast the 5s default when verify
+  // runs every package in parallel — the same lesson the exit tests learned.
+  it('keeps the full promise MAX_PERIODS makes: 600 periods solve', { timeout: 30_000 }, () => {
+    // A 600-period par bond at 0.1% per period — IRR is the coupon rate by
+    // construction, at the very edge of what the engine advertises.
+    const flows = [
+      money('-100000.00'),
+      ...Array.from({ length: MAX_PERIODS - 1 }, () => money('100.00')),
+      money('100100.00'),
+    ];
+    const solved = irr(flows);
+    const distance = subtractRate(solved, rate('0.001'));
+    expect(distance.value.abs().lessThanOrEqualTo(rate('0.000001').value)).toBe(true);
+  });
+
+  it('lowers the ceiling exactly at each proven boundary', () => {
+    const ceilingAt = (periods: number) => rateToString(irrBracketCeiling(periods));
+    expect(ceilingAt(2)).toBe('10');
+    expect(ceilingAt(240)).toBe('10');
+    expect(ceilingAt(241)).toBe('4');
+    expect(ceilingAt(357)).toBe('4');
+    expect(ceilingAt(358)).toBe('2');
+    expect(ceilingAt(524)).toBe('2');
+    expect(ceilingAt(525)).toBe('1.5');
+    expect(ceilingAt(600)).toBe('1.5');
+  });
+
+  it('widens the floor exactly at each proven boundary', () => {
+    const floorAt = (periods: number) => rateToString(irrBracketFloor(periods));
+    expect(floorAt(2)).toBe('-0.9999');
+    expect(floorAt(62)).toBe('-0.9999');
+    expect(floorAt(63)).toBe('-0.999');
+    expect(floorAt(83)).toBe('-0.999');
+    expect(floorAt(84)).toBe('-0.99');
+    expect(floorAt(125)).toBe('-0.99');
+    expect(floorAt(126)).toBe('-0.9');
+    expect(floorAt(250)).toBe('-0.9');
+    expect(floorAt(251)).toBe('-0.6');
+    expect(floorAt(600)).toBe('-0.6');
+  });
+
+  it('reads the floor from the true period count, boundary-exact', () => {
+    // 62 periods sit on the last '-0.9999' rung; a count off by even one
+    // period in either direction would name '-99.90%' here instead.
+    const flows = [money('100.00'), ...Array.from({ length: 62 }, () => money('-1000000.00'))];
+    expect(() => irr(flows)).toThrow('irr has no root in [-99.99%, 1000.00%] for these flows');
+  });
+
+  it('reads the ceiling from the true period count, boundary-exact', () => {
+    // 240 periods sit on the last '10' rung; a count off by one period
+    // in either direction would name '400.00%' here instead.
+    const flows = [money('100.00'), ...Array.from({ length: 240 }, () => money('-1000000.00'))];
+    expect(() => irr(flows)).toThrow('irr has no root in [-90.00%, 1000.00%] for these flows');
+  });
+
+  it('names the widened bracket when a long series has no root inside it', () => {
+    // The single inflow comes FIRST, so no discounting can rescue it: the
+    // true IRR is ~999,900% per period, far beyond the ceiling.
+    const flows = [money('100.00'), ...Array.from({ length: 100 }, () => money('-1000000.00'))];
+    expect(() => irr(flows)).toThrow('irr has no root in [-99.00%, 1000.00%] for these flows');
   });
 });
 
