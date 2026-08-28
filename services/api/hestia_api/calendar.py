@@ -77,6 +77,15 @@ def _ky_open_inspection(year: int) -> WindowDates:
 # plus anchors, here and in the TypeScript twin (packages/engines/src/
 # deadlines.ts). Keys are timeless function identities — a statutory change
 # is a NEW key behind a new effective-dated rule row.
+#
+# Some states belong in NEITHER place. Tennessee's county boards convene on a
+# statutory date but adjourn on one each county fixes administratively and
+# moves every year — Davidson County was June 14 in 2024, June 27 in 2025,
+# June 26 in 2026 — and no statewide list of those dates exists. A builder
+# there could only produce a confident wrong answer, so Tennessee has no key
+# and its pack carries the published dates as data instead (see
+# `appeal.window.closes_on` in seed/907 and the published branch of
+# sweep._appeal_windows).
 def _oh_bor_complaint(year: int) -> WindowDates:
     """ORC 5715.19(A): a complaint against valuation (DTE Form 1, filed with
     the county auditor as clerk of the Board of Revision) may be filed
@@ -92,58 +101,9 @@ def _oh_bor_complaint(year: int) -> WindowDates:
     )
 
 
-def _tn_county_board(year: int) -> WindowDates:
-    """Tennessee's assessment-contest window, in the counties that keep the
-    statewide calendar.
-
-    TCA 67-1-404(a): the county board of equalization meets on June 1 each
-    year and sits until equalization is complete. The Comptroller, which
-    supervises the boards, states the board convenes the next business day
-    where June 1 falls on a weekend, so the OPEN rolls too — unlike Ohio's,
-    where the open is a statutory date rather than a meeting.
-
-    TCA 67-5-1412(e): an appeal from the local board reaches the State Board
-    of Equalization only if filed by August 1 of the tax year, or within
-    forty-five days of the date notice of the local board's action was sent,
-    whichever is later. The forty-five-day leg depends on a notice this
-    system has not seen, so the builder returns the date every Tennessee
-    owner can rely on WITHOUT one — never later than the true deadline.
-
-    TCA 1-3-102 excludes a last day falling on a Saturday, Sunday or legal
-    holiday. Anchors: 2028-08-01 is a Tuesday and stands; 2027-08-01 is a
-    Sunday and rolls to 2027-08-02.
-    """
-    _check_year(year)
-    return WindowDates(
-        opens_on=roll_forward_from_weekend(dt.date(year, 6, 1)),
-        closes_on=roll_forward_from_weekend(dt.date(year, 8, 1)),
-    )
-
-
-def _tn_shelby_county_board(year: int) -> WindowDates:
-    """Shelby County (Memphis) convenes May 1, a month ahead of the rest of
-    Tennessee — a county-level fact, so the pack overrides the state's
-    calendar on the Shelby County row and the chain does the rest. The close
-    is unchanged: TCA 67-5-1412(e) is statewide.
-
-    Authority is the Comptroller's published county-board schedule rather
-    than TCA 67-1-404 itself, which is why this is a separate key and not a
-    parameter — a builder whose two callers disagree about their source
-    would be one function pretending to be two rules. Anchors: 2027-05-01 is
-    a Saturday and rolls to 2027-05-03; 2028-05-01 is a Monday and stands.
-    """
-    _check_year(year)
-    return WindowDates(
-        opens_on=roll_forward_from_weekend(dt.date(year, 5, 1)),
-        closes_on=roll_forward_from_weekend(dt.date(year, 8, 1)),
-    )
-
-
 APPEAL_WINDOWS: dict[str, Callable[[int], WindowDates]] = {
     "us-ky.open-inspection": _ky_open_inspection,
     "us-oh.bor-complaint": _oh_bor_complaint,
-    "us-tn.county-board": _tn_county_board,
-    "us-tn.shelby-county-board": _tn_shelby_county_board,
 }
 
 

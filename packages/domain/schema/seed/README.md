@@ -25,16 +25,33 @@ pack file is picked up with zero code changes.
    - `assessment_ratio`, landlord-tenant rows (statewide act or adoption map,
      whatever the state's structure), `income_tax` (state and, where real,
      municipal rows), `depreciation_conformity` incl. `conformity_kind`.
-3. **Calendar registry entries** iff the state's window fits no existing
-   builder — one pure function in `packages/engines/src/deadlines.ts` and one
-   in `services/api/hestia_api/calendar.py`, each with two externally
-   verified anchor dates. A key may be seeded at ANY level, not just the
-   state: Tennessee's Shelby County convenes a month before the rest of the
-   state, so `seed/907` puts `us-tn.shelby-county-board` on the county row
-   and depth-first chain resolution prefers it. Give a deviation its own key
-   rather than parameterising one builder — two callers whose authorities
-   differ are two rules, and a single function pretending otherwise cannot
-   cite either honestly.
+3. **An appeal window, in one of three shapes.** Pick by asking what
+   actually determines the date:
+   - *Computed.* The deadline is a function of the year, so the pack names a
+     registry key in `appeal.window.calendar` and the two twins
+     (`packages/engines/src/deadlines.ts` and
+     `services/api/hestia_api/calendar.py`) each carry one pure builder with
+     two externally verified anchor dates. Kentucky and Ohio are this shape.
+     Keys are timeless function identities: a statutory change is a NEW key
+     behind a new effective-dated rule row, never an edit to a builder.
+   - *Published.* The deadline is an administrative decision somebody makes
+     and revises, so no function can be right. The pack carries the dates as
+     data — `appeal.window.opens_on` and `appeal.window.closes_on`, matched
+     into one window by a shared `effective_from`, each bounded by
+     `effective_to` so a date cannot outlive its year — plus
+     `appeal.window.source` on the state row saying where the date comes
+     from. Tennessee is this shape: its county boards convene on a statutory
+     date but adjourn when they choose, and adjournment is the deadline
+     (`seed/907`).
+   - *Neither yet.* Seed `appeal.window.source` alone. The sweep reports
+     `window_not_published`, which tells a reader where to go looking
+     instead of implying the state has no appeal law.
+
+   A rule may be seeded at ANY level, not just the state — depth-first chain
+   resolution prefers the nearer row, so a county that differs from its state
+   simply carries its own. Never parameterise one builder across two
+   authorities: two callers whose sources differ are two rules, and a single
+   function pretending otherwise cannot cite either honestly.
 4. **A pack test** — `tests/packs/xx.sql`, the Newport-vs-Campbell pattern:
    the chain resolves through `jurisdiction_chain()`, the calendar key /
    ratio / conformity discriminator resolve to the seeded values, and at

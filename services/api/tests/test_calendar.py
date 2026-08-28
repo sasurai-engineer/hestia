@@ -63,8 +63,10 @@ def test_nth_weekday_refuses_nonsense() -> None:
 
 def test_the_registry_resolves_exactly_the_registered_keys() -> None:
     assert "us-ky.open-inspection" in calendar.APPEAL_WINDOWS
-    assert "us-tn.county-board" in calendar.APPEAL_WINDOWS
-    assert "us-tn.shelby-county-board" in calendar.APPEAL_WINDOWS
+    # Tennessee deliberately registers nothing: its deadline is an
+    # administrative date a county sets and moves each year, so a builder
+    # there could only be confidently wrong.
+    assert not [key for key in calendar.APPEAL_WINDOWS if key.startswith("us-tn.")]
     assert "us-zz.not-a-state" not in calendar.APPEAL_WINDOWS
     builder = calendar.APPEAL_WINDOWS["us-ky.open-inspection"]
     window = builder(2026)
@@ -90,39 +92,6 @@ def test_the_ohio_bor_window_anchors() -> None:
     assert builder(2029).conference_by is None
     with pytest.raises(ValueError):
         builder(2201)
-
-
-def test_the_tennessee_county_board_window_anchors() -> None:
-    builder = calendar.APPEAL_WINDOWS["us-tn.county-board"]
-    # 2028: June 1 is a Thursday and August 1 a Tuesday; both stand.
-    assert builder(2028) == calendar.WindowDates(
-        opens_on=dt.date(2028, 6, 1), closes_on=dt.date(2028, 8, 1), conference_by=None
-    )
-    # 2027-08-01 is a Sunday; TCA 1-3-102 extends it to Monday August 2.
-    assert builder(2027).closes_on == dt.date(2027, 8, 2)
-    # 2030-06-01 is a Saturday; the board convenes the next business day, so
-    # the open rolls as well — a meeting date, not a statutory date.
-    assert builder(2030).opens_on == dt.date(2030, 6, 3)
-    assert builder(2027).conference_by is None
-    with pytest.raises(ValueError):
-        builder(2201)
-
-
-def test_shelby_county_convenes_a_month_before_the_rest_of_tennessee() -> None:
-    """The county-level override: same state, same close, earlier open."""
-    state = calendar.APPEAL_WINDOWS["us-tn.county-board"]
-    shelby = calendar.APPEAL_WINDOWS["us-tn.shelby-county-board"]
-    # 2028-05-01 is a Monday and stands.
-    assert shelby(2028) == calendar.WindowDates(
-        opens_on=dt.date(2028, 5, 1), closes_on=dt.date(2028, 8, 1), conference_by=None
-    )
-    # 2027-05-01 is a Saturday; the board convenes Monday May 3.
-    assert shelby(2027).opens_on == dt.date(2027, 5, 3)
-    # TCA 67-5-1412(e) is statewide: the close is the same date either way.
-    assert shelby(2028).closes_on == state(2028).closes_on
-    assert shelby(2028).opens_on < state(2028).opens_on
-    with pytest.raises(ValueError):
-        shelby(2201)
 
 
 def test_year_bounds() -> None:

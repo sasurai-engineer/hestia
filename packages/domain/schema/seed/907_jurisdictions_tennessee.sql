@@ -42,29 +42,70 @@ INSERT INTO jurisdictions (id, level, name, state, parent_id, fips_code) VALUES
   ('a0000000-0047-4000-8000-000000000101', 'municipality', 'Nashville', 'TN', 'a0000000-0047-4000-8000-000000000021', '4752006'),
   ('a0000000-0047-4000-8000-000000000102', 'municipality', 'Memphis', 'TN', 'a0000000-0047-4000-8000-000000000022', '4748000');
 
--- ---------------------------------------------------------------------------
--- Property tax: the county board of equalization.
+-- The other fifteen counties the landlord-tenant act reaches. They carry no
+-- municipalities yet — nobody owns there — but they must exist, because the
+-- act binds by COUNTY and a county that is missing from this table is a
+-- county whose landlord gets told the law of a chapter that disclaims him.
 --
--- The state row carries the ordinary calendar; Shelby County overrides it,
--- which is the first time any pack has needed a county to disagree with its
--- state about a calendar. Nothing in the resolver changed to allow that —
--- depth-first chain resolution already prefers the nearer row.
+-- Populations are the as-enumerated 2010 figures. TCA 1-3-116(a)(8) makes the
+-- 2010 CPH-1-44 publication controlling and says the figures "shall not be
+-- affected by subsequent revisions by the Census Bureau", which decides
+-- Anderson County: 75,129 as enumerated, 75,082 in the Bureau's later
+-- estimates base, and the statute reads the first. It clears the threshold by
+-- 129 people.
+INSERT INTO jurisdictions (id, level, name, state, parent_id, fips_code) VALUES
+  ('a0000000-0047-4000-8000-000000000023', 'county', 'Anderson County', 'TN', 'a0000000-0047-4000-8000-000000000010', '47001'),  -- 2010: 75,129
+  ('a0000000-0047-4000-8000-000000000024', 'county', 'Blount County', 'TN', 'a0000000-0047-4000-8000-000000000010', '47009'),  -- 2010: 123,010
+  ('a0000000-0047-4000-8000-000000000025', 'county', 'Bradley County', 'TN', 'a0000000-0047-4000-8000-000000000010', '47011'),  -- 2010: 98,963
+  ('a0000000-0047-4000-8000-000000000026', 'county', 'Hamilton County', 'TN', 'a0000000-0047-4000-8000-000000000010', '47065'),  -- 2010: 336,463
+  ('a0000000-0047-4000-8000-000000000027', 'county', 'Knox County', 'TN', 'a0000000-0047-4000-8000-000000000010', '47093'),  -- 2010: 432,226
+  ('a0000000-0047-4000-8000-000000000028', 'county', 'Madison County', 'TN', 'a0000000-0047-4000-8000-000000000010', '47113'),  -- 2010: 98,294
+  ('a0000000-0047-4000-8000-000000000029', 'county', 'Maury County', 'TN', 'a0000000-0047-4000-8000-000000000010', '47119'),  -- 2010: 80,956
+  ('a0000000-0047-4000-8000-000000000030', 'county', 'Montgomery County', 'TN', 'a0000000-0047-4000-8000-000000000010', '47125'),  -- 2010: 172,331
+  ('a0000000-0047-4000-8000-000000000031', 'county', 'Rutherford County', 'TN', 'a0000000-0047-4000-8000-000000000010', '47149'),  -- 2010: 262,604
+  ('a0000000-0047-4000-8000-000000000032', 'county', 'Sevier County', 'TN', 'a0000000-0047-4000-8000-000000000010', '47155'),  -- 2010: 89,889
+  ('a0000000-0047-4000-8000-000000000033', 'county', 'Sullivan County', 'TN', 'a0000000-0047-4000-8000-000000000010', '47163'),  -- 2010: 156,823
+  ('a0000000-0047-4000-8000-000000000034', 'county', 'Sumner County', 'TN', 'a0000000-0047-4000-8000-000000000010', '47165'),  -- 2010: 160,645
+  ('a0000000-0047-4000-8000-000000000035', 'county', 'Washington County', 'TN', 'a0000000-0047-4000-8000-000000000010', '47179'),  -- 2010: 122,979
+  ('a0000000-0047-4000-8000-000000000036', 'county', 'Williamson County', 'TN', 'a0000000-0047-4000-8000-000000000010', '47187'),  -- 2010: 183,182
+  ('a0000000-0047-4000-8000-000000000037', 'county', 'Wilson County', 'TN', 'a0000000-0047-4000-8000-000000000010', '47189');  -- 2010: 113,993
+
+-- ---------------------------------------------------------------------------
+-- Property tax: the deadline no function can compute.
+--
+-- This is the fact that earned Tennessee its place as the third state. The
+-- county board of equalization CONVENES on a statutory date -- June 1 under
+-- TCA 67-1-404(a), early May in Shelby under 67-1-404(c) -- but it ADJOURNS
+-- when it chooses, and adjournment is the deadline: TCA 67-5-1401 makes
+-- failure to appear before final adjournment a waiver, after which the
+-- assessor's value is conclusive. TCA 67-1-404(b) caps the session at
+-- 6/10/15/up-to-30 days by county population and sets NO minimum, the county
+-- legislative body fixes the length for every county over 35,000, and the
+-- county mayor may extend it. The Comptroller's own handbook notes a board
+-- can adjourn after a single day.
+--
+-- So the operative date is administrative, it differs by county, and it moves
+-- every year: Davidson was June 14 in 2024, June 27 in 2025, June 26 in 2026.
+-- The Comptroller publishes no consolidated list; each assessor publishes its
+-- own. A builder here could only produce a confident wrong answer, and wrong
+-- in the fatal direction -- August 1 (the SECOND-level State Board deadline
+-- under TCA 67-5-1412(e)) is 36 days past Davidson's 2026 date, by which time
+-- the appeal is waived. Tennessee therefore names NO calendar key. It carries
+-- the dates its counties published, and where none is loaded the sweep says
+-- so rather than computing one.
 -- ---------------------------------------------------------------------------
 
 INSERT INTO jurisdiction_rules
   (jurisdiction_id, domain, code, value_numeric, value_text, citation, effective_from) VALUES
-  ('a0000000-0047-4000-8000-000000000010', 'assessment_appeal', 'appeal.window.calendar',
-   NULL, 'us-tn.county-board',
-   'TCA 67-1-404(a) (the county board meets June 1); TCA 67-5-1412(e) (the '
-   'State Board filing deadline); TCA 1-3-102 (weekend and holiday extension)',
-   DATE '1973-01-01'),
-  -- Shelby convenes May 1 per the Comptroller's published county-board
-  -- schedule. A statewide row would have told a Memphis owner to wait a
-  -- month past the day the board actually sat.
-  ('a0000000-0047-4000-8000-000000000022', 'assessment_appeal', 'appeal.window.calendar',
-   NULL, 'us-tn.shelby-county-board',
-   'TCA 67-1-404 (session dates); Tennessee Comptroller, county board of '
-   'equalization schedule (Shelby County convenes May 1) — CONFIRM ANNUALLY',
+  -- The state-level rule that turns an absent date into a NAMED gap instead
+  -- of an anonymous one: it tells the reader where the date actually lives.
+  ('a0000000-0047-4000-8000-000000000010', 'assessment_appeal', 'appeal.window.source',
+   NULL, 'published_by_county; the county board convenes on a statutory date but '
+   'adjourns on one the county fixes administratively and revises each year, and '
+   'adjournment is the deadline. Confirm the year''s date with the county assessor '
+   'of property.',
+   'TCA 67-1-404(a) (convening); TCA 67-1-404(b) (session length, no minimum); '
+   'TCA 67-5-1401 (failure to appear before adjournment waives the objection)',
    DATE '1973-01-01'),
   ('a0000000-0047-4000-8000-000000000010', 'assessment_appeal', 'appeal.form',
    NULL, 'Appeal to the county board of equalization; from its action, appeal '
@@ -75,20 +116,47 @@ INSERT INTO jurisdiction_rules
    'prerequisite to the county board',
    'TCA 67-5-1407 — CONFIRM WITH TN COUNSEL', DATE '1973-01-01'),
   ('a0000000-0047-4000-8000-000000000010', 'assessment_appeal', 'appeal.instructions',
-   NULL, 'Appeal to the county board of equalization once it convenes; an appeal '
-   'to the State Board of Equalization must be filed by August 1 of the tax year, '
-   'or within 45 days of the date notice of the local board''s action was sent if '
-   'that is later. The 45-day leg depends on a notice this system has not seen, so '
-   'the scheduled date is the August 1 leg, which is never the later of the two.',
-   'TCA 67-5-1412(e)', DATE '1973-01-01'),
-  -- Two deadlines the sweep does not yet schedule, recorded so the pack does
-  -- not imply August 1 is the only way in. Both hang off a notice date.
+   NULL, 'File with the COUNTY board of equalization on or before it adjourns — '
+   'that is the date that matters, it is set by the county, and it moves each '
+   'year. Appealing to the county board is a prerequisite (TCA 67-5-1412(b)(1)) '
+   'unless the assessor never sent notice of the increase or reclassification. '
+   'August 1 is the SECOND-level deadline, for appealing the county board''s '
+   'action to the State Board of Equalization — it is not the date to file.',
+   'TCA 67-5-1412(b)(1); TCA 67-5-1412(e)', DATE '1973-01-01'),
+  -- Recorded so the pack does not imply the county board is the only way in.
   ('a0000000-0047-4000-8000-000000000010', 'assessment_appeal', 'appeal.direct_to_state_days',
    45, 'where notice of a change was sent later than ten days before the local '
    'board adjourned, the taxpayer may appeal directly to the State Board within '
    '45 days of the notice; where no notice was sent, within 45 days of the tax '
-   'billing date',
-   'TCA 67-5-1412(b)', DATE '1973-01-01');
+   'billing date. On a showing of reasonable cause the State Board may accept a '
+   'late appeal up to March 1 of the following year — a contested safety valve, '
+   'not a deadline to rely on.',
+   'TCA 67-5-1412(e)', DATE '1973-01-01');
+
+-- The dates themselves, one county and one year at a time, each from the
+-- county that published it. The opens/closes pair is matched on
+-- effective_from, which is what makes two rows one window.
+INSERT INTO jurisdiction_rules
+  (jurisdiction_id, domain, code, value_numeric, value_text, citation, effective_from, effective_to) VALUES
+  ('a0000000-0047-4000-8000-000000000021', 'assessment_appeal', 'appeal.window.opens_on',
+   NULL, '2026-05-26',
+   'Metropolitan Board of Equalization, tax year 2026: scheduling opens May 26, '
+   '2026 (Assessor of Property, Davidson County)', DATE '2026-01-01', DATE '2027-01-01'),
+  ('a0000000-0047-4000-8000-000000000021', 'assessment_appeal', 'appeal.window.closes_on',
+   NULL, '2026-06-26',
+   'Metropolitan Board of Equalization, tax year 2026: appointments must be '
+   'scheduled by June 26, 2026 at 4:00 p.m. (Assessor of Property, Davidson '
+   'County) — CONFIRM ANNUALLY, this date moves every year',
+   DATE '2026-01-01', DATE '2027-01-01'),
+  ('a0000000-0047-4000-8000-000000000022', 'assessment_appeal', 'appeal.window.opens_on',
+   NULL, '2026-05-01',
+   'Shelby County Board of Equalization, tax year 2026: accepting appeals from '
+   'May 1, 2026', DATE '2026-01-01', DATE '2027-01-01'),
+  ('a0000000-0047-4000-8000-000000000022', 'assessment_appeal', 'appeal.window.closes_on',
+   NULL, '2026-06-30',
+   'Shelby County Board of Equalization, tax year 2026 real property petition: '
+   'appeal deadline June 30, 2026 — CONFIRM ANNUALLY, this date moves every year',
+   DATE '2026-01-01', DATE '2027-01-01');
 
 -- ---------------------------------------------------------------------------
 -- Assessment ratio: CLASSIFIED, unlike Kentucky's flat 100% or Ohio's 35%.
@@ -116,8 +184,9 @@ INSERT INTO jurisdiction_rules
    NULL, 'No bright-line rule. Separately parceled single-family homes owned and '
    'managed as one rental enterprise may be classified commercial on all the facts '
    'and circumstances; the assessor weighs them case by case.',
-   'Tenn. Att''y Gen. Op. 25-016 (2025); Spring Hill, L.P. v. State Board of '
-   'Equalization — CONFIRM WITH TN COUNSEL BEFORE RELIANCE', DATE '2025-01-01');
+   'Tenn. Att''y Gen. Op. 25-016 (issued 2025-08-25); Spring Hill, L.P. v. '
+   'State Board of Equalization — CONFIRM WITH TN COUNSEL BEFORE RELIANCE',
+   DATE '2025-08-25');
 
 -- ---------------------------------------------------------------------------
 -- Landlord-tenant: a THIRD adoption shape.
@@ -140,17 +209,29 @@ INSERT INTO jurisdiction_rules
   (jurisdiction_id, domain, code, value_numeric, value_text, citation, effective_from) VALUES
   ('a0000000-0047-4000-8000-000000000010', 'landlord_tenant_act', 'ltl.statewide',
    NULL, 'false; the act binds only counties above the population threshold, by '
-   'operation of the statute rather than by local adoption, and preempts '
-   'conflicting local ordinances where it applies',
-   'TCA 66-28-102(a); TCA 66-28-102(e) (preemption, effective 2021-07-01)',
-   DATE '1975-07-01');
+   'operation of the statute rather than by local adoption',
+   'TCA 66-28-102(a)', DATE '1975-07-01'),
+  -- Its own row, from its own date: field preemption arrived in 2021 and an
+  -- as_of query before then must not resolve it.
+  ('a0000000-0047-4000-8000-000000000010', 'landlord_tenant_act', 'ltl.preempts_local',
+   NULL, 'true; where the chapter applies it preempts the field and bars '
+   'conflicting local ordinances',
+   'TCA 66-28-102(e) (2021 Tenn. Pub. Acts ch. 182)', DATE '2021-07-01');
 
 INSERT INTO jurisdiction_rules
   (jurisdiction_id, domain, code, value_text, citation, effective_from)
 SELECT id, 'landlord_tenant_act', 'urlta.adopted', 'true',
-       'TCA 66-28-102(a) (the chapter applies in counties over 75,000 by the 2010 '
-       'federal census; Davidson and Shelby are both above it)',
-       DATE '1975-07-01'
+       'TCA 66-28-102(a): the chapter applies in counties over 75,000 by the 2010 '
+       'federal census (2012 Tenn. Pub. Acts ch. 847). 2021 Tenn. Pub. Acts ch. '
+       '182, s.2 deleted "or any subsequent federal census", so the list is FROZEN '
+       'at seventeen counties and can no longer grow. TCA 1-3-116(a)(8) makes the '
+       'as-enumerated 2010 CPH-1-44 figures controlling, unaffected by later '
+       'Census Bureau revision. BEWARE the widely copied nineteen-county list, '
+       'including the one on the Attorney General consumer-laws page: it adds '
+       'Greene (68,831) and Putnam (72,321) and states the repealed 68,000 '
+       'threshold. Putnam passed 75,000 in the 2020 census and is still not '
+       'covered. Every county seeded in this pack is one of the seventeen.',
+       DATE '2012-04-27'
 FROM jurisdictions
 WHERE level = 'county' AND state = 'TN';
 
@@ -183,9 +264,10 @@ FROM jurisdictions j
 CROSS JOIN (VALUES
   ('security_deposit', 'deposit.return_deadline_exists', NULL::NUMERIC,
    'false; the chapter fixes no deadline to return a deposit. What it fixes '
-   'instead is a forfeiture: a landlord who did not hold the deposit in a '
-   'separate account, or who did not give the final damage listing, may retain '
-   'no part of it.',
+   'instead is a forfeiture, and it is conjunctive: a landlord who BOTH failed '
+   'to hold the deposit in a separate account AND failed to give the final '
+   'damage listing may retain no part of it. Either failure alone does not '
+   'trigger it.',
    'TCA 66-28-301(c) — CONFIRM WITH TN COUNSEL', DATE '1975-07-01'),
   ('security_deposit', 'urlta.deposit.separate_account_required', NULL,
    'true', 'TCA 66-28-301(a); TCA 66-28-301(h) (the tenant must be told where '
@@ -193,9 +275,10 @@ CROSS JOIN (VALUES
   ('security_deposit', 'urlta.deposit.itemized_list_required', NULL,
    'true', 'TCA 66-28-301(b)', DATE '1975-07-01'),
   ('security_deposit', 'deposit.inspection_notice_days', 5,
-   'the landlord must tell the tenant of the right to inspect within five days '
-   'of receiving notice to vacate; the inspection happens on the vacate day or '
-   'within four calendar days after',
+   'the landlord MAY tell the tenant of the right to inspect within five days '
+   'of receiving notice to vacate; the statute is permissive, not a duty. Where '
+   'notice is given the inspection happens on the vacate day or within four '
+   'calendar days after.',
    'TCA 66-28-301(b)', DATE '1975-07-01'),
   ('security_deposit', 'deposit.unclaimed_notification_days', 60,
    'where a refund is due, the landlord sends notice to the last known address; '
@@ -206,26 +289,36 @@ CROSS JOIN (VALUES
 WHERE j.level = 'county' AND j.state = 'TN';
 
 -- ---------------------------------------------------------------------------
--- Notice periods. The URLTA numbers are on the counties; the non-URLTA
--- numbers are on the state, so a property in an unseeded Tennessee county
--- resolves to TCA 66-7-109 rather than borrowing Nashville's law.
+-- Notice periods. Every one sits on a COUNTY row, because in Tennessee the
+-- county is what decides which chapter applies — the same discipline Kentucky
+-- uses for its municipal adoptions, reached by a different route.
 --
 -- Note that the fourteen-day cure / thirty-day termination structure people
--- remember is the NON-URLTA rule. Under the current chapter 28 both legs are
--- fourteen days, with seven for a repeat of the same breach inside six
--- months.
+-- remember is the NON-URLTA rule (TCA 66-7-109). Under the current chapter 28
+-- both legs are fourteen days, with seven for a repeat of the same breach
+-- inside six months.
 -- ---------------------------------------------------------------------------
 
+-- Deliberately NOT on the state row: the notice periods themselves.
+--
+-- The two answers differ — fourteen days to cure under TCA 66-28-505(a)(2) in
+-- a covered county, against 66-7-109's fourteen-for-listed-causes and
+-- thirty-for-everything-else elsewhere — and 66-7-109(g) says in as many
+-- words that it does not reach the seventeen. A statewide row would hand one
+-- of those answers to every Tennessee property, so the state carries only the
+-- RULE FOR CHOOSING and an unplaceable property gets a gap rather than
+-- somebody else's statute.
 INSERT INTO jurisdiction_rules
   (jurisdiction_id, domain, code, value_numeric, value_text, citation, effective_from) VALUES
-  ('a0000000-0047-4000-8000-000000000010', 'notice_period', 'eviction.notice_days',
-   14, 'non-URLTA counties: fourteen days for rent in arrears on demand, for '
-   'damage beyond normal wear and tear, and for violent acts or a real and '
-   'present danger to health or safety',
-   'TCA 66-7-109(a)(1); TCA 66-7-109(g)', DATE '1975-07-01'),
-  ('a0000000-0047-4000-8000-000000000010', 'notice_period', 'eviction.other_default_days',
-   30, 'non-URLTA counties: thirty days for all other defaults',
-   'TCA 66-7-109(b)', DATE '1975-07-01');
+  ('a0000000-0047-4000-8000-000000000010', 'landlord_tenant_act', 'ltl.applies_by',
+   NULL, 'county_population; a Tennessee property must be resolved to its county '
+   'before any notice, deposit or eviction period can be answered. In the '
+   'seventeen counties over 75,000 by the 2010 census the URLTA (TCA ch. 66-28) '
+   'governs; everywhere else TCA 66-7-109 does — fourteen days for rent in '
+   'arrears, damage beyond normal wear and tear, or a real and present danger, '
+   'and thirty days for every other default.',
+   'TCA 66-28-102(a); TCA 66-7-109(a)(1); TCA 66-7-109(b); TCA 66-7-109(g)',
+   DATE '2012-04-27');
 
 INSERT INTO jurisdiction_rules
   (jurisdiction_id, domain, code, value_numeric, value_text, citation, effective_from)

@@ -48,7 +48,8 @@ class CoverageGap:
     property_id: str
     state: str
     domain: str
-    reason: str  # no_state_jurisdiction | no_rule_for_domain | calendar_key_unregistered
+    reason: str  # no_state_jurisdiction | no_rule_for_domain |
+    #              calendar_key_unregistered | window_not_published
     detail: str
 
 
@@ -107,21 +108,62 @@ resolved AS (
     AND (r.effective_to IS NULL OR r.effective_to > %(as_of)s)
   ORDER BY a.property_id, r.code, c.depth ASC, r.effective_from DESC
 )
+,
+-- Not every state's window is a function of the year. Tennessee's county
+-- boards convene on a statutory date but ADJOURN on one each county sets
+-- administratively and moves annually, and no statewide list of those dates
+-- exists -- so for such a state the window is a published DATE the pack
+-- carries, not a builder the code registers. The opens/closes pair is
+-- matched on effective_from, which is what makes the two rows one window.
+published AS (
+  SELECT DISTINCT ON (a.property_id)
+         a.property_id,
+         opens.value_text::date AS opens_on,
+         closes.value_text::date AS closes_on,
+         closes.citation
+  FROM anchored a
+  CROSS JOIN LATERAL jurisdiction_chain(a.start_id) c
+  JOIN jurisdiction_rules closes
+    ON closes.jurisdiction_id = c.jurisdiction_id
+   AND closes.domain = 'assessment_appeal'
+   AND closes.code = 'appeal.window.closes_on'
+   AND closes.superseded_by IS NULL
+  LEFT JOIN jurisdiction_rules opens
+    ON opens.jurisdiction_id = closes.jurisdiction_id
+   AND opens.code = 'appeal.window.opens_on'
+   AND opens.superseded_by IS NULL
+   AND opens.effective_from = closes.effective_from
+  -- A window that has already closed is not the next one. With no later date
+  -- loaded the property gets a gap, which is the honest answer: nobody has
+  -- published next year's date yet.
+  WHERE closes.value_text::date >= %(as_of)s
+  ORDER BY a.property_id, c.depth ASC, closes.value_text::date ASC
+)
 SELECT a.property_id, a.state, a.start_id,
        cal.value_text AS calendar_key, cal.citation AS citation,
-       ins.value_text AS instructions
+       ins.value_text AS instructions,
+       src.value_text AS window_source, src.citation AS source_citation,
+       pub.opens_on AS published_opens_on, pub.closes_on AS published_closes_on,
+       pub.citation AS published_citation
 FROM anchored a
 LEFT JOIN resolved cal
   ON cal.property_id = a.property_id AND cal.code = 'appeal.window.calendar'
 LEFT JOIN resolved ins
   ON ins.property_id = a.property_id AND ins.code = 'appeal.instructions'
+LEFT JOIN resolved src
+  ON src.property_id = a.property_id AND src.code = 'appeal.window.source'
+LEFT JOIN published pub ON pub.property_id = a.property_id
 """
 
 
 def _appeal_windows(conn: Conn, as_of: dt.date) -> tuple[list[dict[str, Any]], list[CoverageGap]]:
-    """The next assessment-appeal window for every live property whose
-    jurisdiction chain names a registered calendar; a typed gap for every
-    property whose chain does not."""
+    """The next assessment-appeal window for every live property, from the
+    date its pack published or the calendar its pack names; a typed gap for
+    every property whose chain gives neither.
+
+    A published date wins over a computed one. Some states' windows are a
+    function of the year and some are an administrative decision a county
+    makes annually, and only the first kind can be a builder."""
     rows: list[dict[str, Any]] = []
     gaps: list[CoverageGap] = []
     for record in conn.execute(APPEAL_RESOLUTION_SQL, {"as_of": as_of}).fetchall():
@@ -133,6 +175,40 @@ def _appeal_windows(conn: Conn, as_of: dt.date) -> tuple[list[dict[str, Any]], l
                     domain="assessment_appeal",
                     reason="no_state_jurisdiction",
                     detail=f"no jurisdiction pack is loaded for {record['state']}",
+                )
+            )
+            continue
+        if record["published_closes_on"] is not None:
+            # A date somebody published beats a date this build could compute,
+            # because in a state like Tennessee there is nothing correct to
+            # compute: the deadline is whatever the county board set this year.
+            rows.append(
+                _row(
+                    "assessment_appeal_window",
+                    record["published_closes_on"],
+                    record["published_citation"],
+                    window_opens_on=record["published_opens_on"],
+                    property_id=record["property_id"],
+                    note=record["instructions"],
+                )
+            )
+            continue
+        if record["window_source"] is not None:
+            # The pack says this state's window is published rather than
+            # computed, and no upcoming date is loaded. That is a different
+            # answer from "this state has no appeal rules at all", and the
+            # difference is what tells someone where to go looking.
+            gaps.append(
+                CoverageGap(
+                    property_id=str(record["property_id"]),
+                    state=record["state"],
+                    domain="assessment_appeal",
+                    reason="window_not_published",
+                    detail=(
+                        f"{record['source_citation']}: no upcoming appeal window is "
+                        "loaded for this jurisdiction, and the date is not one this "
+                        "build may compute"
+                    ),
                 )
             )
             continue
@@ -471,7 +547,11 @@ def _deposit_gaps(conn: Conn, as_of: dt.date) -> list[CoverageGap]:
             ORDER BY c.depth ASC, r.effective_from DESC
             LIMIT 1
           ) nearest
-          WHERE lower(split_part(nearest.value_text, ';', 1)) = 'false'
+          -- btrim on both sides of split_part, because deposit.py's
+          -- _rule_truth strips the same whitespace. A pack author who
+          -- writes 'false ; ...' must not get a panel and a sweep that
+          -- disagree about the same lease.
+          WHERE lower(btrim(split_part(btrim(nearest.value_text), ';', 1))) = 'false'
         )
         """,
         {"as_of": as_of},
