@@ -1,0 +1,10 @@
+# Advisories with no patched release, accepted with eyes open. Every entry
+# must name its reasoning and must fall out when a patch ships — Renovate
+# surfaces the new version, and the nightly security sweep re-checks. The
+# same exception is recorded for pnpm audit (pnpm-workspace.yaml
+# auditConfig.ignoreGhsas) and dependency review (allow-ghsas in
+# security.yml); Trivy skips it on its own via ignore-unfixed.
+
+[[IgnoredVulns]]
+id = "GHSA-jmr9-qjv8-65gv"
+reason = "extract-zip <=2.0.1 symlink traversal; no patched release exists. Dev-only path (@lhci/cli > lighthouse > puppeteer's browser fetcher) that never executes here: CHROME_PATH points at Playwright's browser, so the fetcher downloads and unzips nothing."
