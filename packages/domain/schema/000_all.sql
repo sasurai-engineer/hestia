@@ -18,3 +18,4 @@
 \ir 017_replacement_history.sql
 \ir 018_screening.sql
 \ir 019_assessment_records.sql
+\ir 020_income_tax_rates_leave_the_profile.sql

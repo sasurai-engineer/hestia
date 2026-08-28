@@ -23,6 +23,8 @@ DECLARE
   phaseout NUMERIC;
   ratio NUMERIC;
   ratio_citation TEXT;
+  income_rate NUMERIC;
+  income_citation TEXT;
   distinct_ratios INT;
 BEGIN
   -- The load-bearing URLTA contrast: one street across the Newport line is a
@@ -133,4 +135,26 @@ BEGIN
     RAISE EXCEPTION 'expected three distinct assessment ratios, found %', distinct_ratios;
   END IF;
   RAISE NOTICE '  ok      100, 35 and 25 percent: three states, three ratios';
+
+  -- The income_tax domain had no pin in any pack test until #8 gave it a
+  -- reader. Until module 020 this same figure also sat in a tax_profiles
+  -- assertion in tests/constraints.sql, where nothing compared the two; the
+  -- rate now has one home and this is the assertion that keeps it there.
+  SELECT r.value_numeric, r.citation INTO income_rate, income_citation
+  FROM jurisdiction_rules r JOIN jurisdictions j ON j.id = r.jurisdiction_id
+  WHERE j.name = 'Kentucky' AND r.code = 'income.flat_rate' AND r.superseded_by IS NULL;
+  IF income_rate IS DISTINCT FROM 0.035000::NUMERIC THEN
+    RAISE EXCEPTION 'Kentucky income tax is %, expected 0.035', income_rate;
+  END IF;
+  IF income_citation NOT LIKE '%141.020%' THEN
+    RAISE EXCEPTION 'the Kentucky income rate does not cite KRS 141.020: %',
+      income_citation;
+  END IF;
+  -- A rate, not a percentage. jurisdiction_rules.value_numeric carries no
+  -- unit, so 3.5 and 0.035 are equally storable and differ by a hundredfold.
+  IF income_rate >= 1 THEN
+    RAISE EXCEPTION 'the Kentucky income rate is stored in percent form: %',
+      income_rate;
+  END IF;
+  RAISE NOTICE '  ok      Kentucky taxes income at 3.5 percent, stored as a rate';
 END $$;

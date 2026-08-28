@@ -868,6 +868,51 @@
         "title": "BankAccountOut",
         "type": "object"
       },
+      "BodyRateOut": {
+        "description": "One taxing body's rate, with the body's own authority.",
+        "properties": {
+          "citation": {
+            "title": "Citation",
+            "type": "string"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "depth": {
+            "title": "Depth",
+            "type": "integer"
+          },
+          "jurisdiction": {
+            "title": "Jurisdiction",
+            "type": "string"
+          },
+          "jurisdiction_id": {
+            "title": "Jurisdiction Id",
+            "type": "string"
+          },
+          "level": {
+            "title": "Level",
+            "type": "string"
+          },
+          "rate": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Rate",
+            "type": "string"
+          }
+        },
+        "required": [
+          "jurisdiction_id",
+          "jurisdiction",
+          "level",
+          "depth",
+          "code",
+          "rate",
+          "citation"
+        ],
+        "title": "BodyRateOut",
+        "type": "object"
+      },
       "Body_import_bank_statement_bank_accounts__account_id__imports_post": {
         "properties": {
           "file": {
@@ -3308,6 +3353,38 @@
         "title": "EntityOut",
         "type": "object"
       },
+      "EntityTaxRates": {
+        "description": "Every property this entity owns, each resolving its own chain.\n\nThis is issue #8's first acceptance clause as the schema can honestly meet\nit. The entity carries no rates \u2014 an entity has no situs, and\nentities.formation_state is explicitly not one. Its PROPERTIES carry them,\nand this is the union, unaggregated: no combined rate, no apportionment,\nno total.",
+        "properties": {
+          "entity": {
+            "title": "Entity",
+            "type": "string"
+          },
+          "entity_id": {
+            "title": "Entity Id",
+            "type": "string"
+          },
+          "properties": {
+            "items": {
+              "$ref": "#/components/schemas/PropertyTaxRates"
+            },
+            "title": "Properties",
+            "type": "array"
+          },
+          "tax_year": {
+            "title": "Tax Year",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "entity_id",
+          "entity",
+          "tax_year",
+          "properties"
+        ],
+        "title": "EntityTaxRates",
+        "type": "object"
+      },
       "ExcludedAmount": {
         "properties": {
           "amount": {
@@ -5262,6 +5339,101 @@
         "title": "PropertySummary",
         "type": "object"
       },
+      "PropertyTaxRates": {
+        "properties": {
+          "as_of": {
+            "format": "date",
+            "title": "As Of",
+            "type": "string"
+          },
+          "disposed_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disposed On"
+          },
+          "gaps": {
+            "items": {
+              "$ref": "#/components/schemas/RateGap"
+            },
+            "title": "Gaps",
+            "type": "array"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "notes": {
+            "items": {
+              "$ref": "#/components/schemas/RuleNoteOut"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "property_id": {
+            "title": "Property Id",
+            "type": "string"
+          },
+          "rates": {
+            "items": {
+              "$ref": "#/components/schemas/BodyRateOut"
+            },
+            "title": "Rates",
+            "type": "array"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "tax_year": {
+            "title": "Tax Year",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "property_id",
+          "label",
+          "state",
+          "tax_year",
+          "as_of",
+          "disposed_on",
+          "rates",
+          "notes",
+          "gaps"
+        ],
+        "title": "PropertyTaxRates",
+        "type": "object"
+      },
+      "RateGap": {
+        "description": "A question this chain cannot answer. Named, never defaulted.\n\nField-identical to appeal.AppealGap and deposit.GapOut and deliberately\nNOT shared, for the reason the appeal card's own docstring gives: two\nclasses with one name make FastAPI qualify both and rename the very\nschema the separation protects. Named differently instead.",
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "reason",
+          "detail"
+        ],
+        "title": "RateGap",
+        "type": "object"
+      },
       "RatioOut": {
         "description": "The pack's ratio, and whether this row's BASIS called for it.",
         "properties": {
@@ -5944,6 +6116,65 @@
           "field_path"
         ],
         "title": "ReviewIn",
+        "type": "object"
+      },
+      "RuleNoteOut": {
+        "description": "Everything else the domain carries at a body, whole and unparsed.\n\nNumber AND words: income.entity_excise_rate states 0.065 in value_numeric\nand its subject in value_text, and a note dropping either half would be\nlossy. Not parsed \u2014 the pack's leading-token convention already has two\nimplementations that must agree, and a third would be a third place to\ndisagree. This prints what the pack wrote.",
+        "properties": {
+          "citation": {
+            "title": "Citation",
+            "type": "string"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "depth": {
+            "title": "Depth",
+            "type": "integer"
+          },
+          "jurisdiction": {
+            "title": "Jurisdiction",
+            "type": "string"
+          },
+          "level": {
+            "title": "Level",
+            "type": "string"
+          },
+          "text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "jurisdiction",
+          "level",
+          "depth",
+          "code",
+          "value",
+          "text",
+          "citation"
+        ],
+        "title": "RuleNoteOut",
         "type": "object"
       },
       "RuleTextOut": {
@@ -9173,6 +9404,58 @@
         "summary": "Create Entity"
       }
     },
+    "/entities/{entity_id}/tax-rates": {
+      "get": {
+        "description": "The cross-river case: one entity, each property answering from its own\nchain. Nothing is aggregated \u2014 an entity owning across a state line is\nreached by more than one government, and no single rate is true of it.",
+        "operationId": "entity_tax_rates_entities__entity_id__tax_rates_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "entity_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Entity Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tax_year",
+            "required": true,
+            "schema": {
+              "maximum": 2200,
+              "minimum": 1990,
+              "title": "Tax Year",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntityTaxRates"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Entity Tax Rates"
+      }
+    },
     "/healthz": {
       "get": {
         "operationId": "healthz_healthz_get",
@@ -10462,6 +10745,58 @@
           }
         },
         "summary": "Schedule E Report"
+      }
+    },
+    "/properties/{property_id}/tax-rates": {
+      "get": {
+        "description": "Every taxing body that reaches this property, and what each levies.\n\ntax_year is required and has no default: a rate is a fact about a year,\nand defaulting to today's would silently answer a different question than\nthe one a filing asks.",
+        "operationId": "property_tax_rates_properties__property_id__tax_rates_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "property_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Property Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tax_year",
+            "required": true,
+            "schema": {
+              "maximum": 2200,
+              "minimum": 1990,
+              "title": "Tax Year",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropertyTaxRates"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Property Tax Rates"
       }
     },
     "/readyz": {

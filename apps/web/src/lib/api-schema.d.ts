@@ -399,6 +399,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/entities/{entity_id}/tax-rates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Entity Tax Rates
+         * @description The cross-river case: one entity, each property answering from its own
+         *     chain. Nothing is aggregated — an entity owning across a state line is
+         *     reached by more than one government, and no single rate is true of it.
+         */
+        get: operations["entity_tax_rates_entities__entity_id__tax_rates_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/healthz": {
         parameters: {
             query?: never;
@@ -757,6 +779,30 @@ export interface paths {
         };
         /** Schedule E Report */
         get: operations["schedule_e_report_properties__property_id__reports_schedule_e_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/properties/{property_id}/tax-rates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Property Tax Rates
+         * @description Every taxing body that reaches this property, and what each levies.
+         *
+         *     tax_year is required and has no default: a rate is a fact about a year,
+         *     and defaulting to today's would silently answer a different question than
+         *     the one a filing asks.
+         */
+        get: operations["property_tax_rates_properties__property_id__tax_rates_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1404,6 +1450,26 @@ export interface components {
             nickname: string;
             /** Property Id */
             property_id?: string | null;
+        };
+        /**
+         * BodyRateOut
+         * @description One taxing body's rate, with the body's own authority.
+         */
+        BodyRateOut: {
+            /** Citation */
+            citation: string;
+            /** Code */
+            code: string;
+            /** Depth */
+            depth: number;
+            /** Jurisdiction */
+            jurisdiction: string;
+            /** Jurisdiction Id */
+            jurisdiction_id: string;
+            /** Level */
+            level: string;
+            /** Rate */
+            rate: string;
         };
         /** Body_import_bank_statement_bank_accounts__account_id__imports_post */
         Body_import_bank_statement_bank_accounts__account_id__imports_post: {
@@ -2144,6 +2210,26 @@ export interface components {
             /** Name */
             name: string;
         };
+        /**
+         * EntityTaxRates
+         * @description Every property this entity owns, each resolving its own chain.
+         *
+         *     This is issue #8's first acceptance clause as the schema can honestly meet
+         *     it. The entity carries no rates — an entity has no situs, and
+         *     entities.formation_state is explicitly not one. Its PROPERTIES carry them,
+         *     and this is the union, unaggregated: no combined rate, no apportionment,
+         *     no total.
+         */
+        EntityTaxRates: {
+            /** Entity */
+            entity: string;
+            /** Entity Id */
+            entity_id: string;
+            /** Properties */
+            properties: components["schemas"]["PropertyTaxRates"][];
+            /** Tax Year */
+            tax_year: number;
+        };
         /** ExcludedAmount */
         ExcludedAmount: {
             /** Amount */
@@ -2762,6 +2848,47 @@ export interface components {
             /** Year Built */
             year_built: number | null;
         };
+        /** PropertyTaxRates */
+        PropertyTaxRates: {
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** Disposed On */
+            disposed_on: string | null;
+            /** Gaps */
+            gaps: components["schemas"]["RateGap"][];
+            /** Label */
+            label: string;
+            /** Notes */
+            notes: components["schemas"]["RuleNoteOut"][];
+            /** Property Id */
+            property_id: string;
+            /** Rates */
+            rates: components["schemas"]["BodyRateOut"][];
+            /** State */
+            state: string;
+            /** Tax Year */
+            tax_year: number;
+        };
+        /**
+         * RateGap
+         * @description A question this chain cannot answer. Named, never defaulted.
+         *
+         *     Field-identical to appeal.AppealGap and deposit.GapOut and deliberately
+         *     NOT shared, for the reason the appeal card's own docstring gives: two
+         *     classes with one name make FastAPI qualify both and rename the very
+         *     schema the separation protects. Named differently instead.
+         */
+        RateGap: {
+            /** Code */
+            code: string;
+            /** Detail */
+            detail: string;
+            /** Reason */
+            reason: string;
+        };
         /**
          * RatioOut
          * @description The pack's ratio, and whether this row's BASIS called for it.
@@ -2968,6 +3095,32 @@ export interface components {
             field_path: string;
             /** Value */
             value?: string | null;
+        };
+        /**
+         * RuleNoteOut
+         * @description Everything else the domain carries at a body, whole and unparsed.
+         *
+         *     Number AND words: income.entity_excise_rate states 0.065 in value_numeric
+         *     and its subject in value_text, and a note dropping either half would be
+         *     lossy. Not parsed — the pack's leading-token convention already has two
+         *     implementations that must agree, and a third would be a third place to
+         *     disagree. This prints what the pack wrote.
+         */
+        RuleNoteOut: {
+            /** Citation */
+            citation: string;
+            /** Code */
+            code: string;
+            /** Depth */
+            depth: number;
+            /** Jurisdiction */
+            jurisdiction: string;
+            /** Level */
+            level: string;
+            /** Text */
+            text: string | null;
+            /** Value */
+            value: string | null;
         };
         /**
          * RuleTextOut
@@ -4416,6 +4569,39 @@ export interface operations {
             };
         };
     };
+    entity_tax_rates_entities__entity_id__tax_rates_get: {
+        parameters: {
+            query: {
+                tax_year: number;
+            };
+            header?: never;
+            path: {
+                entity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntityTaxRates"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     healthz_healthz_get: {
         parameters: {
             query?: never;
@@ -5209,6 +5395,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ScheduleEReport"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    property_tax_rates_properties__property_id__tax_rates_get: {
+        parameters: {
+            query: {
+                tax_year: number;
+            };
+            header?: never;
+            path: {
+                property_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PropertyTaxRates"];
                 };
             };
             /** @description Validation Error */

@@ -42,6 +42,7 @@ from hestia_api import (
     deposit,
     documents,
     dossier,
+    income_tax,
     jurisdiction,
     ledger,
     maintenance,
@@ -903,6 +904,36 @@ def cash_flow_report(
 @app.get("/reports/rent-roll", response_model=list[reports.RentRollRow])
 def rent_roll_report(conn: Conn) -> list[reports.RentRollRow]:
     return reports.rent_roll(conn)
+
+
+@app.get("/properties/{property_id}/tax-rates", response_model=income_tax.PropertyTaxRates)
+def property_tax_rates(
+    property_id: uuid.UUID,
+    conn: Conn,
+    tax_year: Annotated[int, Query(ge=1990, le=2200)],
+) -> income_tax.PropertyTaxRates:
+    """Every taxing body that reaches this property, and what each levies.
+
+    tax_year is required and has no default: a rate is a fact about a year,
+    and defaulting to today's would silently answer a different question than
+    the one a filing asks."""
+    _require_property(conn, property_id)
+    return income_tax.for_property(conn, str(property_id), tax_year=tax_year)
+
+
+@app.get("/entities/{entity_id}/tax-rates", response_model=income_tax.EntityTaxRates)
+def entity_tax_rates(
+    entity_id: uuid.UUID,
+    conn: Conn,
+    tax_year: Annotated[int, Query(ge=1990, le=2200)],
+) -> income_tax.EntityTaxRates:
+    """The cross-river case: one entity, each property answering from its own
+    chain. Nothing is aggregated — an entity owning across a state line is
+    reached by more than one government, and no single rate is true of it."""
+    try:
+        return income_tax.for_entity(conn, str(entity_id), tax_year=tax_year)
+    except income_tax.UnknownEntity as error:
+        raise HTTPException(status_code=404, detail="entity not found") from error
 
 
 @app.get("/properties/{property_id}/appeal", response_model=appeal.AppealCase)
