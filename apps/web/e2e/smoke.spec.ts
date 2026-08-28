@@ -238,6 +238,37 @@ test('screening: the decision is recorded once and the FCRA checklist appears', 
   await expect(card.getByText('State the adverse action taken')).toHaveCount(0);
 });
 
+test('the debt record: a mortgage, the engine split, and the counters move', async ({ page }) => {
+  // This walk OWNS its note — a unique lender per run, all assertions scoped
+  // to that lender's card, because a long-lived database accumulates notes.
+  await page.goto('/');
+  await page.getByText('998 Monmouth St, Newport, KY 41071').first().click();
+  const lender = `Walk Federal ${String(Date.now())}`;
+  await page.getByLabel('Lender').fill(lender);
+  await page.getByLabel('Original principal').fill('190000.00');
+  await page.getByLabel(/Annual rate/).fill('0.0625');
+  await page.getByLabel('Term (months)').fill('360');
+  await page.getByLabel('Originated').fill('2024-02-01');
+  await page.getByRole('button', { name: 'Record the mortgage' }).click();
+
+  const card = page.locator('.debt-panel .card', { hasText: lender });
+  await expect(card.getByText(/0 payments — \$0\.00 principal, \$0\.00 interest/)).toBeVisible();
+  await expect(card.getByText(/at 6\.250% over 360 months/)).toBeVisible();
+
+  // The engine's split arrives as the suggestion, and the recorder is
+  // pre-filled with it — the exact figures, not a rounding of them.
+  await expect(card.getByText(/Next per the engine: month \d+/)).toBeVisible();
+  const interest = card.getByLabel('Interest');
+  await expect(interest).not.toHaveValue('');
+  await card.getByRole('button', { name: 'Record the payment' }).click();
+  await expect(card.getByText(/1 payments — /)).toBeVisible();
+
+  // The schedule unfolds under its citation.
+  await card.getByRole('button', { name: /The schedule/ }).click();
+  await expect(card.getByText(/hestia_sim\.finance\.amortization/).first()).toBeVisible();
+  await expect(card.getByText(/of interest over the remaining term/)).toBeVisible();
+});
+
 test('a work order completes and the vendor calendar knows its certificate', async ({ page }) => {
   // A vendor with a certificate that expires: the day it lapses is a deadline.
   await page.goto('/vendors');

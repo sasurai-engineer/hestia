@@ -355,6 +355,57 @@ describe('the API client', () => {
     );
   });
 
+  it('walks the debt paths against the contract', async () => {
+    const fetchMock = vi.fn().mockImplementation(jsonResponse(200, []));
+    vi.stubGlobal('fetch', fetchMock);
+    await api.listDebts();
+    expect(fetchMock).toHaveBeenLastCalledWith('http://localhost:8000/debts', expect.anything());
+    await api.listDebts({ propertyId: 'p1', includePaidOff: true });
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/debts?property_id=p1&include_paid_off=true',
+      expect.anything(),
+    );
+    await api.createDebt({
+      property_id: 'p1',
+      lender: 'First Federal',
+      original_principal: '190000.00',
+      interest_rate: '0.0625',
+      term_months: 360,
+      originated_on: '2024-02-01',
+    });
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/debts',
+      expect.objectContaining({ method: 'POST' }),
+    );
+    await api.readDebt('n1');
+    expect(fetchMock).toHaveBeenLastCalledWith('http://localhost:8000/debts/n1', expect.anything());
+    await api.debtSchedule('n1');
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/debts/n1/schedule',
+      expect.anything(),
+    );
+    await api.debtSchedule('n1', '2026-08-28');
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/debts/n1/schedule?as_of=2026-08-28',
+      expect.anything(),
+    );
+    await api.recordDebtPayment('n1', {
+      paid_on: '2026-08-28',
+      extra_principal: '0',
+      escrow: '0',
+      post_to_ledger: true,
+    });
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/debts/n1/payments',
+      expect.objectContaining({ method: 'POST' }),
+    );
+    await api.payoffDebt('n1', { paid_off_on: '2026-08-28' });
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'http://localhost:8000/debts/n1/payoff',
+      expect.objectContaining({ method: 'POST' }),
+    );
+  });
+
   it('uploads documents as multipart and surfaces refusals', async () => {
     const file = new File(['%PDF fake'], 'closing.pdf', { type: 'application/pdf' });
     const fetchMock = vi

@@ -45,6 +45,13 @@ export type ScreeningOut = components['schemas']['ScreeningOut'];
 export type ScreeningIn = components['schemas']['ScreeningIn'];
 export type DecisionIn = components['schemas']['DecisionIn'];
 export type NoticeIn = components['schemas']['NoticeIn'];
+export type DebtOut = components['schemas']['DebtOut'];
+export type DebtIn = components['schemas']['DebtIn'];
+export type PaymentIn = components['schemas']['PaymentIn'];
+export type PaymentOut = components['schemas']['PaymentOut'];
+export type PayoffIn = components['schemas']['PayoffIn'];
+export type ScheduleOut = components['schemas']['ScheduleOut'];
+export type ScheduleRow = components['schemas']['ScheduleRow'];
 export type DocumentSummary = components['schemas']['DocumentSummary'];
 export type DocumentDetail = components['schemas']['DocumentDetail'];
 export type DocumentField = components['schemas']['FieldOut'];
@@ -303,4 +310,23 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(body),
     }),
+  listDebts: (params?: { propertyId?: string; includePaidOff?: boolean }) => {
+    const query = new URLSearchParams();
+    if (params?.propertyId) query.set('property_id', params.propertyId);
+    if (params?.includePaidOff) query.set('include_paid_off', 'true');
+    const suffix = query.size > 0 ? `?${query.toString()}` : '';
+    return request<DebtOut[]>(`/debts${suffix}`);
+  },
+  createDebt: (body: DebtIn) =>
+    request<DebtOut>('/debts', { method: 'POST', body: JSON.stringify(body) }),
+  readDebt: (debtId: string) => request<DebtOut>(`/debts/${debtId}`),
+  debtSchedule: (debtId: string, asOf?: string) =>
+    request<ScheduleOut>(`/debts/${debtId}/schedule${asOf ? `?as_of=${asOf}` : ''}`),
+  recordDebtPayment: (debtId: string, body: PaymentIn) =>
+    request<PaymentOut>(`/debts/${debtId}/payments`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  payoffDebt: (debtId: string, body: PayoffIn) =>
+    request<DebtOut>(`/debts/${debtId}/payoff`, { method: 'POST', body: JSON.stringify(body) }),
 };

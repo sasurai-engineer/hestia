@@ -5,6 +5,7 @@ import { CapexFanChart, HoldSellCard, InsuranceCard } from '../../../components/
 import { AmortizationExplorer } from '../../../components/AmortizationExplorer';
 import { ComponentsTable } from '../../../components/ComponentsTable';
 import { DeadlineList } from '../../../components/DeadlineList';
+import { DebtPanel } from '../../../components/DebtPanel';
 import { DefectRegister } from '../../../components/DefectRegister';
 import { ExitTimeline } from '../../../components/ExitTimeline';
 import { HazardCard } from '../../../components/HazardCard';
@@ -112,12 +113,19 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
         </section>
       )}
 
-      {financials !== null && financials.debts.length > 0 ? (
-        <section className="section">
-          <h2 className="section__title">The debt</h2>
+      <section className="section">
+        <h2 className="section__title">The debt</h2>
+        {financials !== null && financials.debts.length > 0 ? (
           <AmortizationExplorer debts={financials.debts} today={today} />
-        </section>
-      ) : null}
+        ) : null}
+        <DebtPanel
+          propertyId={id}
+          today={today}
+          onChanged={() => {
+            void load();
+          }}
+        />
+      </section>
 
       <button
         className="button"
