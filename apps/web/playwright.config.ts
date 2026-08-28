@@ -13,13 +13,12 @@ export default defineConfig({
   // two files interleaving on a shared world is the exact species of ordering
   // bug that turned main red once already. Determinism over a minute saved.
   workers: 1,
-  // A cold production server, a cold uvicorn and a database seeing each query
-  // for the first time are all slower than a warm dev box, and every one of
-  // these assertions reads a row a POST has just created. Five seconds is the
-  // Playwright default and it is a local-machine default; the failures it
-  // produced on CI were timing, not truth. The test timeout above still caps
-  // a genuinely stuck expectation.
-  expect: { timeout: process.env.CI ? 15_000 : 5_000 },
+  // The CI budget covers what is genuinely slower there — a cold production
+  // server, a cold uvicorn, a first-touch database on a 2-core runner — and
+  // nothing else. It was 15s while it also absorbed the read-your-writes
+  // race (#78); #83 fixed that at the root, so the budget came down (#91).
+  // Evidence from green runs at 10s is what justifies the next step down.
+  expect: { timeout: process.env.CI ? 10_000 : 5_000 },
   use: {
     baseURL: process.env.HESTIA_WEB_URL ?? 'http://localhost:3000',
     trace: 'retain-on-failure',
