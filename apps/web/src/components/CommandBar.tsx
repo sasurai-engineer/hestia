@@ -73,7 +73,7 @@ export function CommandBar() {
       <button
         type="button"
         className="masthead__command"
-        aria-label="Open the command palette"
+        aria-label="⌘K — open the command palette"
         onClick={openPalette}
       >
         ⌘K

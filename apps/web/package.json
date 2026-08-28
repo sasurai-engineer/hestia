@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "gen:api": "openapi-typescript src/lib/openapi.json -o src/lib/api-schema.d.ts",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "lighthouse": "CHROME_PATH=\"$(node -e \"process.stdout.write(require('@playwright/test').chromium.executablePath())\")\" lhci autorun"
   },
   "dependencies": {
     "next": "^15.4.0",
@@ -22,6 +23,8 @@
     "@hestia/engines": "workspace:*"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@lhci/cli": "^0.15.1",
     "@testing-library/jest-dom": "^6.6.0",
     "@testing-library/react": "^16.2.0",
     "@types/react": "^19.1.0",

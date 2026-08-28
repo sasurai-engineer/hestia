@@ -24,3 +24,16 @@ overrides:
   postcss: ">=8.5.23"
   qs: ">=6.15.2"
   sharp: ">=0.35.0"
+  tmp: ">=0.2.6" # GHSA-ph9p-34f9-6g65, GHSA-52f5-9888-hmc6 (via @lhci/cli>inquirer)
+  uuid: ">=11.1.1" # GHSA-w5hq-g745-h8pq (via @lhci/cli); v4() API unchanged in v11
+
+# Advisories with no patched release, accepted with eyes open — each entry
+# names its reasoning and must fall out when a patch ships (Renovate will
+# surface it; the nightly sweep re-checks).
+auditConfig:
+  ignoreGhsas:
+    # extract-zip <=2.0.1 symlink traversal; no patched version exists. Dev-only
+    # path (@lhci/cli > lighthouse > puppeteer's browser fetcher) and never
+    # executed here: CHROME_PATH points at Playwright's browser, so nothing is
+    # ever downloaded or unzipped by that fetcher.
+    - GHSA-jmr9-qjv8-65gv

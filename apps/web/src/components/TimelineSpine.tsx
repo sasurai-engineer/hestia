@@ -41,7 +41,10 @@ import { formatMoney } from './TransactionsTable';
  */
 const HEIGHT = 158;
 const AXIS_Y = 118;
-const LANE_Y = [90, 66, 42] as const;
+// 32 units between lanes: with 24px hit targets, vertically stacked marks
+// keep WCAG 2.5.8 spacing even when the surface renders narrower than the
+// viewBox and everything scales down.
+const LANE_Y = [98, 66, 34] as const;
 const PAD = 18;
 const MONTH = 31;
 const YEAR = 366;
@@ -222,7 +225,7 @@ export function TimelineSpine({ events, today, wide = false, ariaLabel }: Timeli
             className="spine__hit"
             style={{
               left: `${(x(event.day) / viewW) * 100}%`,
-              top: `${((laneHeight(event.lane) - 8) / HEIGHT) * 100}%`,
+              top: `${((laneHeight(event.lane) - 12) / HEIGHT) * 100}%`,
             }}
             aria-label={`${KIND_LABEL[event.kind]}: ${event.label}, ${formatDate(isoOf(event.day))}`}
             onClick={() => {
@@ -236,7 +239,9 @@ export function TimelineSpine({ events, today, wide = false, ariaLabel }: Timeli
           </p>
         ) : null}
       </div>
-      <p className="spine__legend faint">
+      {/* muted, not faint: the legend is prose somebody reads, and faint ink
+          fails the contrast gate it taught us to run. */}
+      <p className="spine__legend muted">
         ● ledger · <span className="spine__legend-ember">◆</span> deadline (span = open window) ·{' '}
         <span className="spine__legend-fern">◆</span> lease end ·{' '}
         <span className="spine__legend-graphite">○</span> capex median ·{' '}

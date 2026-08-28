@@ -86,8 +86,10 @@
 
   .spine__hit {
     position: absolute;
-    width: 20px;
-    height: 20px;
+    /* 24px is the WCAG 2.5.8 floor for a touch target, and this is a mark
+       somebody taps in a hurry. */
+    width: 24px;
+    height: 24px;
     transform: translate(-50%, 0);
     background: none;
     border: none;

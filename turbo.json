@@ -27,6 +27,11 @@
       "dependsOn": ["^build"],
       "inputs": ["src/**", "stryker.config.*", "vitest.config.*"],
       "outputs": ["reports/mutation/**"]
+    },
+    "@hestia/web#build": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "public/**", "next.config.*", "tsconfig*.json", "package.json"],
+      "outputs": [".next/**", "!.next/cache/**"]
     }
   }
 }

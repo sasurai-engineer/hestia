@@ -85,8 +85,8 @@
     "$description": "Role: secondary text. AA, not AAA — never below 13px without char."
   },
   "ink-faint": {
-    "$value": "rgb(34 30 25 / 45%)",
-    "$description": "Role: tertiary text, large sizes only."
+    "$value": "rgb(34 30 25 / 65%)",
+    "$description": "Role: tertiary text — AA on paper and parchment at any size (the axe gate proved 45% was a promise the app didn't keep); never on sandstone."
   },
   "line": {
     "$value": "rgb(34 30 25 / 12%)",

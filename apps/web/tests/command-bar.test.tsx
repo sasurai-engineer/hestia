@@ -50,14 +50,14 @@ describe('CommandBar', () => {
   it('loads properties once, on first open, and never again', async () => {
     const list = vi.spyOn(api, 'listProperties').mockResolvedValue(PROPERTIES);
     render(<CommandBar />);
-    fireEvent.click(screen.getByRole('button', { name: 'Open the command palette' }));
+    fireEvent.click(screen.getByRole('button', { name: '⌘K — open the command palette' }));
     await waitFor(() => {
       expect(screen.getByText('Property: 516 Overton St')).toBeDefined();
     });
     fireEvent.click(screen.getByText('Property: 516 Overton St'));
     expect(push).toHaveBeenCalledWith('/property/p1');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open the command palette' }));
+    fireEvent.click(screen.getByRole('button', { name: '⌘K — open the command palette' }));
     expect(list).toHaveBeenCalledTimes(1);
   });
 

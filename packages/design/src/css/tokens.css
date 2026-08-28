@@ -36,7 +36,7 @@
     --ink: var(--char);
     --ink-2: var(--graphite);
     --ink-dim: var(--umber);
-    --ink-faint: rgb(34 30 25 / 45%);
+    --ink-faint: rgb(34 30 25 / 65%);
     --line: rgb(34 30 25 / 12%);
     --line-soft: rgb(34 30 25 / 7%);
     --money-in: var(--fern);
@@ -115,7 +115,7 @@
       --line: rgb(34 30 25 / 24%);
       --line-soft: rgb(34 30 25 / 14%);
       --ink-dim: var(--graphite);
-      --ink-faint: rgb(34 30 25 / 60%);
+      --ink-faint: rgb(34 30 25 / 80%);
     }
   }
 }

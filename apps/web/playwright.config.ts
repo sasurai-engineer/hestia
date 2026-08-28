@@ -9,6 +9,10 @@ export default defineConfig({
   testDir: './e2e',
   timeout: 30_000,
   retries: process.env.CI ? 1 : 0,
+  // One worker, always: both spec files write to the same real database, and
+  // two files interleaving on a shared world is the exact species of ordering
+  // bug that turned main red once already. Determinism over a minute saved.
+  workers: 1,
   // A cold production server, a cold uvicorn and a database seeing each query
   // for the first time are all slower than a warm dev box, and every one of
   // these assertions reads a row a POST has just created. Five seconds is the
