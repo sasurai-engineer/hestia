@@ -454,6 +454,25 @@ def _deposit_gaps(conn: Conn, as_of: dt.date) -> list[CoverageGap]:
             AND r.effective_from <= %(as_of)s
             AND (r.effective_to IS NULL OR r.effective_to > %(as_of)s)
         )
+        -- A pack may state that its state fixes no return deadline at all.
+        -- That is an answer, not missing coverage: Tennessee's chapter gives
+        -- a forfeiture rule in place of a due date, and calling it a gap
+        -- would send an owner looking for a statute that does not exist.
+        AND NOT EXISTS (
+          SELECT 1 FROM (
+            SELECT r.value_text
+            FROM jurisdiction_chain(a.start_id) c
+            JOIN jurisdiction_rules r ON r.jurisdiction_id = c.jurisdiction_id
+            WHERE r.domain = 'security_deposit'
+              AND r.code = 'deposit.return_deadline_exists'
+              AND r.superseded_by IS NULL
+              AND r.effective_from <= %(as_of)s
+              AND (r.effective_to IS NULL OR r.effective_to > %(as_of)s)
+            ORDER BY c.depth ASC, r.effective_from DESC
+            LIMIT 1
+          ) nearest
+          WHERE lower(split_part(nearest.value_text, ';', 1)) = 'false'
+        )
         """,
         {"as_of": as_of},
     ).fetchall()

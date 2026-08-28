@@ -117,19 +117,67 @@ class TestTheAcceptanceWalk:
         assert panel["return_due_on"] is None
         assert [gap["code"] for gap in panel["gaps"]] == ["deposit.return_days"]
 
+    def test_tennessee_answers_no_duty_where_ohio_answers_a_duty(
+        self, clean: None, client: TestClient, conn: psycopg.Connection[Any]
+    ) -> None:
+        """The seam a third state exposes: "no such duty exists here" and "no
+        rule is loaded" must not look alike.
+
+        Tennessee owes no deposit interest and its chapter fixes no deadline
+        to return a deposit at all — the widely repeated thirty days belongs
+        to TCA 66-28-301(g), the window for discovering damage after the
+        tenant leaves, not to a duty to pay. Both absences are seeded as
+        stated rules, so the panel answers them instead of reporting gaps.
+        """
+        lease = make_lease(client, state="TN", city="Nashville", postal="37206", label="Nashville")
+        move_out(conn, lease, "2026-08-01")
+        panel = client.get(f"/leases/{lease}/deposit?as_of=2026-08-05").json()
+
+        # No date is invented, and no gap is raised: an explicit answer is an
+        # answer. An Indiana lease in the same shape gets a gap for both.
+        assert panel["return_days"] is None
+        assert panel["return_due_on"] is None
+        assert panel["interest"] is None
+        assert panel["gaps"] == []
+
+        codes = {duty["code"]: duty for duty in panel["duties"]}
+        assert "urlta.deposit.separate_account_required" in codes
+        assert "66-28-301(a)" in codes["urlta.deposit.separate_account_required"]["citation"]
+        # The forfeiture rule is what Tennessee gives instead of a due date,
+        # so it is what the owner is shown.
+        stated = codes["deposit.return_deadline_exists"]
+        assert "may retain no part of it" in stated["requirement"]
+        assert "66-28-301(c)" in stated["citation"]
+        # A duty the pack denies is never printed as a duty.
+        assert "deposit.interest_required" not in codes
+
+        # And the sweep agrees with the panel: no deadline, and no gap either.
+        sweep = client.post("/sweep/deadlines?as_of=2026-08-05").json()
+        assert (
+            conn.execute(
+                "SELECT count(*) AS n FROM deadlines WHERE lease_id = %s", (lease,)
+            ).fetchone()["n"]
+            == 0
+        )
+        assert not any(
+            g["domain"] == "security_deposit" and g["state"] == "TN" for g in sweep["coverage_gaps"]
+        )
+
     def test_a_state_with_no_pack_reports_a_gap_and_raises_no_deadline(
         self, clean: None, client: TestClient, conn: psycopg.Connection[Any]
     ) -> None:
-        """Tennessee has no pack yet (issue #14). The honest answer is a named
-        gap — a deadline invented from a national average would look like law."""
-        lease = make_lease(client, state="TN", city="Nashville", postal="37206", label="Nashville")
+        """Indiana has no pack. The honest answer is a named gap — a deadline
+        invented from a national average would look like law."""
+        lease = make_lease(
+            client, state="IN", city="Indianapolis", postal="46201", label="Indianapolis"
+        )
         move_out(conn, lease, "2026-08-01")
         panel = client.get(f"/leases/{lease}/deposit?as_of=2026-08-05").json()
         assert panel["duties"] == []
         assert panel["return_days"] is None
         gap = next(g for g in panel["gaps"] if g["code"] == "deposit.return_days")
         assert gap["reason"] == "no_rule_for_domain"
-        assert "TN" in gap["detail"]
+        assert "IN" in gap["detail"]
 
         sweep = client.post("/sweep/deadlines?as_of=2026-08-05").json()
         assert (
@@ -139,7 +187,7 @@ class TestTheAcceptanceWalk:
             == 0
         )
         assert any(
-            g["domain"] == "security_deposit" and g["state"] == "TN" for g in sweep["coverage_gaps"]
+            g["domain"] == "security_deposit" and g["state"] == "IN" for g in sweep["coverage_gaps"]
         )
 
 

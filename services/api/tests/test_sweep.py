@@ -217,7 +217,7 @@ def test_uncovered_jurisdictions_gap_instead_of_guessing(
             """
         )
     properties = {}
-    for state in ("TN", "QQ", "ZZ"):
+    for state in ("IN", "QQ", "ZZ"):
         pid = str(uuid.uuid4())
         properties[state] = pid
         conn.execute(
@@ -233,8 +233,8 @@ def test_uncovered_jurisdictions_gap_instead_of_guessing(
     body = client.post(f"/sweep/deadlines?as_of={AS_OF}").json()
     assert "assessment_appeal_window" not in body["inserted"]
     gaps = {g["state"]: g for g in body["coverage_gaps"]}
-    assert gaps["TN"]["reason"] == "no_state_jurisdiction"
-    assert gaps["TN"]["property_id"] == properties["TN"]
+    assert gaps["IN"]["reason"] == "no_state_jurisdiction"
+    assert gaps["IN"]["property_id"] == properties["IN"]
     assert gaps["QQ"]["reason"] == "calendar_key_unregistered"
     assert "qq.future-calendar" in gaps["QQ"]["detail"]
     assert gaps["ZZ"]["reason"] == "no_rule_for_domain"
@@ -249,10 +249,11 @@ def test_uncovered_jurisdictions_gap_instead_of_guessing(
 def test_the_cross_river_portfolio_gets_both_regimes(
     clean: None, client: TestClient, conn: psycopg.Connection[Any]
 ) -> None:
-    """The nationwide acceptance shape: one owner, three properties — Newport
-    KY, Cincinnati OH (one bridge apart), Nashville TN (no pack). ONE sweep
-    yields each covered state's own window, citation and instructions, no TN
-    row, and exactly one honest TN gap."""
+    """The nationwide acceptance shape: one owner, four properties — Newport
+    KY, Cincinnati OH (one bridge apart), Nashville TN, and an Indianapolis
+    outpost in a state with no pack. ONE sweep yields each covered state's own
+    window, citation and instructions, no Indiana row, and exactly one honest
+    Indiana gap."""
     entity_id = str(uuid.uuid4())
     conn.execute(
         "INSERT INTO entities (id, name, kind) VALUES (%s, 'Cross River LLC', 'llc')",
@@ -262,6 +263,7 @@ def test_the_cross_river_portfolio_gets_both_regimes(
         ("newport-side", "Newport", "KY", "41071"),
         ("cincinnati-side", "Cincinnati", "OH", "45202"),
         ("nashville-outpost", "Nashville", "TN", "37201"),
+        ("indianapolis-outpost", "Indianapolis", "IN", "46204"),
     ):
         conn.execute(
             """
@@ -276,9 +278,9 @@ def test_the_cross_river_portfolio_gets_both_regimes(
     conn.commit()
 
     body = client.post("/sweep/deadlines?as_of=2026-11-01").json()
-    assert body["inserted"]["assessment_appeal_window"] == 2
+    assert body["inserted"]["assessment_appeal_window"] == 3
     (gap,) = body["coverage_gaps"]
-    assert (gap["state"], gap["reason"]) == ("TN", "no_state_jurisdiction")
+    assert (gap["state"], gap["reason"]) == ("IN", "no_state_jurisdiction")
 
     rows = conn.execute(
         """
@@ -287,7 +289,7 @@ def test_the_cross_river_portfolio_gets_both_regimes(
         WHERE d.kind = 'assessment_appeal_window' ORDER BY p.state
         """
     ).fetchall()
-    ky, oh = rows[0], rows[1]
+    ky, oh, tn = rows[0], rows[1], rows[2]
     assert ky["state"] == "KY"
     assert ky["due_on"] == dt.date(2027, 5, 17)
     assert ky["window_opens_on"] == dt.date(2027, 5, 3)
@@ -298,6 +300,15 @@ def test_the_cross_river_portfolio_gets_both_regimes(
     assert oh["window_opens_on"] == dt.date(2027, 1, 1)
     assert "ORC 5715.19" in oh["citation"]
     assert "DTE Form 1" in oh["note"]
+    # Tennessee's 2026 window closed August 3; the next one is a summer 2027
+    # window, and 2027-08-01 is a Sunday that TCA 1-3-102 rolls to Monday.
+    assert tn["state"] == "TN"
+    assert tn["due_on"] == dt.date(2027, 8, 2)
+    assert tn["window_opens_on"] == dt.date(2027, 6, 1)
+    assert "TCA 67-5-1412" in tn["citation"]
+    assert "State Board of Equalization" in tn["note"]
+    # Three states, three windows, no two alike — from one sweep.
+    assert len({ky["due_on"], oh["due_on"], tn["due_on"]}) == 3
 
 
 def test_an_empty_portfolio_sweeps_to_zero_today(clean: None, client: TestClient) -> None:

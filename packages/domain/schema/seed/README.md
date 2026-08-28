@@ -28,7 +28,13 @@ pack file is picked up with zero code changes.
 3. **Calendar registry entries** iff the state's window fits no existing
    builder — one pure function in `packages/engines/src/deadlines.ts` and one
    in `services/api/hestia_api/calendar.py`, each with two externally
-   verified anchor dates.
+   verified anchor dates. A key may be seeded at ANY level, not just the
+   state: Tennessee's Shelby County convenes a month before the rest of the
+   state, so `seed/907` puts `us-tn.shelby-county-board` on the county row
+   and depth-first chain resolution prefers it. Give a deviation its own key
+   rather than parameterising one builder — two callers whose authorities
+   differ are two rules, and a single function pretending otherwise cannot
+   cite either honestly.
 4. **A pack test** — `tests/packs/xx.sql`, the Newport-vs-Campbell pattern:
    the chain resolves through `jurisdiction_chain()`, the calendar key /
    ratio / conformity discriminator resolve to the seeded values, and at
