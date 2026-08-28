@@ -120,6 +120,10 @@ describe('the appeal-window registry', () => {
     });
     const oh = appealWindowBuilder('us-oh.bor-complaint');
     expect(oh?.(2027)).toEqual({ opensOn: '2027-01-01', closesOn: '2027-03-31' });
+    const tn = appealWindowBuilder('us-tn.county-board');
+    expect(tn?.(2028)).toEqual({ opensOn: '2028-06-01', closesOn: '2028-08-01' });
+    const shelby = appealWindowBuilder('us-tn.shelby-county-board');
+    expect(shelby?.(2028)).toEqual({ opensOn: '2028-05-01', closesOn: '2028-08-01' });
     expect(appealWindowBuilder('us-zz.not-a-state')).toBeUndefined();
     expect(appealWindowBuilder('')).toBeUndefined();
   });
@@ -170,6 +174,67 @@ describe('the Ohio pack entry — us-oh.bor-complaint (ORC 5715.19)', () => {
 
   it('bounds its year like every builder', () => {
     expect(() => oh(MAX_YEAR + 1)).toThrow(/year/);
+  });
+});
+
+describe('the Tennessee pack entries — TCA 67-1-404, TCA 67-5-1412', () => {
+  const tn = (year: number) => {
+    const builder = appealWindowBuilder('us-tn.county-board');
+    if (!builder) throw new Error('TN builder must be registered');
+    return builder(year);
+  };
+  const shelby = (year: number) => {
+    const builder = appealWindowBuilder('us-tn.shelby-county-board');
+    if (!builder) throw new Error('Shelby builder must be registered');
+    return builder(year);
+  };
+
+  it('opens June 1 and closes August 1, weekend-extended per TCA 1-3-102', () => {
+    // 2028: June 1 is a Thursday and August 1 a Tuesday; both stand.
+    expect(tn(2028)).toEqual({ opensOn: '2028-06-01', closesOn: '2028-08-01' });
+    // 2027-08-01 is a Sunday; the deadline extends to Monday August 2.
+    expect(tn(2027)).toEqual({ opensOn: '2027-06-01', closesOn: '2027-08-02' });
+    // No conference prerequisite exists in Tennessee.
+    expect(tn(2028).conferenceBy).toBeUndefined();
+  });
+
+  it('rolls the open too, because the board convenes on a business day', () => {
+    // 2030-06-01 is a Saturday; the board sits the following Monday.
+    expect(tn(2030).opensOn).toBe('2030-06-03');
+    expect(dayOfWeek(tn(2030).opensOn)).toBe(1);
+  });
+
+  it('gives Shelby County an earlier open and the same statewide close', () => {
+    // 2028-05-01 is a Monday and stands.
+    expect(shelby(2028)).toEqual({ opensOn: '2028-05-01', closesOn: '2028-08-01' });
+    // 2027-05-01 is a Saturday; the board convenes Monday May 3.
+    expect(shelby(2027).opensOn).toBe('2027-05-03');
+    // TCA 67-5-1412(e) is statewide: the close does not move with the open.
+    expect(shelby(2028).closesOn).toBe(tn(2028).closesOn);
+    expect(toEpochDays(shelby(2028).opensOn)).toBeLessThan(toEpochDays(tn(2028).opensOn));
+  });
+
+  it('never opens or closes on a weekend, in either county calendar', () => {
+    fc.assert(
+      fc.property(fc.integer({ min: MIN_YEAR, max: MAX_YEAR }), (year) => {
+        for (const window of [tn(year), shelby(year)]) {
+          expect(dayOfWeek(window.opensOn)).not.toBe(0);
+          expect(dayOfWeek(window.opensOn)).not.toBe(6);
+          expect(dayOfWeek(window.closesOn)).not.toBe(0);
+          expect(dayOfWeek(window.closesOn)).not.toBe(6);
+          expect(
+            toEpochDays(window.closesOn) - toEpochDays(`${String(year)}-08-01`),
+          ).toBeLessThanOrEqual(2);
+          expect(toEpochDays(window.opensOn)).toBeLessThan(toEpochDays(window.closesOn));
+        }
+      }),
+      { numRuns: 50 },
+    );
+  });
+
+  it('bounds its year like every builder', () => {
+    expect(() => tn(MAX_YEAR + 1)).toThrow(/year/);
+    expect(() => shelby(MAX_YEAR + 1)).toThrow(/year/);
   });
 });
 

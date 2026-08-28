@@ -92,9 +92,58 @@ def _oh_bor_complaint(year: int) -> WindowDates:
     )
 
 
+def _tn_county_board(year: int) -> WindowDates:
+    """Tennessee's assessment-contest window, in the counties that keep the
+    statewide calendar.
+
+    TCA 67-1-404(a): the county board of equalization meets on June 1 each
+    year and sits until equalization is complete. The Comptroller, which
+    supervises the boards, states the board convenes the next business day
+    where June 1 falls on a weekend, so the OPEN rolls too — unlike Ohio's,
+    where the open is a statutory date rather than a meeting.
+
+    TCA 67-5-1412(e): an appeal from the local board reaches the State Board
+    of Equalization only if filed by August 1 of the tax year, or within
+    forty-five days of the date notice of the local board's action was sent,
+    whichever is later. The forty-five-day leg depends on a notice this
+    system has not seen, so the builder returns the date every Tennessee
+    owner can rely on WITHOUT one — never later than the true deadline.
+
+    TCA 1-3-102 excludes a last day falling on a Saturday, Sunday or legal
+    holiday. Anchors: 2028-08-01 is a Tuesday and stands; 2027-08-01 is a
+    Sunday and rolls to 2027-08-02.
+    """
+    _check_year(year)
+    return WindowDates(
+        opens_on=roll_forward_from_weekend(dt.date(year, 6, 1)),
+        closes_on=roll_forward_from_weekend(dt.date(year, 8, 1)),
+    )
+
+
+def _tn_shelby_county_board(year: int) -> WindowDates:
+    """Shelby County (Memphis) convenes May 1, a month ahead of the rest of
+    Tennessee — a county-level fact, so the pack overrides the state's
+    calendar on the Shelby County row and the chain does the rest. The close
+    is unchanged: TCA 67-5-1412(e) is statewide.
+
+    Authority is the Comptroller's published county-board schedule rather
+    than TCA 67-1-404 itself, which is why this is a separate key and not a
+    parameter — a builder whose two callers disagree about their source
+    would be one function pretending to be two rules. Anchors: 2027-05-01 is
+    a Saturday and rolls to 2027-05-03; 2028-05-01 is a Monday and stands.
+    """
+    _check_year(year)
+    return WindowDates(
+        opens_on=roll_forward_from_weekend(dt.date(year, 5, 1)),
+        closes_on=roll_forward_from_weekend(dt.date(year, 8, 1)),
+    )
+
+
 APPEAL_WINDOWS: dict[str, Callable[[int], WindowDates]] = {
     "us-ky.open-inspection": _ky_open_inspection,
     "us-oh.bor-complaint": _oh_bor_complaint,
+    "us-tn.county-board": _tn_county_board,
+    "us-tn.shelby-county-board": _tn_shelby_county_board,
 }
 
 

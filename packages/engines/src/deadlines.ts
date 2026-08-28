@@ -160,6 +160,48 @@ const ohBorComplaint: AppealWindowBuilder = (year) => {
 };
 
 /**
+ * Tennessee's assessment-contest window, in the counties that keep the
+ * statewide calendar. TCA 67-1-404(a): the county board of equalization
+ * meets June 1 each year; the Comptroller, which supervises the boards,
+ * states the board convenes the next business day where June 1 falls on a
+ * weekend, so the OPEN rolls too — unlike Ohio's, where the open is a
+ * statutory date rather than a meeting. TCA 67-5-1412(e): an appeal reaches
+ * the State Board of Equalization only if filed by August 1 of the tax year,
+ * or within forty-five days of the notice of the local board's action if
+ * that is later — a leg that depends on a notice this system has not seen,
+ * so the builder returns the date an owner can rely on without one. TCA
+ * 1-3-102 excludes a last day falling on a Saturday, Sunday or legal
+ * holiday. Anchors: 2028-08-01 is a Tuesday and stands; 2027-08-01 is a
+ * Sunday and rolls to 2027-08-02.
+ */
+const tnCountyBoard: AppealWindowBuilder = (year) => {
+  assertIntInRange(year, 'year', MIN_YEAR, MAX_YEAR);
+  return {
+    opensOn: rollForwardFromWeekend(`${String(year)}-06-01`),
+    closesOn: rollForwardFromWeekend(`${String(year)}-08-01`),
+  };
+};
+
+/**
+ * Shelby County (Memphis) convenes May 1, a month ahead of the rest of
+ * Tennessee — a county-level fact, so the pack overrides the state's
+ * calendar on the Shelby County row and the chain does the rest. The close
+ * is unchanged: TCA 67-5-1412(e) is statewide. Authority is the
+ * Comptroller's published county-board schedule rather than TCA 67-1-404
+ * itself, which is why this is a separate key and not a parameter — a
+ * builder whose two callers disagree about their source would be one
+ * function pretending to be two rules. Anchors: 2027-05-01 is a Saturday and
+ * rolls to 2027-05-03; 2028-05-01 is a Monday and stands.
+ */
+const tnShelbyCountyBoard: AppealWindowBuilder = (year) => {
+  assertIntInRange(year, 'year', MIN_YEAR, MAX_YEAR);
+  return {
+    opensOn: rollForwardFromWeekend(`${String(year)}-05-01`),
+    closesOn: rollForwardFromWeekend(`${String(year)}-08-01`),
+  };
+};
+
+/**
  * The registered builder for a pack's calendar key, or undefined. The table
  * lives inside the function rather than at module scope so that mutation
  * testing can attribute it to covering tests — a module-scope Map is a
@@ -170,6 +212,8 @@ export const appealWindowBuilder = (key: string): AppealWindowBuilder | undefine
   const registry: ReadonlyMap<string, AppealWindowBuilder> = new Map([
     ['us-ky.open-inspection', kyOpenInspection],
     ['us-oh.bor-complaint', ohBorComplaint],
+    ['us-tn.county-board', tnCountyBoard],
+    ['us-tn.shelby-county-board', tnShelbyCountyBoard],
   ]);
   return registry.get(key);
 };

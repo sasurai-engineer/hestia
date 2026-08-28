@@ -155,6 +155,32 @@ _REQUIREMENTS: dict[str, str] = {
 }
 
 
+def _rule_is_true(row: Any) -> bool:
+    """Whether a boolean-valued rule ASSERTS its obligation.
+
+    Presence of the row is not the answer. A pack states both halves — Ohio
+    seeds `deposit.interest_required` as "true; 5% per annum ..." and
+    Tennessee seeds it "false; ...", because "no interest is owed here" is a
+    finding a pack should be able to make, and is not the same fact as
+    silence. The leading token before any semicolon carries the truth; the
+    prose after it carries the reason.
+    """
+    return (row["value_text"] or "").strip().lower().split(";")[0].strip() == "true"
+
+
+def _rule_is_false(row: Any) -> bool:
+    """A rule that explicitly denies its obligation, as distinct from a
+    numeric or prose rule that has no truth value at all."""
+    return (row["value_text"] or "").strip().lower().split(";")[0].strip() == "false"
+
+
+def _reason(row: Any) -> str:
+    """The prose a boolean rule carries after its truth token — why the pack
+    answered the way it did, in the pack's own words."""
+    _, _, rest = (row["value_text"] or "").partition(";")
+    return rest.strip() or (row["value_text"] or "").strip()
+
+
 def _rules_for(conn: Conn, lease_ids: list[str], as_of: dt.date) -> dict[str, list[Any]]:
     rows = conn.execute(_DEPOSIT_RULES, {"lease_ids": lease_ids, "as_of": as_of}).fetchall()
     grouped: dict[str, list[Any]] = {}
@@ -240,6 +266,8 @@ def read(conn: Conn, lease_id: str, *, as_of: dt.date) -> DepositOut:
         template = _REQUIREMENTS.get(code)
         if template is None:
             continue  # a pack may carry codes this release has no sentence for
+        if _rule_is_false(row):
+            continue  # the pack says this duty does not attach here
         value = row["value_numeric"] if row["value_numeric"] is not None else row["value_text"]
         duties.append(
             DutyOut(
@@ -253,17 +281,32 @@ def read(conn: Conn, lease_id: str, *, as_of: dt.date) -> DepositOut:
     return_rule = by_code.get("deposit.return_days")
     return_days = int(return_rule["value_numeric"]) if return_rule else None
     if return_rule is None:
-        gaps.append(
-            GapOut(
-                code="deposit.return_days",
-                reason="no_rule_for_domain",
-                detail=(
-                    f"no deposit return period is seeded for {lease['state']}; the "
-                    "deadline is not invented and the lease terms govern until a "
-                    "pack says otherwise"
-                ),
+        # "This state fixes no deadline" and "we have loaded no deadline for
+        # this state" are different answers and must not read alike. Where a
+        # pack states the absence — Tennessee's chapter gives a forfeiture
+        # rule instead of a due date — the panel carries that rule and raises
+        # no gap. Silence still raises one.
+        stated_absent = by_code.get("deposit.return_deadline_exists")
+        if stated_absent is not None and _rule_is_false(stated_absent):
+            duties.append(
+                DutyOut(
+                    code=stated_absent["code"],
+                    requirement=_reason(stated_absent),
+                    citation=stated_absent["citation"],
+                )
             )
-        )
+        else:
+            gaps.append(
+                GapOut(
+                    code="deposit.return_days",
+                    reason="no_rule_for_domain",
+                    detail=(
+                        f"no deposit return period is seeded for {lease['state']}; the "
+                        "deadline is not invented and the lease terms govern until a "
+                        "pack says otherwise"
+                    ),
+                )
+            )
     return_due = (
         lease["moved_out_on"] + dt.timedelta(days=return_days)
         if return_days is not None and lease["moved_out_on"] is not None
@@ -272,7 +315,7 @@ def read(conn: Conn, lease_id: str, *, as_of: dt.date) -> DepositOut:
 
     interest: InterestOut | None = None
     interest_rule = by_code.get("deposit.interest_required")
-    if interest_rule is not None:
+    if interest_rule is not None and _rule_is_true(interest_rule):
         # WHICH formula is a rule too (ADR 0003): the pack names a registered
         # builder and the code never branches on a state literal.
         formula_rule = by_code.get("deposit.interest_formula")

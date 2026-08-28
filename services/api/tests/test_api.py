@@ -157,7 +157,7 @@ class TestEntitiesAndProperties:
         ).fetchone()
         assert row is not None and (row["name"], row["level"]) == ("Kentucky", "state")
         # ...and a state with no pack resolves to nothing, honestly.
-        assert make("Nashville", "TN")["jurisdiction_id"] is None
+        assert make("Indianapolis", "IN")["jurisdiction_id"] is None
 
     def test_validation_is_the_contract_not_a_suggestion(self, client: TestClient) -> None:
         assert client.post("/entities", json={"name": "", "kind": "llc"}).status_code == 422

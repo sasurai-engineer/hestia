@@ -13,7 +13,7 @@ from fastapi.testclient import TestClient
 def two_properties(clean: None, client: TestClient) -> dict[str, str]:
     entity_id = client.post("/entities", json={"name": "Cov", "kind": "llc"}).json()["id"]
     ids = {}
-    for label, city, state in (("covered", "Newport", "KY"), ("bare", "Memphis", "TN")):
+    for label, city, state in (("covered", "Newport", "KY"), ("bare", "Indianapolis", "IN")):
         ids[label] = client.post(
             "/properties",
             json={
@@ -63,12 +63,12 @@ def test_the_report_answers_every_domain(
     }
     assert set(covered["domains"]) == enum_domains
 
-    # The TN property is a gap, not a row that quietly knows nothing.
+    # The Indiana property is a gap, not a row that quietly knows nothing.
     assert [p["label"] for p in body["properties"]] == ["covered"]
     (gap,) = body["gaps"]
     assert gap["property_id"] == two_properties["bare"]
     assert gap["reason"] == "no_state_jurisdiction"
-    assert "TN" in gap["message"]
+    assert "IN" in gap["message"]
 
 
 def test_an_unregistered_calendar_key_is_reported(

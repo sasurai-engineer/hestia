@@ -84,16 +84,16 @@ def test_an_unresolved_property_reads_with_an_empty_chain(clean: None, client: T
         "/properties",
         json={
             "entity_id": entity_id,
-            "label": "nashville",
-            "street_1": "1 Broadway",
-            "city": "Nashville",
-            "state": "TN",
-            "postal_code": "37201",
+            "label": "indianapolis",
+            "street_1": "1 Monument Cir",
+            "city": "Indianapolis",
+            "state": "IN",
+            "postal_code": "46204",
             "kind": "single_family",
         },
     ).json()["id"]
     view = client.get(f"/properties/{property_id}/dossier").json()
-    assert view["jurisdiction_chain"] == []  # no TN pack: shown, not guessed
+    assert view["jurisdiction_chain"] == []  # no IN pack: shown, not guessed
     assert view["components"] == [] and view["defects"] == []
 
 

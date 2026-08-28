@@ -276,7 +276,7 @@ def test_an_unpacked_geography_records_coordinates_without_a_wrong_guess(
     census_payload = _fixture("census-geocode-newport.json")
     geographies = census_payload["result"]["addressMatches"][0]["geographies"]
     del geographies["Incorporated Places"]
-    geographies["Counties"][0]["GEOID"] = "47037"  # a county no pack seeds
+    geographies["Counties"][0]["GEOID"] = "18097"  # Marion County IN: no pack seeds it
     monkeypatch.setattr(dossier, "live_fetch", _routed(census_payload, {"features": []}))
     body = client.post(f"/properties/{newport_property}/dossier?as_of=2026-08-25").json()
     steps = _steps(body)
