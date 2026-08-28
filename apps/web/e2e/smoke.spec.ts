@@ -82,12 +82,26 @@ test('the command palette answers ⌘K and navigates', async ({ page }) => {
 test('the 11pm surface: property, symptom, proof, and the incident on the board', async ({
   page,
 }) => {
+  // This test OWNS its plumber. It previously asserted a certificate date that
+  // a different test happened to create, and when the file order changed the
+  // vendor no longer existed by the time the overlay opened — five passed, this
+  // failed, three never ran. A fixture another test owns is a fixture that
+  // moves without warning.
+  await page.goto('/vendors');
+  const plumber = `Dispatch Plumbing ${String(Date.now())}`;
+  await page.getByLabel('Name').fill(plumber);
+  await page.getByLabel('Trade').selectOption('plumbing');
+  await page.getByLabel('Liability expires').fill('2028-09-30');
+  await page.getByRole('button', { name: 'Add vendor' }).click();
+  await expect(page.getByRole('row', { name: new RegExp(plumber) })).toBeVisible();
+
   await page.goto('/');
   await page.getByRole('button', { name: 'Emergency', exact: true }).click();
   await page.getByRole('button', { name: '998 Monmouth St', exact: true }).first().click();
   await page.getByRole('button', { name: /Water — burst pipe/ }).click();
-  // The smoke vendor carries a live certificate; the proof line says so.
-  await expect(page.getByText(/insured through Jun 30, 2027/).first()).toBeVisible();
+  // The plumber above carries a live certificate; the proof line says so, and
+  // names the date it read rather than a date somebody else wrote.
+  await expect(page.getByText(/insured through Sep 30, 2028/).first()).toBeVisible();
   await page.getByRole('button', { name: 'Log with this vendor' }).first().click();
   await expect(page.getByText(/is on the maintenance board as an emergency/)).toBeVisible();
   await page.getByRole('button', { name: 'Close', exact: true }).click();
