@@ -1,5 +1,6 @@
 'use client';
 
+import { Skeleton } from '@hestia/design';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { TransactionsTable } from '../../components/TransactionsTable';
 import { api, type LedgerEntryIn, type LedgerRegister, type PropertySummary } from '../../lib/api';
@@ -141,29 +142,22 @@ export default function TransactionsPage() {
             ))}
           </select>
         </div>
-        {register ? (
-          <p className="muted">
-            In {formatTotal(register.total_in)} · Out {formatTotal(register.total_out)} · Net{' '}
-            <strong className={Number(register.net) < 0 ? 'error-note' : ''}>
-              {Number(register.net) < 0 ? '−' : ''}
-              {formatTotal(register.net)}
-            </strong>
-          </p>
-        ) : null}
+        {/* Rendered from first paint, placeholders and all: a totals line
+            that pops in later shifts the whole row (the CLS gate, #86). */}
+        <p className="muted">
+          {register ? (
+            <>
+              In {formatTotal(register.total_in)} · Out {formatTotal(register.total_out)} · Net{' '}
+              <strong className={Number(register.net) < 0 ? 'error-note' : ''}>
+                {Number(register.net) < 0 ? '−' : ''}
+                {formatTotal(register.net)}
+              </strong>
+            </>
+          ) : (
+            'In — · Out — · Net —'
+          )}
+        </p>
       </div>
-
-      <section className="section">
-        {register ? (
-          <TransactionsTable
-            events={register.events}
-            onReverse={(uuid) => {
-              void reverse(uuid);
-            }}
-          />
-        ) : (
-          <p className="muted">Loading…</p>
-        )}
-      </section>
 
       <section className="section">
         <h2 className="section__title">Record a transaction</h2>
@@ -301,6 +295,23 @@ export default function TransactionsPage() {
             {busy ? 'Recording…' : 'Record'}
           </button>
         </form>
+      </section>
+
+      {/* The register comes LAST in the DOM on purpose: it arrives late and
+          grows without bound, and content below it would be shoved down by
+          its full height — CLS 0.83 on a data-rich database (#86). Last,
+          it can shift nothing. */}
+      <section className="section">
+        {register ? (
+          <TransactionsTable
+            events={register.events}
+            onReverse={(uuid) => {
+              void reverse(uuid);
+            }}
+          />
+        ) : (
+          <Skeleton lines={6} />
+        )}
       </section>
     </>
   );
