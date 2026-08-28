@@ -75,6 +75,12 @@ export default function PortfolioPage() {
           </a>
         ))}
       </div>
+      {/* PLANT (#6 acceptance): sandstone body text on paper is a genuine
+          contrast violation the linter cannot see — only the axe gate can.
+          This line exists to prove CI goes red, then it is removed. */}
+      <p style={{ color: 'var(--sandstone)', background: 'var(--parchment)' }}>
+        planted: this sentence fails the contrast gate on purpose
+      </p>
       <section className="section">
         {adding || (properties !== null && properties.length > 0) ? (
           <>
