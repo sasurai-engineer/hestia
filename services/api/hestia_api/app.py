@@ -82,7 +82,12 @@ def get_conn() -> Iterator[psycopg.Connection[dict[str, Any]]]:
     yield from db.connection_for(config.database_url())
 
 
-Conn = Annotated[psycopg.Connection[dict[str, Any]], Depends(get_conn)]
+# scope="function" is load-bearing, not decoration. It puts the connection on
+# the exit stack FastAPI unwinds BEFORE sending the response, rather than the
+# default one it unwinds after — so the commit finishes while the caller is
+# still waiting, and the answer it gets describes state that already exists.
+# Issue #83; see db.connection_for and tests/test_transaction_boundary.py.
+Conn = Annotated[psycopg.Connection[dict[str, Any]], Depends(get_conn, scope="function")]
 Actor = Annotated[str, Header(alias="x-actor")]
 
 
