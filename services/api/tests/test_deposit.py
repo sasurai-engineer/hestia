@@ -151,6 +151,15 @@ class TestTheAcceptanceWalk:
         # A duty the pack denies is never printed as a duty.
         assert "deposit.interest_required" not in codes
 
+        # The same query shape against Ohio, which DOES owe interest: the
+        # contrast is what proves the panel reads the rule's value and not
+        # merely the row's existence.
+        ohio = make_lease(client, state="OH", city="Cincinnati", postal="45202", label="OhioX")
+        move_out(conn, ohio, "2026-08-01")
+        oh_panel = client.get(f"/leases/{ohio}/deposit?as_of=2026-08-05").json()
+        assert oh_panel["return_days"] == 30
+        assert "deposit.interest_required" in {d["code"] for d in oh_panel["duties"]}
+
         # And the sweep agrees with the panel: no deadline, and no gap either.
         sweep = client.post("/sweep/deadlines?as_of=2026-08-05").json()
         assert (
@@ -162,6 +171,58 @@ class TestTheAcceptanceWalk:
         assert not any(
             g["domain"] == "security_deposit" and g["state"] == "TN" for g in sweep["coverage_gaps"]
         )
+
+    def test_a_boolean_rule_this_build_cannot_read_is_a_gap_not_a_no(
+        self, clean: None, client: TestClient, conn: psycopg.Connection[Any]
+    ) -> None:
+        """A pack row whose value carries neither true nor false.
+
+        Reading it as "no interest is owed" would turn a broken pack into a
+        confident answer, which is the failure this module exists to refuse.
+        Sandboxed in state 'QY' — jurisdiction_rules is append-only, so a
+        bogus row planted on a real chain would poison every later test."""
+        if (
+            conn.execute(
+                "SELECT 1 AS x FROM jurisdictions WHERE state = 'QY' AND level = 'state'"
+            ).fetchone()
+            is None
+        ):
+            conn.execute(
+                """
+                WITH state_row AS (
+                  INSERT INTO jurisdictions (level, name, state, parent_id)
+                  SELECT 'state', 'Quoyland', 'QY', id
+                  FROM jurisdictions WHERE level = 'federal' RETURNING id
+                ), county_row AS (
+                  INSERT INTO jurisdictions (level, name, state, parent_id)
+                  SELECT 'county', 'Quoy County', 'QY', id FROM state_row RETURNING id
+                )
+                INSERT INTO jurisdictions (level, name, state, parent_id)
+                SELECT 'municipality', 'Quoyville', 'QY', id FROM county_row
+                """
+            )
+            conn.execute(
+                """
+                INSERT INTO jurisdiction_rules
+                  (jurisdiction_id, domain, code, value_text, citation, effective_from)
+                SELECT id, 'security_deposit', 'deposit.interest_required',
+                       'sometimes, at the landlord option',
+                       'QY Rev. Stat. 2.2 (test fixture)', DATE '2000-01-01'
+                FROM jurisdictions WHERE state = 'QY' AND level = 'state'
+                """
+            )
+            conn.commit()
+
+        lease = make_lease(client, state="QY", city="Quoyville", postal="00000", label="Quoy")
+        move_out(conn, lease, "2026-08-01")
+        panel = client.get(f"/leases/{lease}/deposit?as_of=2026-08-05").json()
+        assert panel["interest"] is None
+        gap = next(g for g in panel["gaps"] if g["code"] == "deposit.interest_required")
+        assert gap["reason"] == "unreadable_rule_value"
+        assert "QY Rev. Stat. 2.2" in gap["detail"]
+        assert "not guessed either way" in gap["detail"]
+        # The unreadable row is not printed as a duty either.
+        assert "deposit.interest_required" not in {d["code"] for d in panel["duties"]}
 
     def test_a_state_with_no_pack_reports_a_gap_and_raises_no_deadline(
         self, clean: None, client: TestClient, conn: psycopg.Connection[Any]

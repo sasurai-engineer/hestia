@@ -1179,7 +1179,14 @@ class SweepGapOut(BaseModel):
     property_id: uuid.UUID
     state: str
     domain: str
-    reason: Literal["no_state_jurisdiction", "no_rule_for_domain", "calendar_key_unregistered"]
+    reason: Literal[
+        "no_state_jurisdiction",
+        "no_rule_for_domain",
+        "calendar_key_unregistered",
+        # The pack says this state publishes its window rather than
+        # computing it, and no upcoming date is loaded.
+        "window_not_published",
+    ]
     detail: str
 
 

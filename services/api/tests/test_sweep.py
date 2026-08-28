@@ -277,7 +277,9 @@ def test_the_cross_river_portfolio_gets_both_regimes(
         )
     conn.commit()
 
-    body = client.post("/sweep/deadlines?as_of=2026-11-01").json()
+    # 2026-06-01: Kentucky's and Ohio's 2026 windows have closed, so both roll
+    # to 2027; Davidson County's published 2026 date is still ahead.
+    body = client.post("/sweep/deadlines?as_of=2026-06-01").json()
     assert body["inserted"]["assessment_appeal_window"] == 3
     (gap,) = body["coverage_gaps"]
     assert (gap["state"], gap["reason"]) == ("IN", "no_state_jurisdiction")
@@ -300,15 +302,68 @@ def test_the_cross_river_portfolio_gets_both_regimes(
     assert oh["window_opens_on"] == dt.date(2027, 1, 1)
     assert "ORC 5715.19" in oh["citation"]
     assert "DTE Form 1" in oh["note"]
-    # Tennessee's 2026 window closed August 3; the next one is a summer 2027
-    # window, and 2027-08-01 is a Sunday that TCA 1-3-102 rolls to Monday.
+    # Tennessee's date is not computed at all: it is the one Davidson County
+    # published for 2026, and the citation names the county rather than a
+    # statute, because no statute fixes it.
     assert tn["state"] == "TN"
-    assert tn["due_on"] == dt.date(2027, 8, 2)
-    assert tn["window_opens_on"] == dt.date(2027, 6, 1)
-    assert "TCA 67-5-1412" in tn["citation"]
-    assert "State Board of Equalization" in tn["note"]
+    assert tn["due_on"] == dt.date(2026, 6, 26)
+    assert tn["window_opens_on"] == dt.date(2026, 5, 26)
+    assert "Metropolitan Board of Equalization" in tn["citation"]
+    assert "Assessor of Property" in tn["citation"]
+    # The note must not let the State Board's August 1 read as the deadline.
+    assert "SECOND-level" in tn["note"]
+    assert tn["due_on"] < dt.date(2026, 8, 1)
     # Three states, three windows, no two alike — from one sweep.
     assert len({ky["due_on"], oh["due_on"], tn["due_on"]}) == 3
+
+
+def test_a_published_window_that_has_passed_is_a_named_gap_not_a_guess(
+    clean: None, client: TestClient, conn: psycopg.Connection[Any]
+) -> None:
+    """Tennessee's deadline is whatever its county board set this year, so
+    once the published date is behind us there is nothing honest to compute.
+    The sweep must say that in as many words rather than roll a year forward
+    the way a builder-backed state does — Davidson's date was June 14 in
+    2024, June 27 in 2025 and June 26 in 2026, and no rule generates it."""
+    entity_id = str(uuid.uuid4())
+    conn.execute(
+        "INSERT INTO entities (id, name, kind) VALUES (%s, 'Nashville LLC', 'llc')",
+        (entity_id,),
+    )
+    property_id = str(uuid.uuid4())
+    conn.execute(
+        """
+        INSERT INTO properties (id, entity_id, label, street_1, city, state,
+                                postal_code, kind, jurisdiction_id)
+        VALUES (%s, %s, 'weona', '2226 Weona Dr', 'Nashville', 'TN', '37206',
+                'single_family',
+                (SELECT id FROM jurisdictions
+                  WHERE name = 'Nashville' AND level = 'municipality'))
+        """,
+        (property_id, entity_id),
+    )
+    conn.commit()
+
+    # Before the published close: the real date, from the county.
+    early = client.post("/sweep/deadlines?as_of=2026-06-01").json()
+    assert early["inserted"]["assessment_appeal_window"] == 1
+    assert not [g for g in early["coverage_gaps"] if g["domain"] == "assessment_appeal"]
+
+    # After it: a gap that names why, and NO invented deadline.
+    late = client.post("/sweep/deadlines?as_of=2026-07-01").json()
+    assert "assessment_appeal_window" not in late["inserted"]
+    gap = next(g for g in late["coverage_gaps"] if g["domain"] == "assessment_appeal")
+    assert gap["reason"] == "window_not_published"
+    assert gap["property_id"] == property_id
+    assert "67-1-404" in gap["detail"]
+    assert (
+        conn.execute(
+            "SELECT count(*) AS n FROM deadlines WHERE kind = 'assessment_appeal_window'"
+            " AND property_id = %s AND due_on > DATE '2026-06-26'",
+            (property_id,),
+        ).fetchone()["n"]
+        == 0
+    )
 
 
 def test_an_empty_portfolio_sweeps_to_zero_today(clean: None, client: TestClient) -> None:

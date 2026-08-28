@@ -154,31 +154,50 @@ _REQUIREMENTS: dict[str, str] = {
     "deposit.interest_required": "pay interest on the deposit",
 }
 
+# The subset of the above whose VALUE is a truth rather than a quantity. A
+# quantity rule states its duty by existing; a boolean one states it only when
+# it says true, and says nothing readable at all when it says neither.
+_BOOLEAN_DUTIES = frozenset(
+    {
+        "urlta.deposit.separate_account_required",
+        "urlta.deposit.itemized_list_required",
+        "deposit.interest_required",
+    }
+)
 
-def _rule_is_true(row: Any) -> bool:
-    """Whether a boolean-valued rule ASSERTS its obligation.
+
+def _rule_truth(row: Any) -> bool | None:
+    """The truth a boolean rule asserts, or None where it asserts none.
 
     Presence of the row is not the answer. A pack states both halves — Ohio
     seeds `deposit.interest_required` as "true; 5% per annum ..." and
-    Tennessee seeds it "false; ...", because "no interest is owed here" is a
-    finding a pack should be able to make, and is not the same fact as
-    silence. The leading token before any semicolon carries the truth; the
-    prose after it carries the reason.
+    Tennessee as "false; ...", because "no duty is owed here" is a finding a
+    pack should be able to make and is not the same fact as silence. The
+    leading token before any semicolon carries the truth; the prose after it
+    carries the reason.
+
+    A row carrying neither token is not a quiet no. It is a rule this build
+    cannot read, and the caller names it as a gap rather than guessing which
+    way it was meant.
+
+    The sweep asks the same question in SQL (`_deposit_gaps` in sweep.py) and
+    must trim the same way, or a panel and a sweep would answer differently
+    about one lease.
     """
-    return (row["value_text"] or "").strip().lower().split(";")[0].strip() == "true"
-
-
-def _rule_is_false(row: Any) -> bool:
-    """A rule that explicitly denies its obligation, as distinct from a
-    numeric or prose rule that has no truth value at all."""
-    return (row["value_text"] or "").strip().lower().split(";")[0].strip() == "false"
+    asserted = (row["value_text"] or "").strip().lower().split(";")[0].strip()
+    if asserted == "true":
+        return True
+    if asserted == "false":
+        return False
+    return None
 
 
 def _reason(row: Any) -> str:
-    """The prose a boolean rule carries after its truth token — why the pack
-    answered the way it did, in the pack's own words."""
+    """The prose a boolean rule carries after its truth token — the pack's own
+    words for why it answered as it did."""
     _, _, rest = (row["value_text"] or "").partition(";")
-    return rest.strip() or (row["value_text"] or "").strip()
+    prose = rest.strip()
+    return prose if prose else "the pack states this and gives no further reason"
 
 
 def _rules_for(conn: Conn, lease_ids: list[str], as_of: dt.date) -> dict[str, list[Any]]:
@@ -262,12 +281,31 @@ def read(conn: Conn, lease_id: str, *, as_of: dt.date) -> DepositOut:
     by_code = {row["code"]: row for row in rules}
 
     duties: list[DutyOut] = []
+    gaps: list[GapOut] = []
     for code, row in sorted(by_code.items()):
         template = _REQUIREMENTS.get(code)
         if template is None:
             continue  # a pack may carry codes this release has no sentence for
-        if _rule_is_false(row):
-            continue  # the pack says this duty does not attach here
+        if code in _BOOLEAN_DUTIES:
+            truth = _rule_truth(row)
+            if truth is None:
+                # The row exists and this build cannot read it. Printing the
+                # duty anyway would assert an obligation nobody stated, and
+                # dropping it silently would hide a broken pack.
+                gaps.append(
+                    GapOut(
+                        code=code,
+                        reason="unreadable_rule_value",
+                        detail=(
+                            f"{row['citation']} carries neither true nor false, so "
+                            "whether this duty attaches cannot be read from the "
+                            "pack; it is not guessed either way"
+                        ),
+                    )
+                )
+                continue
+            if not truth:
+                continue  # the pack says this duty does not attach here
         value = row["value_numeric"] if row["value_numeric"] is not None else row["value_text"]
         duties.append(
             DutyOut(
@@ -277,7 +315,6 @@ def read(conn: Conn, lease_id: str, *, as_of: dt.date) -> DepositOut:
             )
         )
 
-    gaps: list[GapOut] = []
     return_rule = by_code.get("deposit.return_days")
     return_days = int(return_rule["value_numeric"]) if return_rule else None
     if return_rule is None:
@@ -287,7 +324,7 @@ def read(conn: Conn, lease_id: str, *, as_of: dt.date) -> DepositOut:
         # rule instead of a due date — the panel carries that rule and raises
         # no gap. Silence still raises one.
         stated_absent = by_code.get("deposit.return_deadline_exists")
-        if stated_absent is not None and _rule_is_false(stated_absent):
+        if stated_absent is not None and _rule_truth(stated_absent) is False:
             duties.append(
                 DutyOut(
                     code=stated_absent["code"],
@@ -314,8 +351,9 @@ def read(conn: Conn, lease_id: str, *, as_of: dt.date) -> DepositOut:
     )
 
     interest: InterestOut | None = None
+    # An unreadable value already produced its gap in the duties loop above.
     interest_rule = by_code.get("deposit.interest_required")
-    if interest_rule is not None and _rule_is_true(interest_rule):
+    if interest_rule is not None and _rule_truth(interest_rule):
         # WHICH formula is a rule too (ADR 0003): the pack names a registered
         # builder and the code never branches on a state literal.
         formula_rule = by_code.get("deposit.interest_formula")

@@ -39,9 +39,12 @@ DO $$
 DECLARE
   chain_len INT;
   tn_key TEXT;
-  memphis_key TEXT;
   ky_key TEXT;
   oh_key TEXT;
+  source_kind TEXT;
+  nash_opens DATE;
+  nash_closes DATE;
+  memphis_closes DATE;
   ratio NUMERIC;
   oh_ratio NUMERIC;
   conformity TEXT;
@@ -53,7 +56,8 @@ DECLARE
   income TEXT;
   fonce TEXT;
   urlta_notice NUMERIC;
-  non_urlta_notice NUMERIC;
+  covered_counties INT;
+  hamiltons INT;
 BEGIN
   -- Nashville -> Davidson County -> Tennessee -> United States. The
   -- consolidated metro government is still four levels deep, so resolution
@@ -66,48 +70,95 @@ BEGIN
   END IF;
   RAISE NOTICE '  ok      the Nashville chain walks four levels to the federal root';
 
-  -- THE THREE-REGIME ASSERT: one query shape, three states, no collisions.
-  tn_key := pg_temp.tn_resolve('Nashville', 'appeal.window.calendar');
+  -- THE THREE-REGIME ASSERT: one query shape, three states, three answers —
+  -- and Tennessee's answer is that there is no function to name.
   ky_key := pg_temp.tn_resolve('Newport', 'appeal.window.calendar');
   oh_key := pg_temp.tn_resolve('Cincinnati', 'appeal.window.calendar');
-  IF tn_key IS DISTINCT FROM 'us-tn.county-board' THEN
-    RAISE EXCEPTION 'Nashville resolves %, expected us-tn.county-board', tn_key;
+  tn_key := pg_temp.tn_resolve('Nashville', 'appeal.window.calendar');
+  IF ky_key = oh_key THEN
+    RAISE EXCEPTION 'Kentucky and Ohio calendars collapsed at %', ky_key;
   END IF;
-  IF ky_key = oh_key OR oh_key = tn_key OR ky_key = tn_key THEN
-    RAISE EXCEPTION 'three-regime resolution collapsed: KY=%, OH=%, TN=%',
-      ky_key, oh_key, tn_key;
+  IF tn_key IS NOT NULL THEN
+    RAISE EXCEPTION 'Tennessee names calendar %, but its deadline is an '
+      'administrative date no builder may compute', tn_key;
   END IF;
-  RAISE NOTICE '  ok      three states, three calendars: %, %, %', ky_key, oh_key, tn_key;
+  RAISE NOTICE '  ok      two computed calendars, and a third state that names none';
 
-  -- THE COUNTY OVERRIDE, which no earlier pack needed: Shelby convenes a
-  -- month before the rest of Tennessee, so the county row wins over its own
-  -- state's. Nothing in the resolver changed to allow it — depth-first
-  -- ordering already prefers the nearer row, and this proves it.
-  memphis_key := pg_temp.tn_resolve('Memphis', 'appeal.window.calendar');
-  IF memphis_key IS DISTINCT FROM 'us-tn.shelby-county-board' THEN
-    RAISE EXCEPTION 'Memphis resolves %, expected the Shelby County override',
-      memphis_key;
+  -- Instead it says WHY, so an absent date is a named gap and not silence.
+  source_kind := pg_temp.tn_resolve('Nashville', 'appeal.window.source');
+  IF source_kind IS NULL OR source_kind NOT LIKE 'published_by_county;%' THEN
+    RAISE EXCEPTION 'Tennessee does not say where its appeal date comes from: %',
+      source_kind;
   END IF;
-  IF memphis_key = tn_key THEN
-    RAISE EXCEPTION 'the Shelby override collapsed into the state calendar';
-  END IF;
-  RAISE NOTICE '  ok      a county overrides its own state calendar: Shelby sits May 1';
 
-  -- Every registry key a pack names must be shaped like one. A typo here is
-  -- a silent coverage gap at sweep time, not an error.
-  IF tn_key !~ '^us-[a-z]{2}\.[a-z0-9-]+$' OR memphis_key !~ '^us-[a-z]{2}\.[a-z0-9-]+$' THEN
-    RAISE EXCEPTION 'a Tennessee calendar key is not a registry key: %, %',
-      tn_key, memphis_key;
+  -- THE PUBLISHED WINDOW: a real date, from the county that published it,
+  -- paired to its open by effective_from. This is the county-level fact no
+  -- earlier pack needed, and the one a function would have got wrong.
+  SELECT closes.value_text::date, opens.value_text::date
+    INTO nash_closes, nash_opens
+  FROM jurisdiction_chain(
+    (SELECT id FROM jurisdictions WHERE name = 'Nashville' AND level = 'municipality')) c
+  JOIN jurisdiction_rules closes ON closes.jurisdiction_id = c.jurisdiction_id
+   AND closes.code = 'appeal.window.closes_on' AND closes.superseded_by IS NULL
+  LEFT JOIN jurisdiction_rules opens ON opens.jurisdiction_id = closes.jurisdiction_id
+   AND opens.code = 'appeal.window.opens_on' AND opens.superseded_by IS NULL
+   AND opens.effective_from = closes.effective_from
+  ORDER BY c.depth ASC, closes.value_text::date ASC
+  LIMIT 1;
+  IF nash_closes IS DISTINCT FROM DATE '2026-06-26' THEN
+    RAISE EXCEPTION 'Davidson County 2026 closes %, expected 2026-06-26', nash_closes;
   END IF;
-  RAISE NOTICE '  ok      both calendar keys are well formed';
+  IF nash_opens IS DISTINCT FROM DATE '2026-05-26' THEN
+    RAISE EXCEPTION 'the Davidson 2026 open did not pair with its close: %', nash_opens;
+  END IF;
+  -- The August 1 State Board date must never masquerade as the filing
+  -- deadline: it is 36 days later, and by then the objection is waived.
+  IF nash_closes >= DATE '2026-08-01' THEN
+    RAISE EXCEPTION 'the Davidson deadline is not earlier than the State Board date';
+  END IF;
+  RAISE NOTICE '  ok      Davidson 2026 closes June 26, a month before the State Board date';
+
+  -- Shelby publishes its own, and it differs. A statewide date would have
+  -- been wrong for at least one of them.
+  SELECT closes.value_text::date INTO memphis_closes
+  FROM jurisdiction_chain(
+    (SELECT id FROM jurisdictions WHERE name = 'Memphis' AND level = 'municipality')) c
+  JOIN jurisdiction_rules closes ON closes.jurisdiction_id = c.jurisdiction_id
+   AND closes.code = 'appeal.window.closes_on' AND closes.superseded_by IS NULL
+  ORDER BY c.depth ASC, closes.value_text::date ASC
+  LIMIT 1;
+  IF memphis_closes IS DISTINCT FROM DATE '2026-06-30' THEN
+    RAISE EXCEPTION 'Shelby County 2026 closes %, expected 2026-06-30', memphis_closes;
+  END IF;
+  IF memphis_closes = nash_closes THEN
+    RAISE EXCEPTION 'two counties in one state resolved to the same published date';
+  END IF;
+  RAISE NOTICE '  ok      two counties, two published dates, four days apart';
+
+  -- Every published date is bounded by its own year: one that outlived it
+  -- would go on being served as though it were still the answer.
+  IF EXISTS (
+    SELECT 1 FROM jurisdiction_rules r JOIN jurisdictions j ON j.id = r.jurisdiction_id
+    WHERE j.state = 'TN' AND r.code IN ('appeal.window.opens_on', 'appeal.window.closes_on')
+      AND (r.effective_to IS NULL
+           OR r.value_text::date < r.effective_from
+           OR r.value_text::date >= r.effective_to)
+  ) THEN
+    RAISE EXCEPTION 'a published Tennessee window is unbounded or outside its own year';
+  END IF;
+  RAISE NOTICE '  ok      every published date is bounded by the year it belongs to';
 
   -- Classified assessment. The line is RENTAL UNIT COUNT, not occupancy:
   -- one rental unit is residential at 25%, two or more is commercial at 40%.
   ratio := (pg_temp.tn_rule('Tennessee', 'assessment.ratio')).value_numeric;
   oh_ratio := (pg_temp.tn_rule('Ohio', 'assessment.ratio')).value_numeric;
-  IF ratio IS DISTINCT FROM 0.25::NUMERIC OR ratio = oh_ratio THEN
-    RAISE EXCEPTION 'Tennessee residential ratio is % (Ohio %), expected 0.25 and distinct',
-      ratio, oh_ratio;
+  IF ratio IS DISTINCT FROM 0.25::NUMERIC THEN
+    RAISE EXCEPTION 'Tennessee residential ratio is %, expected 0.25', ratio;
+  END IF;
+  -- Ohio's is pinned by its own pack test; this one only has to prove the
+  -- two states do not share a row, which a mis-scoped seed would break.
+  IF oh_ratio IS NULL OR ratio = oh_ratio THEN
+    RAISE EXCEPTION 'Tennessee and Ohio ratios collapsed at %', ratio;
   END IF;
   IF (pg_temp.tn_rule('Tennessee', 'assessment.ratio.commercial')).value_numeric
      IS DISTINCT FROM 0.40::NUMERIC THEN
@@ -177,8 +228,59 @@ BEGIN
   RAISE NOTICE '  ok      a third adoption shape: the county carries it, not the city';
 
   -- And because the act binds by county, the county is where its numbers
-  -- live. A Tennessee property in an unseeded county must resolve PAST them
-  -- to the non-URLTA statute, which is the law that actually governs it.
+  -- live — for ALL SEVENTEEN counties the chapter reaches, not just the two
+  -- with property in them. A county missing from this table is a county whose
+  -- landlord would be handed the law of a chapter that disclaims him.
+  SELECT count(*) INTO covered_counties
+  FROM jurisdiction_rules r JOIN jurisdictions j ON j.id = r.jurisdiction_id
+  WHERE j.state = 'TN' AND j.level = 'county'
+    AND r.code = 'urlta.adopted' AND r.value_text = 'true'
+    AND r.superseded_by IS NULL;
+  IF covered_counties <> 17 THEN
+    RAISE EXCEPTION 'the URLTA county list is % rows, expected the frozen seventeen',
+      covered_counties;
+  END IF;
+  -- Anderson clears the threshold by 129 people and Putnam misses it by
+  -- 2,679 despite passing 75,000 in the 2020 census — the two counties that
+  -- prove the list is read from the 2010 figures and is frozen there.
+  IF NOT EXISTS (
+    SELECT 1 FROM jurisdictions WHERE state = 'TN' AND name = 'Anderson County'
+  ) THEN
+    RAISE EXCEPTION 'Anderson County is missing; it qualifies by 129 people';
+  END IF;
+  -- The nineteen-county list circulating in secondary sources — including
+  -- the Attorney General's own consumer-laws page — adds these two on the
+  -- repealed 68,000 threshold. Whoever next "corrects" this pack against that
+  -- page must fail here instead of succeeding.
+  IF EXISTS (
+    SELECT 1 FROM jurisdictions WHERE state = 'TN'
+      AND name IN ('Putnam County', 'Greene County')
+  ) THEN
+    RAISE EXCEPTION 'Putnam or Greene is seeded. Both are on the widely copied '
+      'nineteen-county list and neither qualifies: 2021 Pub. Ch. 182 froze the '
+      'threshold at the 2010 census, where Putnam was 72,321 and Greene 68,831';
+  END IF;
+  RAISE NOTICE '  ok      all seventeen URLTA counties, and not the one that just missed';
+
+  -- This pack introduces the first county name shared by two states: Hamilton
+  -- County is in Ohio and in Tennessee. Anything that looks a county up by
+  -- name alone now has two answers, so pin that they are distinct rows under
+  -- distinct parents before something starts resolving by name.
+  SELECT count(*) INTO hamiltons FROM jurisdictions WHERE name = 'Hamilton County';
+  IF hamiltons <> 2 THEN
+    RAISE EXCEPTION 'expected Hamilton County in two states, found %', hamiltons;
+  END IF;
+  IF (SELECT count(DISTINCT state) FROM jurisdictions WHERE name = 'Hamilton County') <> 2 THEN
+    RAISE EXCEPTION 'the two Hamilton Counties are not in two states';
+  END IF;
+  IF (SELECT j.state FROM jurisdiction_chain(
+        (SELECT id FROM jurisdictions WHERE name = 'Cincinnati' AND level = 'municipality')) c
+      JOIN jurisdictions j ON j.id = c.jurisdiction_id
+      WHERE j.level = 'county') <> 'OH' THEN
+    RAISE EXCEPTION 'Cincinnati resolved through the wrong Hamilton County';
+  END IF;
+  RAISE NOTICE '  ok      two Hamilton Counties, and the chain still tells them apart';
+
   urlta_notice := (
     SELECT r.value_numeric
     FROM jurisdiction_chain(
@@ -186,20 +288,29 @@ BEGIN
     JOIN jurisdiction_rules r ON r.jurisdiction_id = c.jurisdiction_id
     WHERE r.code = 'urlta.notice.nonpayment_days' AND r.superseded_by IS NULL
     ORDER BY c.depth ASC LIMIT 1);
-  non_urlta_notice := (pg_temp.tn_rule('Tennessee', 'eviction.other_default_days')).value_numeric;
-  IF urlta_notice IS DISTINCT FROM 14::NUMERIC OR non_urlta_notice IS DISTINCT FROM 30::NUMERIC THEN
-    RAISE EXCEPTION 'Tennessee notice periods drifted: URLTA %, non-URLTA other %',
-      urlta_notice, non_urlta_notice;
+  IF urlta_notice IS DISTINCT FROM 14::NUMERIC THEN
+    RAISE EXCEPTION 'Tennessee URLTA nonpayment notice is %, expected 14', urlta_notice;
   END IF;
+  -- Nothing act-dependent may sit on the STATE row. The two regimes disagree
+  -- and TCA 66-7-109(g) disclaims itself in the covered counties, so a
+  -- statewide number would be wrong for one side or the other; a property
+  -- this system cannot place in a county must get a gap, not a guess.
   IF EXISTS (
     SELECT 1 FROM jurisdiction_rules r JOIN jurisdictions j ON j.id = r.jurisdiction_id
-    WHERE j.name = 'Tennessee' AND r.code LIKE 'urlta.%'
+    WHERE j.name = 'Tennessee' AND j.level = 'state'
+      AND (r.code LIKE 'urlta.%' OR r.code LIKE 'eviction.%'
+           OR r.code LIKE 'deposit.return%' OR r.code = 'rent.grace_period_days')
   ) THEN
-    RAISE EXCEPTION 'a URLTA rule is seeded on the Tennessee STATE row; a property '
-      'in a county below the population threshold would inherit law that does not '
-      'reach it';
+    RAISE EXCEPTION 'an act-dependent rule sits on the Tennessee STATE row; a '
+      'property that cannot be placed in a county would inherit a statute that '
+      'may not reach it';
   END IF;
-  RAISE NOTICE '  ok      URLTA rules sit on the counties, non-URLTA law on the state';
+  -- But the state must still say HOW to choose, or the gap is anonymous.
+  IF (pg_temp.tn_rule('Tennessee', 'ltl.applies_by')).value_text
+     NOT LIKE 'county_population;%' THEN
+    RAISE EXCEPTION 'Tennessee does not say what decides which act applies';
+  END IF;
+  RAISE NOTICE '  ok      the counties carry the numbers, the state carries the choice';
 
   -- "No interest is owed" and "no deadline exists" are FINDINGS. Ohio says
   -- interest is owed, Tennessee says it is not, and neither is silence —
