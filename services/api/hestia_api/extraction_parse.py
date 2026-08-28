@@ -36,6 +36,26 @@ MAX_LINES = 50_000
 # a line we can read, and scanning it is work an uploader chose for us.
 MAX_LINE_CHARS = 2_000
 
+# The band module 019's plausible_assessment_year enforces, named here so the
+# parser, the API and the database cannot come to disagree about what a tax
+# year is. SMALLINT already caps the column; this catches a typed 20226.
+MIN_TAX_YEAR = 1990
+MAX_TAX_YEAR = 2200
+
+
+def plausible_tax_year(raw: str) -> bool:
+    """Whether a reviewed string is a year a notice could state.
+
+    A reviewer may ratify anything the `text` datatype accepts, so a tax year
+    arrives as free text and is checked here rather than discovered as a
+    CheckViolation in the middle of a write.
+    """
+    stripped = raw.strip()
+    if not stripped.isdigit():
+        return False
+    return MIN_TAX_YEAR <= int(stripped) <= MAX_TAX_YEAR
+
+
 CERTAIN = Decimal("1")
 # A value the parser DERIVED (summed itemized lines) rather than read: right
 # in every fixture we have, but derivation is judgment, and judgment routes
@@ -54,7 +74,12 @@ class UnreadableDocument(Exception):
 class ParsedField:
     field_path: str
     raw_value: str
-    normalised_value: str
+    # None where the parser found the field but will not propose a reading —
+    # two lines claimed to be the same figure and disagreed. The review path
+    # refuses to accept a field with no proposed value (NothingToAccept), so
+    # the reviewer must correct it, which is the point: there is nothing here
+    # a single click should be able to ratify.
+    normalised_value: str | None
     confidence: Decimal
     page: int
 
@@ -254,10 +279,176 @@ def parse_settlement(lines: list[tuple[int, str]]) -> list[ParsedField]:
     return fields
 
 
+# ---------------------------------------------------------------------------
+# The assessment notice
+# ---------------------------------------------------------------------------
+
+# Additive on purpose: the settlement dictionaries above are NOT reused. A
+# path added to MONEY_LABELS would make parse_settlement emit a field the
+# settlement registry has no spec for, and documents._run_extraction drops
+# those on the floor — a silent no-op that looks like a working parser.
+
+# The settlement matcher's twin, differing in one thing: cents are optional.
+# A closing statement always prints them; an assessor prints round dollars
+# ("Total Assessed Value   $150,000") about as often as not, and
+# AMOUNT_AT_END reads those lines as carrying no amount at all. The dollar
+# sign stays mandatory — without it `Tax Year   2026` is an amount of 2026.
+NOTICE_AMOUNT_AT_END = re.compile(r"\$(?P<amount>[\d,]+(?:\.\d{2})?)\s*$")
+
+# "Tax Year 2026", "Tax Year: 2026", "TAX YEAR 2026 PAYABLE 2027". The bounded
+# gap keeps it from reaching across a table row into somebody else's column.
+TAX_YEAR_IN_LINE = re.compile(r"(?i)\btax year\b\D{0,12}(?P<year>(?:19|20)\d{2})")
+
+# Longest phrase first: 'total value' is a substring of nothing here, but
+# 'land' is a substring of 'land market value', and a shorter key matching
+# first would file a land line under the wrong path. Ordered tuple, not a
+# dict, because the order IS the rule.
+#
+# Every one of these was read off a real county form or parcel record —
+# Kentucky form 62A352 and Campbell County's PVA system, Hamilton and Warren
+# and Miami and Clark County auditor pages in Ohio, the Tennessee state TPAD
+# record and Shelby County's own card. No two states agree on wording, and
+# Shelby says "Building Appraisal" where Ohio says "Improvements".
+NOTICE_MONEY_LABELS: tuple[tuple[str, str], ...] = (
+    ("total market appraisal", "assessment.assessed_total"),
+    ("market total value", "assessment.assessed_total"),
+    ("total appraisal", "assessment.assessed_total"),
+    ("total assessment", "assessment.assessed_total"),
+    ("current market value", "assessment.assessed_total"),
+    ("proposed market value", "assessment.assessed_total"),
+    ("fair cash value", "assessment.assessed_total"),
+    ("appraised value", "assessment.assessed_total"),
+    ("assessed value", "assessment.assessed_total"),
+    ("taxable value", "assessment.assessed_total"),
+    ("total value", "assessment.assessed_total"),
+    ("land market value", "assessment.assessed_land"),
+    ("market land value", "assessment.assessed_land"),
+    ("land appraisal", "assessment.assessed_land"),
+    ("land value", "assessment.assessed_land"),
+    ("land", "assessment.assessed_land"),
+    ("market improvement value", "assessment.assessed_improvement"),
+    ("improvement value", "assessment.assessed_improvement"),
+    ("building appraisal", "assessment.assessed_improvement"),
+    ("improvements", "assessment.assessed_improvement"),
+    ("improvement", "assessment.assessed_improvement"),
+)
+
+NOTICE_DATE_LABELS = frozenset(
+    {"date", "notice date", "date mailed", "notice sent on", "date of notice"}
+)
+
+# The offices that issue these, as they sign them. Never matched against the
+# jurisdiction table — this is shown to the reviewer so they can check their
+# own pick against the paper, and nothing more.
+ASSESSING_OFFICES = (
+    "property valuation administrator",
+    "county auditor",
+    "assessor of property",
+    "county assessor",
+)
+
+
+def _notice_label(raw_label: str) -> str | None:
+    """The field a notice's label names, or None. Substring matching, because
+    a county prints 'Total Market Appraisal (100%)' and means 'total'."""
+    label = raw_label.strip().rstrip(":").lower()
+    for phrase, path in NOTICE_MONEY_LABELS:
+        if phrase in label:
+            return path
+    return None
+
+
+def _settle_candidates(path: str, found: list[tuple[str, str, int]]) -> ParsedField:
+    """One field from every line that claimed to be it.
+
+    These documents print the same idea more than once and mean different
+    things by it. A Campbell County record shows Fair Cash Value 0.00 beside
+    a Total Value of 600,000 on an ordinary house; a Tennessee card prints an
+    appraised total beside an assessed total three or four times smaller; an
+    Ohio notice prints last year's value above this year's. So agreement is
+    reported as a reading and disagreement is reported as a question — never
+    resolved by preferring whichever line came first.
+    """
+    distinct = {amount for _, amount, _ in found}
+    if len(distinct) == 1:
+        label, amount, page = found[0]
+        return ParsedField(path, f"{label} ${amount}", normalise_money(amount), DERIVED, page)
+    # No proposed value, deliberately. Offering the first reading would let a
+    # reviewer ratify Campbell County's Fair Cash Value of 0.00 with one
+    # click while the real figure sat in the next line.
+    return ParsedField(
+        path,
+        "; ".join(f"{label} ${amount}" for label, amount, _ in found),
+        None,
+        SUSPECT,
+        found[0][2],
+    )
+
+
+def parse_assessment_notice(lines: list[tuple[int, str]]) -> list[ParsedField]:
+    """What can be read off an assessment notice, and nothing beyond it.
+
+    Two things this deliberately does NOT do. It never emits
+    `assessment.value_basis`: the same card prints a market figure and a
+    taxable one that differ by a factor of three in Ohio and four in
+    Tennessee, under labels that vary county by county, and a machine that
+    guesses wrong produces a plausible number that is off by 300%. The
+    registry marks that field required, so it arrives as a flagged skeleton
+    row and a person holding the paper answers it.
+
+    And nothing here is CERTAIN. There is no standard assessment notice —
+    only Kentucky prescribes a form, Ohio fixes no fields at all and some
+    counties mail nothing per parcel, and no Tennessee county publishes its
+    card's front. Every value routes through a human by construction.
+    """
+    money: dict[str, list[tuple[str, str, int]]] = {}
+    fields: list[ParsedField] = []
+    seen: set[str] = set()
+
+    for page, line in lines:
+        text = line.strip()[:MAX_LINE_CHARS]
+        amount_at_end = NOTICE_AMOUNT_AT_END.search(text)
+        if amount_at_end is not None:
+            raw_label = text[: amount_at_end.start()]
+            path = _notice_label(raw_label)
+            if path is not None:
+                money.setdefault(path, []).append(
+                    (raw_label.strip(), amount_at_end.group("amount"), page)
+                )
+            continue
+        year = TAX_YEAR_IN_LINE.search(text)
+        if year is not None and "assessment.tax_year" not in seen:
+            seen.add("assessment.tax_year")
+            fields.append(
+                ParsedField("assessment.tax_year", text, year.group("year"), DERIVED, page)
+            )
+            continue
+        office = next((o for o in ASSESSING_OFFICES if o in text.lower()), None)
+        if office is not None and "assessment.assessing_body" not in seen:
+            seen.add("assessment.assessing_body")
+            fields.append(ParsedField("assessment.assessing_body", text, text, SUSPECT, page))
+            continue
+        labeled = LABELED_LINE.match(text)
+        if labeled and labeled.group("label").strip().lower() in NOTICE_DATE_LABELS:
+            if "assessment.notice_date" in seen:
+                continue
+            seen.add("assessment.notice_date")
+            raw = labeled.group("value").strip()
+            normalised = normalise_date(raw)
+            if normalised is None:
+                fields.append(ParsedField("assessment.notice_date", raw, raw, SUSPECT, page))
+            else:
+                fields.append(ParsedField("assessment.notice_date", raw, normalised, DERIVED, page))
+
+    fields.extend(_settle_candidates(path, found) for path, found in money.items())
+    return fields
+
+
 # Which parser reads which document kind. Kinds absent here upload fine and
 # wait, honestly unextracted, for their parser (or the model seam) to exist.
 PARSERS = {
     "settlement_statement": parse_settlement,
+    "assessment_notice": parse_assessment_notice,
 }
 
 

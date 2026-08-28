@@ -1180,3 +1180,146 @@ SELECT assert_accepted(
             '33333333-3333-3333-3333-333333333333', 'KRS 133.045')$$,
   'the following year is a different deadline');
 
+
+\echo ''
+\echo 'property tax assessments'
+SELECT assert_accepted(
+  $$INSERT INTO assessments (id, property_id, jurisdiction_id, tax_year, value_basis,
+      assessed_land, assessed_improvement, assessed_total, notice_received_on,
+      millage_rate, provenance_id)
+    VALUES ('46464646-4646-4646-8646-464646460001',
+            '33333333-3333-3333-3333-333333333333',
+            '77777777-7777-7777-7777-777777777777', 2026, 'taxable',
+            30000, 130000, 160000, '2026-05-04', 0.910000,
+            '22222222-2222-2222-2222-222222222222')$$,
+  'a 2026 notice transcribed whole');
+SELECT assert_rejected(
+  $$INSERT INTO assessments (property_id, jurisdiction_id, tax_year, value_basis,
+      assessed_total, provenance_id)
+    VALUES ('33333333-3333-3333-3333-333333333333',
+            '77777777-7777-7777-7777-777777777777', 2026, 'taxable', 170000,
+            '22222222-2222-2222-2222-222222222222')$$,
+  'one_body_one_year_one_basis',
+  'the same body stating the same figure for the same year twice');
+SELECT assert_accepted(
+  $$INSERT INTO assessments (property_id, jurisdiction_id, tax_year, value_basis,
+      assessed_total, provenance_id)
+    VALUES ('33333333-3333-3333-3333-333333333333',
+            '77777777-7777-7777-7777-777777777777', 2025, 'taxable', 0,
+            '22222222-2222-2222-2222-222222222222')$$,
+  'a fully exempt parcel, assessed at zero');
+SELECT assert_rejected(
+  $$INSERT INTO assessments (property_id, jurisdiction_id, tax_year, value_basis,
+      assessed_total, provenance_id)
+    VALUES ('33333333-3333-3333-3333-333333333333',
+            '77777777-7777-7777-7777-777777777777', 2024, 'taxable', -1,
+            '22222222-2222-2222-2222-222222222222')$$,
+  'money_nonneg_check', 'an assessment worth less than nothing');
+SELECT assert_rejected(
+  $$INSERT INTO assessments (property_id, jurisdiction_id, tax_year, value_basis,
+      assessed_land, assessed_total, provenance_id)
+    VALUES ('33333333-3333-3333-3333-333333333333',
+            '77777777-7777-7777-7777-777777777777', 2023, 'taxable', -1, 160000,
+            '22222222-2222-2222-2222-222222222222')$$,
+  'money_nonneg_check', 'a land line below zero');
+SELECT assert_rejected(
+  $$INSERT INTO assessments (property_id, jurisdiction_id, tax_year, value_basis,
+      assessed_land, assessed_total, provenance_id)
+    VALUES ('33333333-3333-3333-3333-333333333333',
+            '77777777-7777-7777-7777-777777777777', 2022, 'taxable', 200000, 160000,
+            '22222222-2222-2222-2222-222222222222')$$,
+  'assessed_land_within_total', 'more land than whole property');
+-- Accepted ON PURPOSE, and this is the assertion that matters most in this
+-- block: an improvement line ABOVE the total is what a notice prints when the
+-- total is net of an exemption the parts are gross of. A later reader who
+-- "tidies up" assessed_land_within_total into a symmetric parts-within-total
+-- rule breaks here rather than in a Kentucky owner's face.
+SELECT assert_accepted(
+  $$INSERT INTO assessments (property_id, jurisdiction_id, tax_year, value_basis,
+      assessed_improvement, assessed_total, provenance_id)
+    VALUES ('33333333-3333-3333-3333-333333333333',
+            '77777777-7777-7777-7777-777777777777', 2021, 'taxable', 200000, 160000,
+            '22222222-2222-2222-2222-222222222222')$$,
+  'an improvement line gross of an exemption the total is net of');
+SELECT assert_rejected(
+  $$INSERT INTO assessments (property_id, jurisdiction_id, tax_year, value_basis,
+      assessed_total, provenance_id)
+    VALUES ('33333333-3333-3333-3333-333333333333',
+            '77777777-7777-7777-7777-777777777777', 1899, 'taxable', 160000,
+            '22222222-2222-2222-2222-222222222222')$$,
+  'plausible_assessment_year', 'a tax year no notice states');
+SELECT assert_rejected(
+  $$INSERT INTO assessments (property_id, jurisdiction_id, tax_year, value_basis,
+      assessed_total, notice_received_on, provenance_id)
+    VALUES ('33333333-3333-3333-3333-333333333333',
+            '77777777-7777-7777-7777-777777777777', 2020, 'taxable', 160000, '2010-05-04',
+            '22222222-2222-2222-2222-222222222222')$$,
+  'notice_not_before_its_year',
+  'a notice dated a decade before the year it assesses');
+-- Ohio mails the reappraisal notice in the autumn BEFORE the tax year it
+-- sets. The lower bound is year-1 precisely so this is not refused.
+SELECT assert_accepted(
+  $$INSERT INTO assessments (property_id, jurisdiction_id, tax_year, value_basis,
+      assessed_total, notice_received_on, provenance_id)
+    VALUES ('33333333-3333-3333-3333-333333333333',
+            '77777777-7777-7777-7777-777777777777', 2019, 'taxable', 160000, '2018-10-15',
+            '22222222-2222-2222-2222-222222222222')$$,
+  'a reappraisal notice mailed the autumn before its tax year');
+SELECT assert_rejected(
+  $$INSERT INTO assessments (property_id, jurisdiction_id, tax_year, value_basis,
+      assessed_total, millage_rate, provenance_id)
+    VALUES ('33333333-3333-3333-3333-333333333333',
+            '77777777-7777-7777-7777-777777777777', 2018, 'taxable', 160000, -0.001,
+            '22222222-2222-2222-2222-222222222222')$$,
+  'millage_rate_nonneg', 'a negative rate of tax');
+-- NOT NULL carries no constraint name, so assert_rejected would report
+-- '<trigger>' and read as a lie. Asserted directly instead.
+DO $$
+BEGIN
+  BEGIN
+    INSERT INTO assessments (property_id, jurisdiction_id, tax_year, value_basis,
+                             assessed_total)
+    VALUES ('33333333-3333-3333-3333-333333333333',
+            '77777777-7777-7777-7777-777777777777', 2017, 'taxable', 160000);
+    RAISE EXCEPTION 'CONSTRAINT DID NOT BITE: an assessment with no author was accepted';
+  EXCEPTION WHEN not_null_violation THEN
+    RAISE NOTICE '  ok      rejected by NOT NULL: an assessment that will not say how we know it';
+  END;
+END $$;
+-- The basis is the difference between a number and a number three times too
+-- large, so it is not optional and there is nothing to fall back on.
+DO $$
+BEGIN
+  BEGIN
+    INSERT INTO assessments (property_id, jurisdiction_id, tax_year,
+                             assessed_total, provenance_id)
+    VALUES ('33333333-3333-3333-3333-333333333333',
+            '77777777-7777-7777-7777-777777777777', 2016, 160000,
+            '22222222-2222-2222-2222-222222222222');
+    RAISE EXCEPTION 'CONSTRAINT DID NOT BITE: an assessment that will not say '
+      'whether it is a market or a taxable figure was accepted';
+  EXCEPTION WHEN not_null_violation THEN
+    RAISE NOTICE '  ok      rejected by NOT NULL: an assessment with no stated basis';
+  END;
+END $$;
+-- Tennessee prints both figures on one card for one parcel and one year. The
+-- widened key exists so an owner can transcribe the card whole rather than
+-- choosing which half to keep.
+SELECT assert_accepted(
+  $$INSERT INTO assessments (property_id, jurisdiction_id, tax_year, value_basis,
+      assessed_total, provenance_id)
+    VALUES ('33333333-3333-3333-3333-333333333333',
+            '77777777-7777-7777-7777-777777777777', 2026, 'market', 640000,
+            '22222222-2222-2222-2222-222222222222')$$,
+  'the market half of a notice whose taxable half is already recorded');
+-- window_ordered has stood since module 004 without ever being shown to
+-- reject anything, which by this file's opening line makes it a comment. It
+-- is an appeal on the assessment recorded above, so it belongs here.
+SELECT assert_rejected(
+  $$INSERT INTO assessment_appeals (assessment_id, window_opens_on, window_closes_on)
+    VALUES ('46464646-4646-4646-8646-464646460001', '2026-05-04', '2026-05-01')$$,
+  'window_ordered', 'an appeal window that closes before it opens');
+SELECT assert_accepted(
+  $$INSERT INTO assessment_appeals (assessment_id, window_opens_on, window_closes_on)
+    VALUES ('46464646-4646-4646-8646-464646460001', '2026-05-04', '2026-05-18')$$,
+  'the KRS 133.045 inspection period, in order');

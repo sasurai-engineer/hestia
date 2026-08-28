@@ -575,10 +575,16 @@ class TestReviewFindings:
         for year, land, total in ((2019, 30000, 160000), (2026, 90000, 300000)):
             conn.execute(
                 """
+                WITH source AS (
+                  INSERT INTO provenance (kind, confidence, source_label)
+                  VALUES ('owner_stated', 1.0, 'assessment fixture') RETURNING id
+                )
                 INSERT INTO assessments
-                  (property_id, jurisdiction_id, tax_year, assessed_land, assessed_total)
-                VALUES (%s, %s, %s, %s, %s)
-                ON CONFLICT (property_id, jurisdiction_id, tax_year) DO NOTHING
+                  (property_id, jurisdiction_id, tax_year, value_basis,
+                   assessed_land, assessed_total, provenance_id)
+                SELECT %s, %s, %s, 'taxable', %s, %s, source.id FROM source
+                ON CONFLICT (property_id, jurisdiction_id, tax_year, value_basis)
+                DO NOTHING
                 """,
                 (newport_property, KY_STATE, year, land, total),
             )
@@ -925,10 +931,16 @@ class TestApply:
     def seed_assessment(self, conn: psycopg.Connection[Any], property_id: str) -> None:
         conn.execute(
             """
+            WITH source AS (
+              INSERT INTO provenance (kind, confidence, source_label)
+              VALUES ('owner_stated', 1.0, 'assessment fixture') RETURNING id
+            )
             INSERT INTO assessments
-              (property_id, jurisdiction_id, tax_year, assessed_land, assessed_total)
-            VALUES (%s, %s, 2019, 30000, 160000)
-            ON CONFLICT (property_id, jurisdiction_id, tax_year) DO NOTHING
+              (property_id, jurisdiction_id, tax_year, value_basis,
+               assessed_land, assessed_total, provenance_id)
+            SELECT %s, %s, 2019, 'taxable', 30000, 160000, source.id FROM source
+            ON CONFLICT (property_id, jurisdiction_id, tax_year, value_basis)
+            DO NOTHING
             """,
             (property_id, KY_STATE),
         )

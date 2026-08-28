@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import datetime as dt
 import uuid
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from decimal import Decimal
 from typing import Annotated, Any, Literal
 
@@ -32,6 +32,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from hestia_api import (
+    assessments,
     bank_import,
     config,
     coverage,
@@ -1427,7 +1428,11 @@ def apply_document(
             status_code=409,
             detail=f"apply requires status confirmed; the document is {error}",
         ) from error
-    except (documents.NotExactlyOneProperty, documents.InvalidAllocation) as error:
+    except (
+        documents.NotExactlyOneProperty,
+        documents.InvalidAllocation,
+        documents.WrongApplyKind,
+    ) as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
     db.record_audit(
         conn,
@@ -2040,5 +2045,105 @@ def return_deposit(
         table_name="leases",
         record_id=str(lease_id),
         after_value=result.model_dump(mode="json"),
+    )
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Assessments: what a body says a property is worth
+# ---------------------------------------------------------------------------
+
+
+def _record_assessment(
+    write: Callable[[], assessments.AssessmentOut],
+) -> assessments.AssessmentOut:
+    """One error map for one writer. Both doors into `assessments` refuse for
+    the same reasons in the same words; two ladders would drift apart on the
+    first wording change."""
+    try:
+        return write()
+    except documents.UnknownDocument as error:
+        raise HTTPException(status_code=404, detail="document not found") from error
+    except assessments.UnknownProperty as error:
+        raise HTTPException(status_code=404, detail="property not found") from error
+    except documents.AlreadyApplied as error:
+        raise HTTPException(
+            status_code=409, detail="already applied; a document applies exactly once"
+        ) from error
+    except documents.NotConfirmed as error:
+        raise HTTPException(
+            status_code=409,
+            detail=f"apply requires status confirmed; the document is {error}",
+        ) from error
+    except assessments.DuplicateAssessment as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    except (
+        assessments.NotAGoverningBody,
+        assessments.UnusableValue,
+        documents.WrongApplyKind,
+        documents.NotExactlyOneProperty,
+    ) as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    except assessments.JurisdictionUnavailable as error:
+        raise HTTPException(
+            status_code=503,
+            detail=(f"no jurisdiction pack is loaded for {error}; see GET /coverage/jurisdictions"),
+        ) from error
+
+
+@app.post("/assessments", response_model=assessments.AssessmentOut, status_code=201)
+def create_assessment(
+    body: assessments.AssessmentIn, conn: Conn, request: Request, actor: Actor = "system"
+) -> assessments.AssessmentOut:
+    result = _record_assessment(lambda: assessments.record(conn, body, actor))
+    # The created ROW, not the request body: the body may omit the
+    # jurisdiction, and an audit reader needs what was written.
+    _audit(
+        conn,
+        request,
+        actor,
+        "assessment.create",
+        "assessments",
+        result.id,
+        result.model_dump(mode="json"),
+    )
+    return result
+
+
+@app.post(
+    "/documents/{document_id}/apply-assessment",
+    response_model=assessments.AssessmentOut,
+    status_code=201,
+)
+def apply_assessment_notice(
+    document_id: uuid.UUID,
+    body: assessments.NoticeApplyIn,
+    conn: Conn,
+    request: Request,
+    actor: Actor = "system",
+) -> assessments.AssessmentOut:
+    result = _record_assessment(
+        lambda: assessments.apply_notice(conn, str(document_id), body, actor)
+    )
+    _audit(
+        conn,
+        request,
+        actor,
+        "assessment.create",
+        "assessments",
+        result.id,
+        result.model_dump(mode="json"),
+    )
+    # The document changed state too, and every mutation owes a row. The same
+    # action string as /documents/{id}/apply, so "what closed this document" is
+    # one audit query however it was closed.
+    _audit(
+        conn,
+        request,
+        actor,
+        "documents.apply",
+        "source_documents",
+        str(document_id),
+        {"kind": "assessment_notice", "assessment_id": result.id},
     )
     return result

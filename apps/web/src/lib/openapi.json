@@ -253,6 +253,268 @@
         "title": "ApplySuggestion",
         "type": "object"
       },
+      "AssessmentIn": {
+        "description": "A notice typed off the paper.",
+        "properties": {
+          "assessed_improvement": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,16}|(?=[\\d.]{1,19}0*$)\\d{0,16}\\.\\d{0,2}0*$)",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assessed Improvement"
+          },
+          "assessed_land": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,16}|(?=[\\d.]{1,19}0*$)\\d{0,16}\\.\\d{0,2}0*$)",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assessed Land"
+          },
+          "assessed_total": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,16}|(?=[\\d.]{1,19}0*$)\\d{0,16}\\.\\d{0,2}0*$)",
+                "type": "string"
+              }
+            ],
+            "title": "Assessed Total"
+          },
+          "jurisdiction_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jurisdiction Id"
+          },
+          "notice_received_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notice Received On"
+          },
+          "property_id": {
+            "format": "uuid",
+            "title": "Property Id",
+            "type": "string"
+          },
+          "tax_year": {
+            "maximum": 2200.0,
+            "minimum": 1990.0,
+            "title": "Tax Year",
+            "type": "integer"
+          },
+          "value_basis": {
+            "enum": [
+              "market",
+              "taxable"
+            ],
+            "title": "Value Basis",
+            "type": "string"
+          }
+        },
+        "required": [
+          "property_id",
+          "tax_year",
+          "value_basis",
+          "assessed_total"
+        ],
+        "title": "AssessmentIn",
+        "type": "object"
+      },
+      "AssessmentOut": {
+        "properties": {
+          "assessed_improvement": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assessed Improvement"
+          },
+          "assessed_land": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assessed Land"
+          },
+          "assessed_total": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Assessed Total",
+            "type": "string"
+          },
+          "change_from_prior": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change From Prior"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "jurisdiction": {
+            "title": "Jurisdiction",
+            "type": "string"
+          },
+          "jurisdiction_id": {
+            "title": "Jurisdiction Id",
+            "type": "string"
+          },
+          "land_share": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Land Share"
+          },
+          "notice_received_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notice Received On"
+          },
+          "prior_tax_year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prior Tax Year"
+          },
+          "property_id": {
+            "title": "Property Id",
+            "type": "string"
+          },
+          "provenance_kind": {
+            "title": "Provenance Kind",
+            "type": "string"
+          },
+          "source_document_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Document Id"
+          },
+          "source_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Label"
+          },
+          "tax_year": {
+            "title": "Tax Year",
+            "type": "integer"
+          },
+          "value_basis": {
+            "title": "Value Basis",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "property_id",
+          "jurisdiction_id",
+          "jurisdiction",
+          "tax_year",
+          "value_basis",
+          "assessed_land",
+          "assessed_improvement",
+          "assessed_total",
+          "notice_received_on",
+          "land_share",
+          "prior_tax_year",
+          "change_from_prior",
+          "provenance_kind",
+          "confidence",
+          "source_label",
+          "source_document_id",
+          "created_at"
+        ],
+        "title": "AssessmentOut",
+        "type": "object"
+      },
       "BankAccountIn": {
         "properties": {
           "account_last4": {
@@ -593,6 +855,10 @@
       },
       "ChainLink": {
         "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
           "level": {
             "title": "Level",
             "type": "string"
@@ -603,6 +869,7 @@
           }
         },
         "required": [
+          "id",
           "name",
           "level"
         ],
@@ -2582,6 +2849,13 @@
       },
       "DossierView": {
         "properties": {
+          "assessments": {
+            "items": {
+              "$ref": "#/components/schemas/AssessmentOut"
+            },
+            "title": "Assessments",
+            "type": "array"
+          },
           "city": {
             "title": "City",
             "type": "string"
@@ -2711,7 +2985,8 @@
           "hazards",
           "components",
           "defects",
-          "deadlines"
+          "deadlines",
+          "assessments"
         ],
         "title": "DossierView",
         "type": "object"
@@ -4013,6 +4288,25 @@
           "reason"
         ],
         "title": "NeedsClassification",
+        "type": "object"
+      },
+      "NoticeApplyIn": {
+        "description": "The one decision applying a notice asks for; every number comes off the\nreviewed document.",
+        "properties": {
+          "jurisdiction_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jurisdiction Id"
+          }
+        },
+        "title": "NoticeApplyIn",
         "type": "object"
       },
       "NoticeIn": {
@@ -7046,6 +7340,56 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/assessments": {
+      "post": {
+        "operationId": "create_assessment_assessments_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssessmentIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Assessment"
+      }
+    },
     "/bank/accounts": {
       "get": {
         "operationId": "list_bank_accounts_bank_accounts_get",
@@ -8094,6 +8438,66 @@
           }
         },
         "summary": "Apply Document"
+      }
+    },
+    "/documents/{document_id}/apply-assessment": {
+      "post": {
+        "operationId": "apply_assessment_notice_documents__document_id__apply_assessment_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Document Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoticeApplyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Apply Assessment Notice"
       }
     },
     "/documents/{document_id}/content": {

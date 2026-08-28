@@ -17,3 +17,4 @@
 \ir 016_maintenance.sql
 \ir 017_replacement_history.sql
 \ir 018_screening.sql
+\ir 019_assessment_records.sql

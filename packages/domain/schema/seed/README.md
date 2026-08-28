@@ -8,7 +8,7 @@ answer questions instead of holding them (ADR 0003 — jurisdiction is data).
 | Range | Contents |
 |---|---|
 | `899_federal.sql` | The federal tier: the root jurisdiction row and rules that apply identically in all fifty states. Sorts before every pack; every pack may assume it is installed and nothing else. |
-| `900–949` | State packs, one file per state: `9NN_jurisdictions_xx.sql`. |
+| `900–949` | State packs, one file per state (`9NN_jurisdictions_xx.sql`), and the registry seeds that are data rather than structure: `905` and `908` are `extraction_field_specs` rows for a document kind, `906` names a deposit-interest formula builder. A registry seed is not a pack and needs no pack test. |
 | `950+` | Demo data and corrections. |
 
 The migration runner (`scripts/migrate.py`) discovers seeds by glob — a new

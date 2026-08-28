@@ -13,6 +13,8 @@ from typing import Any
 import psycopg
 from pydantic import BaseModel
 
+from hestia_api import assessments as assessment_records
+
 Conn = psycopg.Connection[dict[str, Any]]
 
 
@@ -32,6 +34,9 @@ class PropertySummary(BaseModel):
 
 
 class ChainLink(BaseModel):
+    # The picker that chooses an assessment's issuing body sends an id, and
+    # this list is exactly the set the API will accept.
+    id: str
     name: str
     level: str
 
@@ -98,6 +103,10 @@ class DossierView(BaseModel):
     components: list[ComponentOut]
     defects: list[DefectOut]
     deadlines: list[DeadlineOut]
+    # Newest tax year first. The appeal card reads these beside the
+    # assessment_appeal_window deadline above: what the body said, when the
+    # notice came, and how far the value moved since that body last spoke.
+    assessments: list[assessment_records.AssessmentOut]
 
 
 def list_properties(conn: Conn) -> list[PropertySummary]:
@@ -137,7 +146,7 @@ def dossier_view(conn: Conn, property_id: str) -> DossierView | None:
     if prop["jurisdiction_id"] is not None:
         chain = conn.execute(
             """
-            SELECT j.name, j.level::text
+            SELECT j.id::text AS id, j.name, j.level::text
             FROM jurisdiction_chain(%s) c
             JOIN jurisdictions j ON j.id = c.jurisdiction_id
             ORDER BY c.depth
@@ -197,6 +206,7 @@ def dossier_view(conn: Conn, property_id: str) -> DossierView | None:
         components=[ComponentOut(**c) for c in components],
         defects=[DefectOut(**d) for d in defects],
         deadlines=[DeadlineOut(**d) for d in deadlines],
+        assessments=assessment_records.for_property(conn, property_id),
     )
 
 
