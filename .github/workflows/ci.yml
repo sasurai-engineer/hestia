@@ -147,8 +147,14 @@ jobs:
       # best practices >= 95, asserted by @lhci/cli against the production
       # build (lighthouserc.json starts `next start` itself; the API service
       # above is still running, so server-rendered pages answer honestly).
+      # --no-sandbox is CI-only: ubuntu-latest restricts unprivileged user
+      # namespaces via AppArmor, so chrome-launcher's default launch dies with
+      # "No usable sandbox!". The browser renders only our own localhost app
+      # here; local runs keep the sandbox.
       - name: Lighthouse budgets
-        run: pnpm --filter @hestia/web run lighthouse
+        run: >-
+          pnpm --filter @hestia/web run lighthouse --
+          --collect.settings.chromeFlags="--no-sandbox"
       # The wire truth from the build's own manifest: every route's
       # first-load JavaScript stays under the gzip budget.
       - name: First-load JS budget
