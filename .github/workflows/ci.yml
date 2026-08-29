@@ -239,6 +239,10 @@ jobs:
         run: uv run python scripts/tests/test_migrate.py
       - name: Bundle budget self-test
         run: uv run python scripts/tests/test_bundle_budget.py
+      - name: Turbo inputs law + self-test
+        run: |
+          uv run python scripts/tests/test_turbo_inputs.py
+          uv run python scripts/check_turbo_inputs.py
       # Unconditional: the simulation service exists, so a skip-guard here
       # would be a gate that can quietly stop gating.
       - name: Simulation tests with coverage gate

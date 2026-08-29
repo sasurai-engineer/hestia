@@ -1,4 +1,5 @@
 {
+  "//": "Task inputs are the hash. A task whose inputs omit a file it reads will replay a cached pass after that file changes -- which is a gate reporting a run that never happened. tests/** and fixtures/** are listed because apps/web keeps its entire suite in tests/, packages/design keeps the livery laws there, and packages/engines proves itself against fixtures/engine-fixtures.json.",
   "$schema": "https://turbo.build/schema.json",
   "ui": "stream",
   "globalDependencies": ["tsconfig.base.json", "biome.json", ".nvmrc", "pnpm-workspace.yaml"],
@@ -10,22 +11,22 @@
     },
     "typecheck": {
       "dependsOn": ["^build"],
-      "inputs": ["src/**", "tsconfig*.json"],
+      "inputs": ["src/**", "tests/**", "e2e/**", "tsconfig*.json"],
       "outputs": []
     },
     "test": {
       "dependsOn": ["^build"],
-      "inputs": ["src/**", "vitest.config.*"],
+      "inputs": ["src/**", "tests/**", "fixtures/**", "vitest.config.*"],
       "outputs": []
     },
     "test:coverage": {
       "dependsOn": ["^build"],
-      "inputs": ["src/**", "vitest.config.*"],
+      "inputs": ["src/**", "tests/**", "fixtures/**", "vitest.config.*"],
       "outputs": ["coverage/**"]
     },
     "test:mutation": {
       "dependsOn": ["^build"],
-      "inputs": ["src/**", "stryker.config.*", "vitest.config.*"],
+      "inputs": ["src/**", "tests/**", "fixtures/**", "stryker.config.*", "vitest.config.*"],
       "outputs": ["reports/mutation/**"]
     },
     "@hestia/web#build": {
