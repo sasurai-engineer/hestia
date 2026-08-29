@@ -6,6 +6,7 @@
       "url": [
         "http://localhost:3000/",
         "http://localhost:3000/transactions",
+        "http://localhost:3000/transactions/import",
         "http://localhost:3000/vendors",
         "http://localhost:3000/calendar"
       ],
@@ -16,9 +17,24 @@
     },
     "assert": {
       "assertions": {
-        "categories:performance": ["error", { "minScore": 0.9 }],
-        "categories:accessibility": ["error", { "minScore": 0.95 }],
-        "categories:best-practices": ["error", { "minScore": 0.95 }]
+        "categories:performance": [
+          "error",
+          {
+            "minScore": 0.9
+          }
+        ],
+        "categories:accessibility": [
+          "error",
+          {
+            "minScore": 0.95
+          }
+        ],
+        "categories:best-practices": [
+          "error",
+          {
+            "minScore": 0.95
+          }
+        ]
       }
     }
   }
