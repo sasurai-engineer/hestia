@@ -66,24 +66,41 @@ function ScheduleTable({ schedule }: { schedule: ScheduleOut }) {
 
 function PaymentForm({
   debt,
-  schedule,
+  amortizing,
   today,
   onRecord,
 }: {
   debt: DebtOut;
-  schedule: ScheduleOut | null;
+  amortizing: boolean;
   today: string;
   onRecord: (debtId: string, body: Parameters<typeof api.recordDebtPayment>[1]) => void;
 }) {
   const [paidOn, setPaidOn] = useState(today);
+  // `null` means the operator has not touched the field, so the figure shown
+  // is the engine's suggestion and travels as null — the server recomputes
+  // it from paid_on and gets the same answer. A figure they typed travels
+  // verbatim, because that is them stating what the lender actually applied.
   const [interest, setInterest] = useState<string | null>(null);
   const [principal, setPrincipal] = useState<string | null>(null);
   const [extraPrincipal, setExtraPrincipal] = useState('0');
   const [postToLedger, setPostToLedger] = useState(true);
-  // The engine's split for the period is the suggestion; a cleared field
-  // means "take the engine's figure", which is also what the server does.
-  const interestValue = interest ?? schedule?.next_interest ?? '';
-  const principalValue = principal ?? schedule?.next_principal ?? '';
+  // The suggestion is fetched AS OF the date the money carries. A payment
+  // dated in June is split by June's row, not by the row for the day the
+  // panel happened to load (#99).
+  const [suggestion, setSuggestion] = useState<ScheduleOut | null>(null);
+  useEffect(() => {
+    if (!amortizing || paidOn === '') return;
+    api
+      .debtSchedule(debt.id, paidOn)
+      .then(setSuggestion)
+      .catch(() => {
+        setSuggestion(null);
+      });
+  }, [debt.id, amortizing, paidOn]);
+
+  const stated = (value: string | null) => (value === null || value === '' ? null : value);
+  const interestValue = interest ?? suggestion?.next_interest ?? '';
+  const principalValue = principal ?? suggestion?.next_principal ?? '';
   return (
     <form
       className="form-row"
@@ -91,8 +108,8 @@ function PaymentForm({
         event.preventDefault();
         onRecord(debt.id, {
           paid_on: paidOn,
-          interest: interestValue === '' ? null : interestValue,
-          principal: principalValue === '' ? null : principalValue,
+          interest: stated(interest),
+          principal: stated(principal),
           extra_principal: extraPrincipal === '' ? '0' : extraPrincipal,
           // Escrow stays out of the v1 form; the default it means is zero.
           escrow: '0',
@@ -233,7 +250,7 @@ function NoteCard({
       ) : null}
       {retired ? null : (
         <>
-          <PaymentForm debt={debt} schedule={schedule} today={today} onRecord={onRecord} />
+          <PaymentForm debt={debt} amortizing={amortizing} today={today} onRecord={onRecord} />
           <p>
             <Button
               variant="quiet"

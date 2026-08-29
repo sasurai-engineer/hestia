@@ -6,7 +6,16 @@
  * arithmetic of its own beyond exact money comparison: the figures are the
  * engine's, passed through.
  */
-import { abs, add, equals, lessThan, money, subtract, toDecimalString } from '@hestia/domain';
+import {
+  abs,
+  add,
+  equals,
+  isZero,
+  lessThan,
+  money,
+  subtract,
+  toDecimalString,
+} from '@hestia/domain';
 import type { DebtOut, LedgerEventOut, ScheduleOut } from './api';
 
 export interface NoteSplit {
@@ -85,17 +94,28 @@ export function matchOffers(
 }
 
 /** The AcceptIn splits for a row settled by a note: the engine's figures,
- * carrying the row's own sign so the pair sums to the row exactly. */
+ * carrying the row's own sign so the pair sums to the row exactly.
+ *
+ * A zero leg is omitted, mirroring the server's own convention: the ledger
+ * refuses a zero amount, so emitting one turned an offered accept into a 422
+ * for every 0%-rate note and for a final row whose interest rounds away. The
+ * surviving leg still sums to the row exactly, because the other was zero. */
 export function acceptSplits(
   rowAmount: string,
   split: NoteSplit,
 ): { category: 'mortgage_interest' | 'mortgage_principal'; amount: string }[] {
   const outflow = lessThan(money(rowAmount), money('0'));
   const signed = (value: string) => (outflow ? `-${value}` : value);
-  return [
-    { category: 'mortgage_interest', amount: signed(split.interest) },
-    { category: 'mortgage_principal', amount: signed(split.principal) },
-  ];
+  const legs: { category: 'mortgage_interest' | 'mortgage_principal'; amount: string }[] = [];
+  for (const [category, value] of [
+    ['mortgage_interest', split.interest],
+    ['mortgage_principal', split.principal],
+  ] as const) {
+    if (!isZero(money(value))) {
+      legs.push({ category, amount: signed(value) });
+    }
+  }
+  return legs;
 }
 
 export type RegisterLine =

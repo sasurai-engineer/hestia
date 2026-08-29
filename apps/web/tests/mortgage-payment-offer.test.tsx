@@ -80,17 +80,43 @@ describe('MortgagePaymentOffer', () => {
     });
   });
 
-  it('waits for a date rather than guessing one', async () => {
+  it('names the path without a date, but promises no figures', async () => {
     vi.spyOn(api, 'listDebts').mockResolvedValue([NOTE]);
-    vi.spyOn(api, 'debtSchedule').mockResolvedValue(SCHEDULE);
+    const scheduleSpy = vi.spyOn(api, 'debtSchedule').mockResolvedValue(SCHEDULE);
     render(<MortgagePaymentOffer propertyId="p1" occurredOn="" onRecorded={vi.fn()} />);
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Record through/ })).toBeDefined();
+      expect(screen.getByText(/This looks like a note payment/)).toBeDefined();
     });
-    expect(
-      (screen.getByRole('button', { name: /Record through/ }) as HTMLButtonElement).disabled,
-    ).toBe(true);
-    expect(screen.getByText(/pick the date above first/)).toBeDefined();
+    // A split is a fact about a period. With no date there is no period, so
+    // the engine is not asked and no figure is shown (#99).
+    expect(scheduleSpy).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: /Record through/ })).toBeNull();
+    expect(screen.queryByText(/interest,/)).toBeNull();
+  });
+
+  it('asks the engine as of the date being recorded, and follows it', async () => {
+    vi.spyOn(api, 'listDebts').mockResolvedValue([NOTE]);
+    const scheduleSpy = vi
+      .spyOn(api, 'debtSchedule')
+      .mockImplementation((_id, asOf) =>
+        Promise.resolve(
+          asOf === '2026-06-01'
+            ? ({ ...SCHEDULE, next_interest: '984.84', next_principal: '185.02' } as ScheduleOut)
+            : SCHEDULE,
+        ),
+      );
+    const { rerender } = render(
+      <MortgagePaymentOffer propertyId="p1" occurredOn="2026-08-28" onRecorded={vi.fn()} />,
+    );
+    await waitFor(() => {
+      expect(screen.getByText(/\$985\.61 interest/)).toBeDefined();
+    });
+    expect(scheduleSpy).toHaveBeenCalledWith('n1', '2026-08-28');
+    rerender(<MortgagePaymentOffer propertyId="p1" occurredOn="2026-06-01" onRecorded={vi.fn()} />);
+    await waitFor(() => {
+      expect(screen.getByText(/\$984\.84 interest/)).toBeDefined();
+    });
+    expect(scheduleSpy).toHaveBeenCalledWith('n1', '2026-06-01');
   });
 
   it('renders nothing without a live amortizing note', async () => {
@@ -123,6 +149,53 @@ describe('MortgagePaymentOffer', () => {
       expect(api.debtSchedule).toHaveBeenCalled();
     });
     expect(container.firstElementChild).toBeNull();
+  });
+
+  it('a schedule that will not load leaves the plain form to do the work', async () => {
+    vi.spyOn(api, 'listDebts').mockResolvedValue([NOTE]);
+    vi.spyOn(api, 'debtSchedule').mockRejectedValue(new Error('schedule unavailable'));
+    const { container } = render(
+      <MortgagePaymentOffer propertyId="p1" occurredOn="2026-08-28" onRecorded={vi.fn()} />,
+    );
+    await waitFor(() => {
+      expect(api.debtSchedule).toHaveBeenCalled();
+    });
+    // The note exists and the date is known, so there is no path to name —
+    // and no figures to promise. Silence, and the form below still records.
+    await waitFor(() => {
+      expect(container.firstElementChild).toBeNull();
+    });
+  });
+
+  it('keeps the operator\u2019s chosen note when the date changes', async () => {
+    const junior = { ...NOTE, id: 'n2', lender: 'Second Street' } as DebtOut;
+    vi.spyOn(api, 'listDebts').mockResolvedValue([NOTE, junior]);
+    vi.spyOn(api, 'debtSchedule').mockImplementation((debtId) =>
+      Promise.resolve(
+        debtId === 'n1'
+          ? SCHEDULE
+          : ({
+              ...SCHEDULE,
+              debt_id: 'n2',
+              next_interest: '100.00',
+              next_principal: '50.00',
+            } as ScheduleOut),
+      ),
+    );
+    const { rerender } = render(
+      <MortgagePaymentOffer propertyId="p1" occurredOn="2026-08-28" onRecorded={vi.fn()} />,
+    );
+    await waitFor(() => {
+      expect(screen.getByLabelText('Which note')).toBeDefined();
+    });
+    fireEvent.change(screen.getByLabelText('Which note'), { target: { value: 'n2' } });
+    expect(screen.getByRole('button', { name: 'Record through Second Street' })).toBeDefined();
+    rerender(<MortgagePaymentOffer propertyId="p1" occurredOn="2026-07-01" onRecorded={vi.fn()} />);
+    // Refetching for a new period must not silently reset which note the
+    // operator said they were paying.
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Record through Second Street' })).toBeDefined();
+    });
   });
 
   it('a failed fetch is a quiet no-offer, never a broken form', async () => {

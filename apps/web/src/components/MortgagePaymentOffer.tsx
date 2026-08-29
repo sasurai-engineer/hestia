@@ -2,7 +2,7 @@
 
 import { Button, CitationChip } from '@hestia/design';
 import { useEffect, useState } from 'react';
-import { api } from '../lib/api';
+import { api, type DebtOut } from '../lib/api';
 import { type NoteSplit, noteSplit } from '../lib/mortgage-split';
 import { formatMoney } from './TransactionsTable';
 
@@ -27,33 +27,70 @@ export function MortgagePaymentOffer({
   occurredOn,
   onRecorded,
 }: MortgagePaymentOfferProps) {
+  const [notes, setNotes] = useState<DebtOut[]>([]);
   const [splits, setSplits] = useState<NoteSplit[]>([]);
   const [chosen, setChosen] = useState('');
   const [error, setError] = useState<string | null>(null);
 
+  // Which notes could settle this — knowable without a date, so the path is
+  // discoverable before one is picked.
   useEffect(() => {
+    api
+      .listDebts({ propertyId })
+      .then((debts) => {
+        setNotes(debts.filter((d) => d.paid_off_on === null && d.scheduled_payment !== null));
+      })
+      .catch(() => {
+        // No offer is an honest state; the plain form still records.
+        setNotes([]);
+      });
+  }, [propertyId]);
+
+  // The figures, which are NOT knowable without a date: the split is fetched
+  // as of the day the money carries, so what is promised here is what the
+  // server will write for that date (#99).
+  useEffect(() => {
+    if (occurredOn === '' || notes.length === 0) {
+      setSplits([]);
+      return;
+    }
     (async () => {
       try {
-        const debts = await api.listDebts({ propertyId });
-        const live = debts.filter(
-          (debt) => debt.paid_off_on === null && debt.scheduled_payment !== null,
-        );
         const loaded: NoteSplit[] = [];
-        for (const debt of live) {
-          const split = noteSplit(debt, await api.debtSchedule(debt.id));
+        for (const debt of notes) {
+          const split = noteSplit(debt, await api.debtSchedule(debt.id, occurredOn));
           if (split) loaded.push(split);
         }
         setSplits(loaded);
-        setChosen(loaded[0]?.debtId ?? '');
+        setChosen((current) =>
+          loaded.some((l) => l.debtId === current) ? current : (loaded[0]?.debtId ?? ''),
+        );
       } catch {
-        // No offer is an honest state; the plain form still records.
         setSplits([]);
       }
     })();
-  }, [propertyId]);
+  }, [notes, occurredOn]);
+
+  if (notes.length === 0) {
+    return null;
+  }
 
   const split = splits.find((candidate) => candidate.debtId === chosen);
   if (!split) {
+    // Two different silences, and only one of them is worth breaking. No
+    // date yet: name the path, because the operator cannot discover it
+    // otherwise. A date with no split (a spent schedule, a fetch that
+    // failed): say nothing — the plain form below records it honestly.
+    if (occurredOn === '') {
+      return (
+        <div className="card">
+          <p>
+            <strong>This looks like a note payment.</strong> Pick the date above and the
+            engine&rsquo;s split for that period appears here, ready to record as the linked pair.
+          </p>
+        </div>
+      );
+    }
     return null;
   }
 
@@ -102,16 +139,16 @@ export function MortgagePaymentOffer({
         </div>
       ) : null}
       {error ? <p className="error-note">{error}</p> : null}
+      {/* A split only exists once a date does, so the button cannot be
+          reached without one — the dateless case returned above. */}
       <Button
         type="button"
-        disabled={occurredOn === ''}
         onClick={() => {
           void record();
         }}
       >
         Record through {split.lender}
-      </Button>{' '}
-      {occurredOn === '' ? <span className="muted">— pick the date above first</span> : null}
+      </Button>
     </div>
   );
 }

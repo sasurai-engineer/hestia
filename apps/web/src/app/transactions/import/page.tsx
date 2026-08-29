@@ -41,36 +41,41 @@ export default function ImportPage() {
     setQueue(await api.reviewQueue(batchId, 'pending'));
   }, []);
 
-  // The engine splits for each property in the queue, fetched once per
-  // property. A property with no live amortizing note maps to an empty
-  // list, which is the honest no-offer state.
-  const [splitsByProperty, setSplitsByProperty] = useState<Record<string, NoteSplit[]>>({});
+  // The engine splits for each (property, posted_on) in the queue. The DATE
+  // is half the key: a statement imported in August carries rows from May,
+  // June and July, and each row's split is the split for ITS period — the
+  // level payment is identical across periods, so a period-blind split
+  // matches the amount exactly and posts the wrong figures silently (#99).
+  // A property with no live amortizing note maps to an empty list, which is
+  // the honest no-offer state.
+  const [splitsByRow, setSplitsByRow] = useState<Record<string, NoteSplit[]>>({});
   useEffect(() => {
     const pending = [
       ...new Set(
         queue
-          .map((row) => row.suggested_property_id)
-          .filter((id): id is string => id !== null && id !== undefined),
+          .filter((row) => row.suggested_property_id)
+          .map((row) => `${String(row.suggested_property_id)}|${row.posted_on}`),
       ),
-    ].filter((id) => !(id in splitsByProperty));
-    for (const propertyId of pending) {
+    ].filter((key) => !(key in splitsByRow));
+    for (const key of pending) {
+      const [propertyId, postedOn] = key.split('|') as [string, string];
       void (async () => {
         try {
           const debts = await api.listDebts({ propertyId });
           const loaded: NoteSplit[] = [];
           for (const debt of debts) {
             if (debt.paid_off_on !== null || debt.scheduled_payment === null) continue;
-            const split = noteSplit(debt, await api.debtSchedule(debt.id));
+            const split = noteSplit(debt, await api.debtSchedule(debt.id, postedOn));
             if (split) loaded.push(split);
           }
-          setSplitsByProperty((current) => ({ ...current, [propertyId]: loaded }));
+          setSplitsByRow((current) => ({ ...current, [key]: loaded }));
         } catch {
           // No offer is an honest state; plain accept still works.
-          setSplitsByProperty((current) => ({ ...current, [propertyId]: [] }));
+          setSplitsByRow((current) => ({ ...current, [key]: [] }));
         }
       })();
     }
-  }, [queue, splitsByProperty]);
+  }, [queue, splitsByRow]);
 
   const upload = async () => {
     if (!file) return;
@@ -215,7 +220,9 @@ export default function ImportPage() {
               void decide(() => api.excludeBankTransaction(txnId));
             }}
             noteSplits={(row) =>
-              row.suggested_property_id ? (splitsByProperty[row.suggested_property_id] ?? []) : []
+              row.suggested_property_id
+                ? (splitsByRow[`${row.suggested_property_id}|${row.posted_on}`] ?? [])
+                : []
             }
             onAcceptSplit={(row, split) => {
               void decide(() =>

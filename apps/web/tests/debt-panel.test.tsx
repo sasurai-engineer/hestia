@@ -131,7 +131,10 @@ describe('DebtPanel', () => {
     await waitFor(() => {
       expect(record).toHaveBeenCalledWith('n1', {
         paid_on: '2026-09-01',
-        interest: '985.61',
+        // Interest was never touched, so it travels as null and the server
+        // splits September by September's row — the figure on screen was a
+        // suggestion, never a statement (#99).
+        interest: null,
         principal: '200.00',
         extra_principal: '100.00',
         escrow: '0',
@@ -164,6 +167,54 @@ describe('DebtPanel', () => {
         escrow: '0',
         post_to_ledger: false,
       });
+    });
+  });
+
+  it('asks the engine for the split AS OF the date being recorded', async () => {
+    const { scheduleSpy } = arrange([NOTE]);
+    render(<DebtPanel propertyId="p1" today={TODAY} />);
+    await waitFor(() => {
+      expect(scheduleSpy).toHaveBeenCalledWith('n1', TODAY);
+    });
+    // Backdating a catch-up payment re-asks for THAT period's row rather
+    // than keeping the figures for the day the panel happened to load.
+    fireEvent.change(screen.getByLabelText('Paid on'), { target: { value: '2026-06-01' } });
+    await waitFor(() => {
+      expect(scheduleSpy).toHaveBeenCalledWith('n1', '2026-06-01');
+    });
+  });
+
+  it('re-prefills from the backdated period, and still states nothing', async () => {
+    vi.spyOn(api, 'listDebts').mockResolvedValue([NOTE]);
+    vi.spyOn(api, 'debtSchedule').mockImplementation((_id, asOf) =>
+      Promise.resolve(
+        asOf === '2026-06-01'
+          ? ({
+              ...SCHEDULE,
+              next_month: 6,
+              next_interest: '984.84',
+              next_principal: '185.02',
+            } as ScheduleOut)
+          : SCHEDULE,
+      ),
+    );
+    const record = vi.spyOn(api, 'recordDebtPayment').mockResolvedValue({} as never);
+    render(<DebtPanel propertyId="p1" today={TODAY} />);
+    await waitFor(() => {
+      expect((screen.getByLabelText('Interest') as HTMLInputElement).value).toBe('985.61');
+    });
+    fireEvent.change(screen.getByLabelText('Paid on'), { target: { value: '2026-06-01' } });
+    // The suggestion follows the date: June's row, not August's.
+    await waitFor(() => {
+      expect((screen.getByLabelText('Interest') as HTMLInputElement).value).toBe('984.84');
+    });
+    expect((screen.getByLabelText('Principal') as HTMLInputElement).value).toBe('185.02');
+    fireEvent.click(screen.getByRole('button', { name: 'Record the payment' }));
+    await waitFor(() => {
+      expect(record).toHaveBeenCalledWith(
+        'n1',
+        expect.objectContaining({ paid_on: '2026-06-01', interest: null, principal: null }),
+      );
     });
   });
 

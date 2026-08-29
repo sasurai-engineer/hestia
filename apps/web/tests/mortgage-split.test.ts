@@ -152,6 +152,30 @@ describe('acceptSplits', () => {
   });
 });
 
+describe('acceptSplits and the zero leg', () => {
+  it('omits a zero interest leg, which the ledger refuses', () => {
+    // A 0%-rate note (seller financing) has no interest in any period. The
+    // old shape emitted a 0.00 leg and every offered accept 422'd (#99).
+    const free: NoteSplit = { ...SPLIT, interest: '0.00', principal: '250.00', payment: '250.00' };
+    expect(acceptSplits('-250.00', free)).toEqual([
+      { category: 'mortgage_principal', amount: '-250.00' },
+    ]);
+  });
+
+  it('omits a zero principal leg the same way', () => {
+    const io: NoteSplit = { ...SPLIT, interest: '400.00', principal: '0.00', payment: '400.00' };
+    expect(acceptSplits('-400.00', io)).toEqual([
+      { category: 'mortgage_interest', amount: '-400.00' },
+    ]);
+  });
+
+  it('the surviving leg still sums to the row exactly', () => {
+    const free: NoteSplit = { ...SPLIT, interest: '0.00', principal: '250.00', payment: '250.00' };
+    const legs = acceptSplits('-250.00', free);
+    expect(legs.reduce((total, leg) => total + Number(leg.amount), 0)).toBe(-250);
+  });
+});
+
 describe('pairMortgageEvents', () => {
   it('folds the pair into one payment with the exact total', () => {
     const lines = pairMortgageEvents(pairEvents());
