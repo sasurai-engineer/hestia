@@ -232,9 +232,25 @@ test('screening: the decision is recorded once and the FCRA checklist appears', 
   await expect(card.getByText('State the adverse action taken')).toBeVisible();
   await expect(card.getByText('15 U.S.C. 1681m(a)').first()).toBeVisible();
 
-  await card.getByLabel('Sent on').fill('2026-08-28');
+  // TODAY, not a literal, and computed in UTC because the database is.
+  // `decided_on` defaults to the server's CURRENT_DATE the moment the
+  // decision above is recorded, and `notice_follows_its_decision` (module
+  // 018) refuses a notice dated before its own decision. A hard-coded date
+  // therefore passes until the clock reaches it and fails forever after —
+  // this walk broke at midnight UTC on 2026-08-29 having been green all day.
+  const sentOn = new Date().toISOString().slice(0, 10);
+  const [sentYear, sentMonth, sentDay] = sentOn.split('-');
+  // Mirrors formatDate in src/lib/format.ts, which is a pure string
+  // transform. Intl would be a second implementation whose output depends on
+  // the runner's ICU data.
+  const sentLabel = `${
+    ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][
+      Number(sentMonth) - 1
+    ]
+  } ${String(Number(sentDay))}, ${sentYear}`;
+  await card.getByLabel('Sent on').fill(sentOn);
   await card.getByRole('button', { name: 'Record the notice' }).click();
-  await expect(card.getByText(/notice sent Aug 28, 2026/)).toBeVisible();
+  await expect(card.getByText(`notice sent ${sentLabel}`)).toBeVisible();
   await expect(card.getByText('State the adverse action taken')).toHaveCount(0);
 });
 
