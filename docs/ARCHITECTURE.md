@@ -469,19 +469,30 @@ Remaining work items surfaced by the same pass were filed as issues #37–#50.
   the plan's `packages/api-client` happens when a second client (iOS)
   consumes the contract. CI fails on contract drift meanwhile.
 
-## Carried findings from the nationwide review (2026-08-25, still open)
+## Carried findings from the nationwide review (2026-08-25) — all closed
 
-- **Rule superseding is untested end-to-end.** The resolver excludes
-  `superseded_by IS NOT NULL` rows and the effective-window filters exist,
-  but no test exercises a superseded or effective_to-closed appeal rule
-  through the sweep. Before the first real pack correction ships, add a test
-  that closes one rule, supersedes another, and proves resolution follows.
-- **`tax_profiles` holds one state rate per entity per year** — deferred to
-  the tax-profile phase; follow the `depreciable_assets.jurisdiction_id`
-  precedent (a two-state LLC cannot be modeled until then).
-- **`assessments` has no ratio-aware over-assessment logic yet** — the 35%
-  ratio ships as OH pack data (`assessment.ratio`); the engine that consumes
-  it arrives with the over-assessment detector.
+All three findings from that review are now closed, each by the ticket that
+had been waiting for it:
+
+- ~~**Rule superseding is untested end-to-end.**~~ Closed by #7. Both
+  mechanisms — supersede and `effective_to` — run against real Postgres in
+  `services/api/tests/test_pack_corrections.py`, and the first real pack
+  correction shipped with them (`seed/952`, Ohio's appeal instructions,
+  issue #97). The convention is written up in `packages/domain/schema/
+  seed/README.md`.
+- ~~**`tax_profiles` holds one state rate per entity per year.**~~ Closed by
+  #8, and not by the `depreciable_assets.jurisdiction_id` precedent this
+  finding proposed. The statutory rate was already pack data, cited and
+  effective-dated, so an entity-side copy keyed by jurisdiction would have
+  been a second home for one number — invisible to the state-literal ratchet,
+  because a `jurisdiction_id` key contains no state literal. Module 020
+  removed the column instead and `hestia_api/income_tax.py` resolves per
+  taxing body through the property's own chain.
+- ~~**`assessments` has no ratio-aware over-assessment logic yet.**~~ Closed
+  by #9. `hestia_api/appeal.py` applies the pack's ratio, and only where the
+  assessment's own `value_basis` (module 019) says the stored figure is a
+  taxable one — a market row is compared directly with the ratio cited and
+  withheld.
 
 ## Carried findings from review pass 3 (still open)
 
