@@ -62,6 +62,45 @@ pack file is picked up with zero code changes.
 A figure not yet professionally confirmed carries `— CONFIRM WITH <STATE>
 CPA` in its citation, and nothing downstream may present it as settled.
 
+## Correcting a rule that turns out to be wrong
+
+A pack is applied-once and its bytes may never change, so a wrong rule is
+never edited. It is replaced, and which of the two shapes you want depends on
+whether the old text was ever right.
+
+**A CORRECTION** — the rule was wrong from the start. Insert the replacement
+carrying the **same** `jurisdiction_id`, `domain`, `code` and `effective_from`
+as the row it replaces, then point the old row's `superseded_by` at the new
+row's id. The old row stays in the table forever: a resolver excludes it, and
+anyone asking what the pack said last March still gets an answer.
+
+**AN AMENDMENT** — the rule was right and the law changed. Set `effective_to`
+on the old row to the day the new rule starts, and insert the new rule with
+that date as its `effective_from`. Both rows stay open; the effective window
+decides which one resolves on any given date.
+
+`seed/952_ohio_appeal_instructions_correction.sql` is the worked example of
+the first shape, and it is a real one: Ohio's appeal instructions asserted a
+filing window that ORC 5715.19(A) does not state. Read it before writing your
+own.
+
+Two things to know before you start:
+
+- **The open-twin guard will catch a half-finished correction.**
+  `tests/constraints.sql` fails the build if two OPEN rules ever share
+  `(jurisdiction_id, domain, code, effective_from)`. That is exactly the state
+  an insert-without-the-update leaves behind, which is why the two statements
+  belong in one file and therefore one transaction.
+- **A correction is scoped to its own code.** Superseding
+  `appeal.instructions` must leave `appeal.window.calendar` untouched, and
+  `services/api/tests/test_pack_corrections.py` asserts precisely that — a
+  correction that quietly disturbed a neighbouring rule would be worse than
+  the error it fixed.
+
+Both mechanisms are exercised end to end against real Postgres in
+`test_pack_corrections.py`: the sweep emits from the new rule, the coverage
+report cites it, and the superseded row is proved to survive.
+
 ## Deterministic UUIDs
 
 Each pack owns the block `a0000000-00FF-4000-8000-…` where `FF` is the state
