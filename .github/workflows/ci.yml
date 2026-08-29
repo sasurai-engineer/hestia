@@ -155,8 +155,15 @@ jobs:
         run: >-
           pnpm --filter @hestia/web run lighthouse --
           --collect.settings.chromeFlags="--no-sandbox"
+      # Known gap, stated rather than left to be inferred: the dossier
+      # (/property/[id]) is the heaviest and most shift-prone surface in the
+      # app and cannot be listed here, because its URL needs a real property
+      # id that only the walk above creates. Measuring it needs lhci driven
+      # from a run that knows the id — tracked with the layout-shift work.
+      #
       # The wire truth from the build's own manifest: every route's
-      # first-load JavaScript stays under the gzip budget.
+      # first-load JavaScript stays under the gzip budget, counted WITH the
+      # layouts that wrap it (#112).
       - name: First-load JS budget
         run: python3 scripts/check_bundle_budget.py
       - uses: actions/upload-artifact@v4
