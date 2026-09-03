@@ -22,7 +22,7 @@ minimumReleaseAge: 1440
 # the advisories; `pnpm audit` at zero findings is the proof they hold).
 overrides:
   postcss: ">=8.5.23"
-  qs: ">=6.15.2"
+  qs: ">=6.16.0" # GHSA-x5fp-wj9c-mxmx, GHSA-4mjr-xmp4-gh2g (via @lhci/cli>express>body-parser)
   sharp: ">=0.35.0"
   tmp: ">=0.2.6" # GHSA-ph9p-34f9-6g65, GHSA-52f5-9888-hmc6 (via @lhci/cli>inquirer)
   uuid: ">=11.1.1" # GHSA-w5hq-g745-h8pq (via @lhci/cli); v4() API unchanged in v11
