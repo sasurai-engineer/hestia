@@ -349,13 +349,21 @@ def test_a_published_window_that_has_passed_is_a_named_gap_not_a_guess(
     assert early["inserted"]["assessment_appeal_window"] == 1
     assert not [g for g in early["coverage_gaps"] if g["domain"] == "assessment_appeal"]
 
-    # After it: a gap that names why, and NO invented deadline.
+    # After it: a gap that names why, and NO invented deadline. This is the
+    # state every published-shape jurisdiction enters yearly, ON SCHEDULE, the
+    # day its window closes — so the gap must read as "the county has not
+    # spoken yet", never as "nobody ever entered this state" (issue #127: the
+    # two silences demand different acts, and the darkness was silent).
     late = client.post("/sweep/deadlines?as_of=2026-07-01").json()
     assert "assessment_appeal_window" not in late["inserted"]
     gap = next(g for g in late["coverage_gaps"] if g["domain"] == "assessment_appeal")
-    assert gap["reason"] == "window_not_published"
+    assert gap["reason"] == "window_awaiting_publication"
     assert gap["property_id"] == property_id
-    assert "67-1-404" in gap["detail"]
+    # The detail names the last known window and its authority, so a reader
+    # knows the data was alive and what to watch for.
+    assert "2026-06-26" in gap["detail"]
+    assert "Metropolitan Board of Equalization" in gap["detail"]
+    assert "entered when it publishes" in gap["detail"]
     assert (
         conn.execute(
             "SELECT count(*) AS n FROM deadlines WHERE kind = 'assessment_appeal_window'"
@@ -364,6 +372,69 @@ def test_a_published_window_that_has_passed_is_a_named_gap_not_a_guess(
         ).fetchone()["n"]
         == 0
     )
+
+
+def test_a_published_state_with_no_date_ever_loaded_says_so_differently(
+    clean: None, client: TestClient, conn: psycopg.Connection[Any]
+) -> None:
+    """The other silence. A pack may declare its windows are published by the
+    county before anyone has entered a single date — a brand-new state, mid
+    onboarding. That is not "awaiting publication", it is "go find this
+    year's date", and the two must not share a reason. Sandboxed synthetic
+    state, since jurisdiction_rules is append-only."""
+    if (
+        conn.execute(
+            "SELECT 1 AS x FROM jurisdictions WHERE state = 'QP' AND level = 'state'"
+        ).fetchone()
+        is None
+    ):
+        conn.execute(
+            """
+            WITH state_row AS (
+              INSERT INTO jurisdictions (level, name, state, parent_id)
+              SELECT 'state', 'Quopland', 'QP', id FROM jurisdictions
+              WHERE level = 'federal' RETURNING id
+            )
+            INSERT INTO jurisdictions (level, name, state, parent_id)
+            SELECT 'municipality', 'Quopville', 'QP', id FROM state_row
+            """
+        )
+        conn.execute(
+            """
+            INSERT INTO jurisdiction_rules
+              (jurisdiction_id, domain, code, value_text, citation, effective_from)
+            SELECT id, 'assessment_appeal', 'appeal.window.source',
+                   'published_by_county; the county sets the date annually',
+                   'QP Rev. Stat. 9.9 (test fixture)', DATE '2000-01-01'
+            FROM jurisdictions WHERE state = 'QP' AND level = 'state'
+            """
+        )
+        conn.commit()
+    entity_id = str(uuid.uuid4())
+    conn.execute("INSERT INTO entities (id, name, kind) VALUES (%s, 'QP LLC', 'llc')", (entity_id,))
+    property_id = str(uuid.uuid4())
+    conn.execute(
+        """
+        INSERT INTO properties (id, entity_id, label, street_1, city, state,
+                                postal_code, kind, jurisdiction_id)
+        VALUES (%s, %s, 'qp', '1 Main St', 'Quopville', 'QP', '00000',
+                'single_family',
+                (SELECT id FROM jurisdictions
+                  WHERE name = 'Quopville' AND level = 'municipality'))
+        """,
+        (property_id, entity_id),
+    )
+    conn.commit()
+
+    body = client.post("/sweep/deadlines?as_of=2026-07-01").json()
+    gap = next(
+        g
+        for g in body["coverage_gaps"]
+        if g["domain"] == "assessment_appeal" and g["property_id"] == property_id
+    )
+    assert gap["reason"] == "window_not_published"
+    assert "no appeal window has ever been loaded" in gap["detail"]
+    assert "QP Rev. Stat. 9.9" in gap["detail"]
 
 
 def test_an_empty_portfolio_sweeps_to_zero_today(clean: None, client: TestClient) -> None:

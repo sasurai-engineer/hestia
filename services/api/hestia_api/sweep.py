@@ -49,7 +49,8 @@ class CoverageGap:
     state: str
     domain: str
     reason: str  # no_state_jurisdiction | no_rule_for_domain |
-    #              calendar_key_unregistered | window_not_published
+    #              calendar_key_unregistered | window_not_published |
+    #              window_awaiting_publication
     detail: str
 
 
@@ -139,12 +140,36 @@ published AS (
   WHERE closes.value_text::date >= %(as_of)s
   ORDER BY a.property_id, c.depth ASC, closes.value_text::date ASC
 )
+,
+-- The most recent window that has already closed — history, not law, which is
+-- why the effective window filter is absent on purpose: an expired row is
+-- exactly what this looks for. A published-shape state goes dark every year
+-- by design the day its window closes, and stays dark until the county
+-- publishes the next date; the difference between that and a state nobody
+-- ever entered is the difference between "act when the county speaks" and
+-- "this state has no data", and only this row can tell them apart.
+expired AS (
+  SELECT DISTINCT ON (a.property_id)
+         a.property_id,
+         closes.value_text::date AS closes_on,
+         closes.citation
+  FROM anchored a
+  CROSS JOIN LATERAL jurisdiction_chain(a.start_id) c
+  JOIN jurisdiction_rules closes
+    ON closes.jurisdiction_id = c.jurisdiction_id
+   AND closes.domain = 'assessment_appeal'
+   AND closes.code = 'appeal.window.closes_on'
+   AND closes.superseded_by IS NULL
+  WHERE closes.value_text::date < %(as_of)s
+  ORDER BY a.property_id, closes.value_text::date DESC, c.depth ASC
+)
 SELECT a.property_id, a.state, a.start_id,
        cal.value_text AS calendar_key, cal.citation AS citation,
        ins.value_text AS instructions,
        src.value_text AS window_source, src.citation AS source_citation,
        pub.opens_on AS published_opens_on, pub.closes_on AS published_closes_on,
-       pub.citation AS published_citation
+       pub.citation AS published_citation,
+       exp.closes_on AS last_closes_on, exp.citation AS last_citation
 FROM anchored a
 LEFT JOIN resolved cal
   ON cal.property_id = a.property_id AND cal.code = 'appeal.window.calendar'
@@ -153,6 +178,7 @@ LEFT JOIN resolved ins
 LEFT JOIN resolved src
   ON src.property_id = a.property_id AND src.code = 'appeal.window.source'
 LEFT JOIN published pub ON pub.property_id = a.property_id
+LEFT JOIN expired exp ON exp.property_id = a.property_id
 """
 
 
@@ -195,9 +221,31 @@ def _appeal_windows(conn: Conn, as_of: dt.date) -> tuple[list[dict[str, Any]], l
             continue
         if record["window_source"] is not None:
             # The pack says this state's window is published rather than
-            # computed, and no upcoming date is loaded. That is a different
-            # answer from "this state has no appeal rules at all", and the
-            # difference is what tells someone where to go looking.
+            # computed, and no upcoming date is loaded. Two different silences
+            # hide behind that, and they demand different acts. A state whose
+            # LAST window is on record went dark on schedule — every
+            # published-shape state does, yearly, the day its window closes —
+            # and the act is to enter the county's next date when it speaks.
+            # A state with no dated row at all was never entered, and the act
+            # is to go find this year's date now. One reason for each, so
+            # neither can hide inside the other.
+            if record["last_closes_on"] is not None:
+                gaps.append(
+                    CoverageGap(
+                        property_id=str(record["property_id"]),
+                        state=record["state"],
+                        domain="assessment_appeal",
+                        reason="window_awaiting_publication",
+                        detail=(
+                            f"the last known appeal window closed "
+                            f"{record['last_closes_on'].isoformat()} "
+                            f"({record['last_citation']}); the next date is set by "
+                            "the county and must be entered when it publishes — "
+                            "until then the window is honestly unknown"
+                        ),
+                    )
+                )
+                continue
             gaps.append(
                 CoverageGap(
                     property_id=str(record["property_id"]),
@@ -205,9 +253,10 @@ def _appeal_windows(conn: Conn, as_of: dt.date) -> tuple[list[dict[str, Any]], l
                     domain="assessment_appeal",
                     reason="window_not_published",
                     detail=(
-                        f"{record['source_citation']}: no upcoming appeal window is "
-                        "loaded for this jurisdiction, and the date is not one this "
-                        "build may compute"
+                        f"{record['source_citation']}: no appeal window has ever "
+                        "been loaded for this jurisdiction, and the date is not one "
+                        "this build may compute — find this year's published date "
+                        "and enter it"
                     ),
                 )
             )

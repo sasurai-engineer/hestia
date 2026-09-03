@@ -3371,7 +3371,7 @@ export interface components {
              * Reason
              * @enum {string}
              */
-            reason: "no_state_jurisdiction" | "no_rule_for_domain" | "calendar_key_unregistered" | "window_not_published";
+            reason: "no_state_jurisdiction" | "no_rule_for_domain" | "calendar_key_unregistered" | "window_not_published" | "window_awaiting_publication";
             /** State */
             state: string;
         };

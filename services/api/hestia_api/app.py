@@ -1237,8 +1237,11 @@ class SweepGapOut(BaseModel):
         "no_rule_for_domain",
         "calendar_key_unregistered",
         # The pack says this state publishes its window rather than
-        # computing it, and no upcoming date is loaded.
+        # computing it, and no date has ever been loaded.
         "window_not_published",
+        # A published window did its job and expired on schedule; the county's
+        # next date must be entered when it publishes.
+        "window_awaiting_publication",
     ]
     detail: str
 
