@@ -681,6 +681,34 @@ SELECT assert_rejected(
     FROM rent_charges c
     WHERE c.lease_id = 'bbbbbbbb-2222-2222-2222-222222222222' AND c.kind = 'rent'$$,
   '<trigger>', 'an allocation exceeding its charge');
+-- Module 023: the other side of the same coin — a receipt may pay out at
+-- most its own amount, across ALL charges. Two 60s from a 100 receipt: the
+-- first lands, the second is refused, whatever charge it aims at.
+INSERT INTO ledger_events (occurred_on, category, amount, entity_id, memo)
+  VALUES ('2026-08-15', 'rent', 100.00,
+          '11111111-1111-1111-1111-111111111111', 'module-023 fixture receipt');
+INSERT INTO rent_charges (id, lease_id, kind, period_start, due_on, amount)
+  VALUES ('bbbbbbbb-4444-4444-4444-444444444444',
+          'bbbbbbbb-2222-2222-2222-222222222222', 'late_fee', '2026-08-01',
+          '2026-08-20', 75.00);
+SELECT assert_accepted(
+  $$INSERT INTO rent_receipt_allocations (charge_id, ledger_event_id, amount)
+    SELECT c.id,
+           (SELECT id FROM ledger_events WHERE memo = 'module-023 fixture receipt'),
+           60.00
+    FROM rent_charges c
+    WHERE c.lease_id = 'bbbbbbbb-2222-2222-2222-222222222222' AND c.kind = 'rent'$$,
+  'sixty of a hundred-dollar receipt pays the rent charge');
+SELECT assert_rejected(
+  $$INSERT INTO rent_receipt_allocations (charge_id, ledger_event_id, amount)
+    VALUES ('bbbbbbbb-4444-4444-4444-444444444444',
+            (SELECT id FROM ledger_events WHERE memo = 'module-023 fixture receipt'),
+            60.00)$$,
+  '<trigger>', 'the same receipt spending past its amount on a second charge');
+DELETE FROM rent_receipt_allocations
+  WHERE charge_id IN (SELECT id FROM rent_charges
+                      WHERE lease_id = 'bbbbbbbb-2222-2222-2222-222222222222');
+DELETE FROM rent_charges WHERE id = 'bbbbbbbb-4444-4444-4444-444444444444';
 -- Module 022: lease dates bind their charges. The August charge above is
 -- still on the books here, so the lease's dates are load-bearing.
 SELECT assert_rejected(
