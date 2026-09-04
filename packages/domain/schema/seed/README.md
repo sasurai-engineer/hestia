@@ -31,7 +31,7 @@ pack file is picked up with zero code changes.
      registry key in `appeal.window.calendar` and the two twins
      (`packages/engines/src/deadlines.ts` and
      `services/api/hestia_api/calendar.py`) each carry one pure builder with
-     two externally verified anchor dates. Kentucky and Ohio are this shape.
+     two externally verified anchor dates. Kentucky, Ohio and Texas are this shape.
      Keys are timeless function identities: a statutory change is a NEW key
      behind a new effective-dated rule row, never an edit to a builder.
    - *Published.* The deadline is an administrative decision somebody makes

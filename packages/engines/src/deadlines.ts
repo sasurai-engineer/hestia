@@ -165,6 +165,37 @@ const ohBorComplaint: AppealWindowBuilder = (year) => {
 };
 
 /**
+ * Tex. Tax Code s.41.44(a)(1): a protest is timely "not later than May 15
+ * or the 30th day after the date that notice to the property owner was
+ * delivered ... as provided by Section 25.19, whichever is later" (May 15
+ * text since HB 2228, 85th Leg., effective 2018). The notice leg is per-parcel and CONDITIONAL (an
+ * unchanged value produces no notice at all), so this builder emits the date
+ * an owner can rely on WITHOUT a notice in hand: May 15, extended by s.1.06
+ * when it falls on a weekend. A later notice-relative deadline, where one
+ * exists, is entered from the notice as data — never assumed. s.1.06 rolls
+ * a close falling on a Saturday, Sunday, or legal state or national holiday
+ * forward; only the weekend roll is modelled, which errs early. That is the
+ * Tennessee treatment reached from the opposite direction: there the pack
+ * refuses to compute what only the county knows; here it refuses to wait on
+ * a notice the statute never promises.
+ *
+ * No statute names an opening date. A protest concerns the value as of
+ * January 1 (s.23.01(a)), and districts accept protests once the year's
+ * appraisal work exists, so January 1 is the emitted open — errs early,
+ * never late, like every date this engine produces. No conference is a
+ * prerequisite: the s.41.445 informal conference is a right, not a gate.
+ * Anchors: 2026-05-15 is a Friday and stands; 2027-05-15 is a Saturday and
+ * rolls to Monday May 17.
+ */
+const txProtestByMay15: AppealWindowBuilder = (year) => {
+  assertIntInRange(year, 'year', MIN_YEAR, MAX_YEAR);
+  return {
+    opensOn: `${String(year)}-01-01`,
+    closesOn: rollForwardFromWeekend(`${String(year)}-05-15`),
+  };
+};
+
+/**
  * The registered builder for a pack's calendar key, or undefined. The table
  * lives inside the function rather than at module scope so that mutation
  * testing can attribute it to covering tests — a module-scope Map is a
@@ -175,6 +206,7 @@ export const appealWindowBuilder = (key: string): AppealWindowBuilder | undefine
   const registry: ReadonlyMap<string, AppealWindowBuilder> = new Map([
     ['us-ky.open-inspection', kyOpenInspection],
     ['us-oh.bor-complaint', ohBorComplaint],
+    ['us-tx.protest-by-may-15', txProtestByMay15],
   ]);
   return registry.get(key);
 };

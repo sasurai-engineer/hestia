@@ -94,6 +94,38 @@ def test_the_ohio_bor_window_anchors() -> None:
         builder(2201)
 
 
+def test_the_texas_protest_window_anchors() -> None:
+    builder = calendar.APPEAL_WINDOWS["us-tx.protest-by-may-15"]
+    # 2026-05-15 is a Friday and stands.
+    assert builder(2026) == calendar.WindowDates(
+        opens_on=dt.date(2026, 1, 1), closes_on=dt.date(2026, 5, 15), conference_by=None
+    )
+    # 2027-05-15 is a Saturday; Tex. Tax Code s.1.06 rolls it to Monday.
+    assert builder(2027).closes_on == dt.date(2027, 5, 17)
+    # The s.41.445 informal conference is a right, never a filing gate.
+    assert builder(2027).conference_by is None
+    with pytest.raises(ValueError):
+        builder(2201)
+
+
+def test_the_texas_window_never_waits_on_a_notice() -> None:
+    # The close is a pure function of the year: the s.25.19 notice is
+    # conditional and the emitted date must hold with no notice in hand.
+    builder = calendar.APPEAL_WINDOWS["us-tx.protest-by-may-15"]
+    for year in range(2024, 2040):
+        window = builder(year)
+        assert window.opens_on == dt.date(year, 1, 1)
+        assert window.closes_on.weekday() < 5
+        drift = (window.closes_on - dt.date(year, 5, 15)).days
+        assert 0 <= drift <= 2
+
+
+def test_next_window_rolls_the_texas_close_only_after_it_passes() -> None:
+    builder = calendar.APPEAL_WINDOWS["us-tx.protest-by-may-15"]
+    assert calendar.next_window(builder, dt.date(2026, 5, 15)).closes_on == dt.date(2026, 5, 15)
+    assert calendar.next_window(builder, dt.date(2026, 5, 16)).closes_on == dt.date(2027, 5, 17)
+
+
 def test_year_bounds() -> None:
     with pytest.raises(ValueError):
         calendar.first_monday_of_may(1899)
