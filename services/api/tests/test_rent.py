@@ -186,6 +186,162 @@ class TestRentSweep:
         for period, due in by_period.items():
             assert due[:7] == period[:7]
 
+    def test_escalation_waits_for_the_anniversary_date_not_its_month(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        # Issue #102's table: a 2024-03-15 lease used to bill the WHOLE of
+        # March 2025 escalated — fourteen days early. The convention (posted
+        # on the ticket): the first escalated charge is the first period
+        # starting on or after the anniversary date.
+        unit = client.post(
+            "/units", json={"property_id": world["property"], "label": "U102a"}
+        ).json()["id"]
+        lease_id = client.post(
+            "/leases",
+            json={
+                "unit_id": unit,
+                "starts_on": "2024-03-15",
+                "rent": "1000.00",
+                "escalation": "fixed_percent",
+                "escalation_value": "0.05",
+            },
+        ).json()["id"]
+        for as_of in ["2025-03-01", "2025-04-01", "2026-03-01", "2026-04-01"]:
+            client.post(f"/sweep/rent-charges?as_of={as_of}")
+        by_period = {
+            c["period_start"]: Decimal(c["amount"])
+            for c in client.get(f"/leases/{lease_id}").json()["charges"]
+        }
+        assert by_period["2025-03-01"] == Decimal("1000.00")  # old rate to the date
+        assert by_period["2025-04-01"] == Decimal("1050.00")  # first full period after
+        assert by_period["2026-03-01"] == Decimal("1050.00")
+        assert by_period["2026-04-01"] == Decimal("1102.50")  # compounded year two
+
+    def test_a_december_31_lease_no_longer_escalates_thirty_days_early(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        unit = client.post(
+            "/units", json={"property_id": world["property"], "label": "U102b"}
+        ).json()["id"]
+        lease_id = client.post(
+            "/leases",
+            json={
+                "unit_id": unit,
+                "starts_on": "2024-12-31",
+                "rent": "2000.00",
+                "escalation": "fixed_amount",
+                "escalation_value": "100.00",
+            },
+        ).json()["id"]
+        for as_of in ["2025-12-01", "2026-01-01"]:
+            client.post(f"/sweep/rent-charges?as_of={as_of}")
+        by_period = {
+            c["period_start"]: Decimal(c["amount"])
+            for c in client.get(f"/leases/{lease_id}").json()["charges"]
+        }
+        # December 2025 spans the anniversary but STARTS before it: old rate.
+        assert by_period["2025-12-01"] == Decimal("2000.00")
+        assert by_period["2026-01-01"] == Decimal("2100.00")
+
+    def test_a_leap_day_lease_escalates_from_the_clamped_anniversary(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        unit = client.post(
+            "/units", json={"property_id": world["property"], "label": "U102c"}
+        ).json()["id"]
+        lease_id = client.post(
+            "/leases",
+            json={
+                "unit_id": unit,
+                "starts_on": "2024-02-29",
+                "rent": "1000.00",
+                "escalation": "fixed_percent",
+                "escalation_value": "0.03",
+            },
+        ).json()["id"]
+        for as_of in ["2025-02-01", "2025-03-01"]:
+            client.post(f"/sweep/rent-charges?as_of={as_of}")
+        by_period = {
+            c["period_start"]: Decimal(c["amount"])
+            for c in client.get(f"/leases/{lease_id}").json()["charges"]
+        }
+        assert by_period["2025-02-01"] == Decimal("1000.00")
+        assert by_period["2025-03-01"] == Decimal("1030.00")
+
+    def test_the_stub_first_month_bills_prorated_instead_of_never(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        # Issue #102's second defect: a mid-month lease was invisible to its
+        # own first sweep and the stub month was never billed at all.
+        unit = client.post(
+            "/units", json={"property_id": world["property"], "label": "U102d"}
+        ).json()["id"]
+        lease_id = client.post(
+            "/leases",
+            json={"unit_id": unit, "starts_on": "2026-03-15", "rent": "3100.00"},
+        ).json()["id"]
+        client.post("/sweep/rent-charges?as_of=2026-03-01")
+        client.post("/sweep/rent-charges?as_of=2026-03-01")
+        # Exactly one charge for THIS lease after two sweeps: the stub month
+        # billed once, idempotent under its deterministic stub key. (The
+        # sweep total also counts the world fixture's own lease.)
+        (charge,) = client.get(f"/leases/{lease_id}").json()["charges"]
+        assert charge["period_start"] == "2026-03-15"
+        # 17 of March's 31 days at 3100.00: exactly 1700.00.
+        assert Decimal(charge["amount"]) == Decimal("1700.00")
+        # Rent for a mid-month start is not due before the lease exists.
+        assert charge["due_on"] == "2026-03-15"
+
+    def test_the_final_month_bills_prorated_instead_of_in_full(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        # The third defect, found in this pass: ends_on >= period_start swept
+        # a lease ending April 10 into April and billed the FULL month.
+        unit = client.post(
+            "/units", json={"property_id": world["property"], "label": "U102e"}
+        ).json()["id"]
+        lease_id = client.post(
+            "/leases",
+            json={
+                "unit_id": unit,
+                "starts_on": "2026-01-01",
+                "ends_on": "2026-04-10",
+                "rent": "3000.00",
+            },
+        ).json()["id"]
+        client.post("/sweep/rent-charges?as_of=2026-04-01")
+        client.post("/sweep/rent-charges?as_of=2026-05-01")
+        charges = client.get(f"/leases/{lease_id}").json()["charges"]
+        by_period = {c["period_start"]: c for c in charges}
+        april = by_period["2026-04-01"]
+        # 10 of April's 30 days at 3000.00: exactly 1000.00.
+        assert Decimal(april["amount"]) == Decimal("1000.00")
+        assert "2026-05-01" not in by_period  # May is past the lease
+
+    def test_a_sub_cent_stub_share_is_a_gap_not_a_sweep_abort(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        # Adversarial-panel finding on this change: a peppercorn rent whose
+        # one-day stub share rounds to 0.00 would violate the amount > 0
+        # CHECK and roll back EVERY lease's charge for the month. It must
+        # be a reported gap instead, with the other leases still billed.
+        unit = client.post(
+            "/units", json={"property_id": world["property"], "label": "U102f"}
+        ).json()["id"]
+        client.post(
+            "/leases",
+            json={
+                "unit_id": unit,
+                "starts_on": "2026-01-31",
+                "ends_on": "2026-03-01",
+                "rent": "0.10",
+            },
+        )
+        result = client.post("/sweep/rent-charges?as_of=2026-01-15").json()
+        assert result["charges_created"] >= 1  # the world lease still billed
+        (gap,) = [g for g in result["gaps"] if g["reason"] == "amount_rounds_to_zero"]
+        assert "rounds to zero" in gap["detail"]
+
     def test_escalations_and_cpi_gap(self, world: dict[str, str], client: TestClient) -> None:
         # A second unit with each escalation shape.
         unit2 = client.post("/units", json={"property_id": world["property"], "label": "B"}).json()[
