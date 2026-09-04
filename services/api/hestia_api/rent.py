@@ -16,7 +16,7 @@ from decimal import ROUND_HALF_EVEN, Decimal
 from typing import Any, Literal
 
 import psycopg
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from hestia_api import ledger as ledger_module
 
@@ -60,6 +60,23 @@ class LeaseIn(BaseModel):
     escalation_value: Decimal | None = None
     status: Literal["active", "month_to_month", "draft"] = "active"
     resident_ids: list[str] = []
+
+    @model_validator(mode="after")
+    def escalation_value_matches_its_kind(self) -> "LeaseIn":
+        """The unit hazard module 021 rejects at the schema, rejected here
+        first as a 422 the caller can read: a percent escalation is a
+        DECIMAL FRACTION (0.035 is 3.5%), a fixed amount is non-negative
+        dollars. 3.5 for 3.5% would compound to a 350% annual increase."""
+        value = self.escalation_value
+        if self.escalation == "fixed_percent" and value is not None and not -1 < value < 1:
+            raise ValueError(
+                f"escalation_value for fixed_percent is a decimal fraction: "
+                f"{value} would escalate rent by {value:.0%} a year — "
+                f"3.5% is written 0.035"
+            )
+        if self.escalation == "fixed_amount" and value is not None and value < 0:
+            raise ValueError("escalation_value for fixed_amount is non-negative dollars")
+        return self
 
 
 class LeaseSummary(BaseModel):
