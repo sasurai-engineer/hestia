@@ -755,6 +755,52 @@ class TestPaidMoneyDrawsNoFee:
         assert Decimal(detail["open_credit"]) == Decimal("0.00")
 
 
+class TestWaiverConvention:
+    def test_waive_forgives_the_unpaid_remainder_and_paid_money_stays(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        # The convention this test PINS (issue #137): waiving a partially
+        # paid charge forgives only the unpaid remainder; the paid portion
+        # remains payment for the waived charge and is NOT released back to
+        # open credit. An adversarial reviewer hand-running the queries once
+        # concluded the paid money had vanished — these exact figures are
+        # the proof it did not, and changing this convention must break
+        # this test on purpose.
+        client.post("/sweep/rent-charges?as_of=2026-08-01")
+        client.post(
+            f"/leases/{world['lease']}/receipts",
+            json={"occurred_on": "2026-08-02", "amount": "500.00"},
+        )
+        detail = client.get(f"/leases/{world['lease']}").json()
+        charge_a = next(c for c in detail["charges"] if c["period_start"] == "2026-08-01")
+        assert charge_a["status"] == "partially_paid"
+        waived = client.post(f"/rent-charges/{charge_a['id']}/waive", json={"reason": "goodwill"})
+        assert waived.status_code == 204
+        client.post("/sweep/rent-charges?as_of=2026-09-01")
+        detail = client.get(f"/leases/{world['lease']}").json()
+        # 500 paid (stays), 950 forgiven, September's 1450 owed — no money
+        # vanished and none came back.
+        assert Decimal(detail["balance_due"]) == Decimal("1450.00")
+        assert Decimal(detail["open_credit"]) == Decimal("0.00")
+        waived_charge = next(c for c in detail["charges"] if c["period_start"] == "2026-08-01")
+        assert waived_charge["status"] == "waived"
+        assert Decimal(waived_charge["allocated"]) == Decimal("500.00")
+
+    def test_a_fully_paid_charge_has_nothing_to_forgive(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        client.post("/sweep/rent-charges?as_of=2026-08-01")
+        client.post(
+            f"/leases/{world['lease']}/receipts",
+            json={"occurred_on": "2026-08-02", "amount": "1450.00"},
+        )
+        detail = client.get(f"/leases/{world['lease']}").json()
+        (charge,) = detail["charges"]
+        assert charge["status"] == "paid"
+        refused = client.post(f"/rent-charges/{charge['id']}/waive", json={"reason": "goodwill"})
+        assert refused.status_code == 404
+
+
 class TestRenewals:
     def test_context_carries_labeled_defaults_then_measured_history(
         self, world: dict[str, str], client: TestClient, conn: psycopg.Connection[Any]

@@ -10820,6 +10820,7 @@
     },
     "/rent-charges/{charge_id}/waive": {
       "post": {
+        "description": "Waive forgives the UNPAID remainder; paid allocations stay.\n\nThe convention, stated where callers can find it (issue #137): money\nalready allocated to the charge remains payment for it \u2014 a tenant who\npaid 500 of 1450 and is then waived was forgiven 950, not refunded\n500. Nothing is released back to open credit, the balance arithmetic\nexcludes both the waived amount and its allocations (net zero: the\ncharge is settled), and the audit record carries the forgiven figure.\nA fully paid charge has nothing to forgive and is not waivable.",
         "operationId": "waive_charge_rent_charges__charge_id__waive_post",
         "parameters": [
           {

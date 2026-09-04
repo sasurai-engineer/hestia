@@ -837,7 +837,18 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Waive Charge */
+        /**
+         * Waive Charge
+         * @description Waive forgives the UNPAID remainder; paid allocations stay.
+         *
+         *     The convention, stated where callers can find it (issue #137): money
+         *     already allocated to the charge remains payment for it — a tenant who
+         *     paid 500 of 1450 and is then waived was forgiven 950, not refunded
+         *     500. Nothing is released back to open credit, the balance arithmetic
+         *     excludes both the waived amount and its allocations (net zero: the
+         *     charge is settled), and the audit record carries the forgiven figure.
+         *     A fully paid charge has nothing to forgive and is not waivable.
+         */
         post: operations["waive_charge_rent_charges__charge_id__waive_post"];
         delete?: never;
         options?: never;
