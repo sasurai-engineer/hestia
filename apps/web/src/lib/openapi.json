@@ -3995,7 +3995,7 @@
           },
           "rent_due_day": {
             "default": 1,
-            "maximum": 28.0,
+            "maximum": 31.0,
             "minimum": 1.0,
             "title": "Rent Due Day",
             "type": "integer"
