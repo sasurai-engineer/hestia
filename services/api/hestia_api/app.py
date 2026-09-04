@@ -732,15 +732,33 @@ def waive_charge(
     request: Request,
     actor: Actor = "system",
 ) -> None:
-    updated = conn.execute(
+    """Waive forgives the UNPAID remainder; paid allocations stay.
+
+    The convention, stated where callers can find it (issue #137): money
+    already allocated to the charge remains payment for it — a tenant who
+    paid 500 of 1450 and is then waived was forgiven 950, not refunded
+    500. Nothing is released back to open credit, the balance arithmetic
+    excludes both the waived amount and its allocations (net zero: the
+    charge is settled), and the audit record carries the forgiven figure.
+    A fully paid charge has nothing to forgive and is not waivable.
+    """
+    charge = conn.execute(
         """
-        UPDATE rent_charges SET status = 'waived', waived_reason = %s
-        WHERE id = %s AND status IN ('scheduled', 'due', 'partially_paid')
+        SELECT c.amount - coalesce((SELECT sum(a.amount)
+                                    FROM rent_receipt_allocations a
+                                    WHERE a.charge_id = c.id), 0) AS forgiven
+        FROM rent_charges c
+        WHERE c.id = %s AND c.status IN ('scheduled', 'due', 'partially_paid')
+        FOR UPDATE OF c
         """,
+        (str(charge_id),),
+    ).fetchone()
+    if charge is None:
+        raise HTTPException(status_code=404, detail="no waivable charge found")
+    conn.execute(
+        "UPDATE rent_charges SET status = 'waived', waived_reason = %s WHERE id = %s",
         (body.reason, str(charge_id)),
     )
-    if updated.rowcount == 0:
-        raise HTTPException(status_code=404, detail="no waivable charge found")
     _audit(
         conn,
         request,
@@ -748,7 +766,7 @@ def waive_charge(
         "rent.waive",
         "rent_charges",
         str(charge_id),
-        {"reason": body.reason},
+        {"reason": body.reason, "forgiven": str(charge["forgiven"])},
     )
 
 
