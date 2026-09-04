@@ -152,6 +152,40 @@ class TestRentSweep:
         )
         assert ok.status_code == 201
 
+    def test_due_on_is_a_day_of_the_month_not_day_arithmetic(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        # Issue #103: with rent_due_day = 31 the old arithmetic put
+        # February's due date on March 3 — outside its own period, feeding
+        # wrong late fees and a wrong ageing bucket. "The 31st" means the
+        # month's last day where no 31st exists.
+        unit = client.post(
+            "/units", json={"property_id": world["property"], "label": "U103"}
+        ).json()["id"]
+        lease = client.post(
+            "/leases",
+            json={
+                "unit_id": unit,
+                "starts_on": "2026-01-01",
+                "rent": "1200.00",
+                "rent_due_day": 31,
+            },
+        )
+        assert lease.status_code == 201, lease.text
+        lease_id = lease.json()["id"]
+        for as_of in ["2026-01-01", "2026-02-01", "2026-09-01", "2028-02-01"]:
+            client.post(f"/sweep/rent-charges?as_of={as_of}")
+        charges = client.get(f"/leases/{lease_id}").json()["charges"]
+        by_period = {c["period_start"]: c["due_on"] for c in charges}
+        assert by_period["2026-01-01"] == "2026-01-31"
+        assert by_period["2026-02-01"] == "2026-02-28"
+        assert by_period["2026-09-01"] == "2026-09-30"
+        assert by_period["2028-02-01"] == "2028-02-29"
+        # Every due date sits inside its own period — the defect's signature
+        # was a due date in the following month.
+        for period, due in by_period.items():
+            assert due[:7] == period[:7]
+
     def test_escalations_and_cpi_gap(self, world: dict[str, str], client: TestClient) -> None:
         # A second unit with each escalation shape.
         unit2 = client.post("/units", json={"property_id": world["property"], "label": "B"}).json()[
