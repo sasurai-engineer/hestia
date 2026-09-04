@@ -10,6 +10,7 @@ a coverage gap, the deadline sweep's discipline.
 
 from __future__ import annotations
 
+import calendar as calendar_module
 import datetime as dt
 from dataclasses import dataclass
 from decimal import ROUND_HALF_EVEN, Decimal
@@ -54,7 +55,7 @@ class LeaseIn(BaseModel):
     starts_on: dt.date
     ends_on: dt.date | None = None
     rent: Decimal = Field(gt=0, decimal_places=2, max_digits=18)
-    rent_due_day: int = Field(default=1, ge=1, le=28)
+    rent_due_day: int = Field(default=1, ge=1, le=31)
     security_deposit: Decimal = Field(default=Decimal(0), ge=0, decimal_places=2, max_digits=18)
     escalation: Literal["none", "fixed_amount", "fixed_percent"] = "none"
     escalation_value: Decimal | None = None
@@ -307,6 +308,18 @@ def _escalated_rent(
     return grown.quantize(CENT, rounding=ROUND_HALF_EVEN)
 
 
+def _due_on_in(period_start: dt.date, rent_due_day: int) -> dt.date:
+    """The lease's due day AS A DAY OF THE MONTH, clamped to the month's last
+    day — "due on the 31st" means the 31st where one exists and the last day
+    where none does, which is what a lease means by it. The previous
+    implementation was day ARITHMETIC (period_start + due_day - 1): identical
+    for days 1-28, but day 31 in February landed on March 3 — a due date
+    outside its own period, feeding wrong late fees and a wrong ageing
+    bucket (issue #103)."""
+    last_day = calendar_module.monthrange(period_start.year, period_start.month)[1]
+    return period_start.replace(day=min(rent_due_day, last_day))
+
+
 def sweep_rent_charges(conn: Conn, as_of: dt.date) -> RentSweepResult:
     """One rent charge per active lease for as_of's month. Idempotent via the
     one-charge-per-period key; CPI escalations are reported, not guessed."""
@@ -342,7 +355,7 @@ def sweep_rent_charges(conn: Conn, as_of: dt.date) -> RentSweepResult:
         amount = _escalated_rent(
             lease["rent"], lease["escalation"], lease["escalation_value"], years
         )
-        due_on = period_start + dt.timedelta(days=lease["rent_due_day"] - 1)
+        due_on = _due_on_in(period_start, lease["rent_due_day"])
         result = conn.execute(
             """
             INSERT INTO rent_charges
