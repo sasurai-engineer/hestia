@@ -584,10 +584,30 @@ def apply_open_credit(conn: Conn, lease_id: str) -> list[dict[str, str]]:
     both sides — the single allocation engine behind receipts, sweeps, and
     webhook settlements. A prepayment therefore pays the next charge the
     moment the sweep creates it, instead of vanishing while a late fee
-    accrues (the adversarial review's scenario). Charge rows are locked so
-    concurrent applications serialize; the schema's allocation-cap trigger
-    backs the arithmetic at the database.
+    accrues (the adversarial review's scenario).
+
+    Concurrency, honestly (issue #139): the charge rows are locked FIRST,
+    so a concurrent application on the same lease waits here and then sees
+    the survivor set; the credits are read AFTER, in a fresh statement, so
+    the remaining figures reflect whatever the earlier transaction spent.
+    Behind both stands the database: module 014 caps allocations per
+    charge, module 023 caps them per receipt, so a race that slips the
+    ordering is refused loudly and rolled back rather than spending the
+    same money twice.
     """
+    open_charges = conn.execute(
+        """
+        SELECT c.id::text,
+               c.amount - coalesce((SELECT sum(a.amount)
+                                    FROM rent_receipt_allocations a
+                                    WHERE a.charge_id = c.id), 0) AS outstanding
+        FROM rent_charges c
+        WHERE c.lease_id = %s AND c.status IN ('due', 'partially_paid')
+        ORDER BY c.due_on, c.created_at
+        FOR UPDATE OF c
+        """,
+        (lease_id,),
+    ).fetchall()
     credits = conn.execute(
         """
         SELECT e.id, e.event_uuid::text,
@@ -602,19 +622,6 @@ def apply_open_credit(conn: Conn, lease_id: str) -> list[dict[str, str]]:
           AND NOT EXISTS (SELECT 1 FROM ledger_events r
                           WHERE r.reverses_event_id = e.id)
         ORDER BY e.occurred_on, e.id
-        """,
-        (lease_id,),
-    ).fetchall()
-    open_charges = conn.execute(
-        """
-        SELECT c.id::text,
-               c.amount - coalesce((SELECT sum(a.amount)
-                                    FROM rent_receipt_allocations a
-                                    WHERE a.charge_id = c.id), 0) AS outstanding
-        FROM rent_charges c
-        WHERE c.lease_id = %s AND c.status IN ('due', 'partially_paid')
-        ORDER BY c.due_on, c.created_at
-        FOR UPDATE OF c
         """,
         (lease_id,),
     ).fetchall()
