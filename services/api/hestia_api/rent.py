@@ -131,7 +131,7 @@ class LeaseDetail(BaseModel):
 @dataclass(frozen=True)
 class RentSweepGap:
     lease_id: str
-    reason: str  # cpi_index_unavailable | no_late_fee_rule
+    reason: str  # cpi_index_unavailable | no_late_fee_rule | amount_rounds_to_zero
     detail: str
 
 
@@ -308,6 +308,48 @@ def _escalated_rent(
     return grown.quantize(CENT, rounding=ROUND_HALF_EVEN)
 
 
+def _month_end(month_start: dt.date) -> dt.date:
+    last = calendar_module.monthrange(month_start.year, month_start.month)[1]
+    return month_start.replace(day=last)
+
+
+def _lease_years_elapsed(starts_on: dt.date, month_start: dt.date) -> int:
+    """Complete lease years at the period's start: the count of
+    anniversaries falling on or before it. A February 29 start clamps to
+    February 28 — under period-boundary application both candidate
+    anniversaries (Feb 28 / Mar 1) land inside the same period, so the
+    choice provably never changes a bill; the clamp mirrors _due_on_in.
+    Escalating from the anniversary DATE rather than its month errs toward
+    the tenant: the anniversary month itself stays at the old rate and the
+    first escalated charge is the first full period of the new lease year
+    (issue #102, convention posted on the ticket)."""
+    years = month_start.year - starts_on.year
+    if years <= 0:
+        return 0
+    last_day = calendar_module.monthrange(month_start.year, starts_on.month)[1]
+    anniversary = dt.date(month_start.year, starts_on.month, min(starts_on.day, last_day))
+    return years - 1 if anniversary > month_start else years
+
+
+def _prorated(
+    monthly: Decimal,
+    month_start: dt.date,
+    month_end: dt.date,
+    period_start: dt.date,
+    period_end: dt.date,
+) -> Decimal:
+    """Calendar-day proration for a partial month: monthly x occupied days /
+    days in month, half-even to the cent. A whole month is returned as
+    EXACTLY the monthly figure — the multiplication is skipped so no
+    rounding artifact can shave the normal case."""
+    if period_start == month_start and period_end == month_end:
+        return monthly
+    occupied = (period_end - period_start).days + 1
+    days_in_month = (month_end - month_start).days + 1
+    share = monthly * Decimal(occupied) / Decimal(days_in_month)
+    return share.quantize(CENT, rounding=ROUND_HALF_EVEN)
+
+
 def _due_on_in(period_start: dt.date, rent_due_day: int) -> dt.date:
     """The lease's due day AS A DAY OF THE MONTH, clamped to the month's last
     day — "due on the 31st" means the 31st where one exists and the last day
@@ -323,17 +365,18 @@ def _due_on_in(period_start: dt.date, rent_due_day: int) -> dt.date:
 def sweep_rent_charges(conn: Conn, as_of: dt.date) -> RentSweepResult:
     """One rent charge per active lease for as_of's month. Idempotent via the
     one-charge-per-period key; CPI escalations are reported, not guessed."""
-    period_start = as_of.replace(day=1)
+    month_start = as_of.replace(day=1)
+    month_end = _month_end(month_start)
     leases = conn.execute(
         """
         SELECT id::text, starts_on, ends_on, rent, rent_due_day,
                escalation::text, escalation_value
         FROM leases
         WHERE status IN ('active', 'month_to_month')
-          AND starts_on <= %(period)s
-          AND (ends_on IS NULL OR ends_on >= %(period)s)
+          AND starts_on <= %(month_end)s
+          AND (ends_on IS NULL OR ends_on >= %(month_start)s)
         """,
-        {"period": period_start},
+        {"month_start": month_start, "month_end": month_end},
     ).fetchall()
     created = 0
     gaps: list[RentSweepGap] = []
@@ -347,25 +390,48 @@ def sweep_rent_charges(conn: Conn, as_of: dt.date) -> RentSweepResult:
                 )
             )
             continue
-        years = (
-            period_start.year
-            - lease["starts_on"].year
-            - (1 if (period_start.month, 1) < (lease["starts_on"].month, 1) else 0)
-        )
-        amount = _escalated_rent(
+        # Escalation applies from the first period that starts on or after
+        # the lease ANNIVERSARY DATE — never from the first of the
+        # anniversary month, which billed up to 30 days early (issue #102).
+        years = _lease_years_elapsed(lease["starts_on"], month_start)
+        monthly = _escalated_rent(
             lease["rent"], lease["escalation"], lease["escalation_value"], years
         )
-        due_on = _due_on_in(period_start, lease["rent_due_day"])
+        # The charge covers only the days the lease occupies: a mid-month
+        # start prorates the stub first month (which previously never billed
+        # at all), a mid-month end prorates the final one (which previously
+        # billed in full). period_start doubles as the idempotency key and
+        # is deterministic per (lease, month).
+        period_start = max(month_start, lease["starts_on"])
+        period_end = min(month_end, lease["ends_on"]) if lease["ends_on"] else month_end
+        amount = _prorated(monthly, month_start, month_end, period_start, period_end)
+        if amount == 0:
+            # A sub-cent share (peppercorn rent over a one-day stub) rounds
+            # to 0.00, which the amount > 0 CHECK would refuse — and one
+            # refused row would roll back every lease's charge for the
+            # month. Nothing billable is a reported gap, never an abort.
+            gaps.append(
+                RentSweepGap(
+                    lease_id=lease["id"],
+                    reason="amount_rounds_to_zero",
+                    detail=(
+                        f"the prorated share of {monthly} for "
+                        f"{period_start}..{period_end} rounds to zero; "
+                        "no charge was created"
+                    ),
+                )
+            )
+            continue
+        # Rent for a mid-month start is not due before the lease exists.
+        due_on = max(_due_on_in(month_start, lease["rent_due_day"]), period_start)
         result = conn.execute(
             """
             INSERT INTO rent_charges
               (lease_id, kind, period_start, period_end, due_on, amount, generated_by)
-            VALUES (%s, 'rent', %s,
-                    (%s::date + INTERVAL '1 month' - INTERVAL '1 day')::date,
-                    %s, %s, 'sweep')
+            VALUES (%s, 'rent', %s, %s, %s, %s, 'sweep')
             ON CONFLICT (lease_id, kind, period_start) DO NOTHING
             """,
-            (lease["id"], period_start, period_start, due_on, amount),
+            (lease["id"], period_start, period_end, due_on, amount),
         )
         created += result.rowcount
         if result.rowcount:
