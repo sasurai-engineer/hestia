@@ -681,7 +681,33 @@ SELECT assert_rejected(
     FROM rent_charges c
     WHERE c.lease_id = 'bbbbbbbb-2222-2222-2222-222222222222' AND c.kind = 'rent'$$,
   '<trigger>', 'an allocation exceeding its charge');
+-- Module 022: lease dates bind their charges. The August charge above is
+-- still on the books here, so the lease's dates are load-bearing.
+SELECT assert_rejected(
+  $$UPDATE leases SET starts_on = '2025-12-15'
+    WHERE id = 'bbbbbbbb-2222-2222-2222-222222222222'$$,
+  'lease_dates_bind_their_charges',
+  'moving starts_on under a billed month');
+SELECT assert_rejected(
+  $$UPDATE leases SET ends_on = '2026-08-15'
+    WHERE id = 'bbbbbbbb-2222-2222-2222-222222222222'$$,
+  'lease_dates_bind_their_charges',
+  'cutting ends_on into a billed month');
+SELECT assert_accepted(
+  $$UPDATE leases SET ends_on = '2027-03-31'
+    WHERE id = 'bbbbbbbb-2222-2222-2222-222222222222'$$,
+  'an end date beyond every billed month may still move');
+SELECT assert_accepted(
+  $$UPDATE leases SET ends_on = NULL
+    WHERE id = 'bbbbbbbb-2222-2222-2222-222222222222'$$,
+  'going month-to-month while the boundary is unbilled');
 DELETE FROM rent_charges WHERE lease_id = 'bbbbbbbb-2222-2222-2222-222222222222';
+-- With no charges left, the dates are free again — the trigger binds
+-- charges, not leases.
+SELECT assert_accepted(
+  $$UPDATE leases SET starts_on = '2026-02-01'
+    WHERE id = 'bbbbbbbb-2222-2222-2222-222222222222'$$,
+  'a chargeless lease may move its start');
 DELETE FROM leases WHERE id = 'bbbbbbbb-2222-2222-2222-222222222222';
 DELETE FROM units WHERE id = 'bbbbbbbb-1111-1111-1111-111111111111';
 
