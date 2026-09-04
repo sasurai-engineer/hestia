@@ -610,6 +610,138 @@ class TestLateFees:
         assert "flat $35" in fee["rule_citation"]
 
 
+class TestPaidMoneyDrawsNoFee:
+    def _qy_world(
+        self, world: dict[str, str], client: TestClient, conn: psycopg.Connection[Any]
+    ) -> str:
+        """A synthetic QY state with grace 3 + flat $20, its own property and
+        lease at 1000/mo — self-contained so test order cannot matter."""
+        exists = conn.execute("SELECT 1 AS x FROM jurisdictions WHERE state = 'QY'").fetchone()
+        if exists is None:
+            conn.execute(
+                """
+                INSERT INTO jurisdictions (level, name, state, parent_id)
+                SELECT 'state', 'Quyland', 'QY', id FROM jurisdictions
+                WHERE level = 'federal'
+                """
+            )
+            conn.execute(
+                """
+                INSERT INTO jurisdiction_rules
+                  (jurisdiction_id, domain, code, value_numeric, value_money, citation,
+                   effective_from)
+                SELECT id, 'late_fee', 'latefee.grace_days', 3, NULL,
+                       'QY Stat. 1.1 (fixture)', DATE '2000-01-01'
+                FROM jurisdictions WHERE state = 'QY' AND level = 'state'
+                """
+            )
+            conn.execute(
+                """
+                INSERT INTO jurisdiction_rules
+                  (jurisdiction_id, domain, code, value_numeric, value_money, citation,
+                   effective_from)
+                SELECT id, 'late_fee', 'latefee.amount', NULL, 20.00,
+                       'QY Stat. 1.2 (fixture): flat $20', DATE '2000-01-01'
+                FROM jurisdictions WHERE state = 'QY' AND level = 'state'
+                """
+            )
+            conn.commit()
+        property_id = client.post(
+            "/properties",
+            json={
+                "entity_id": world["entity"],
+                "label": "qy-house",
+                "street_1": "1 Paid Up Pl",
+                "city": "Quyton",
+                "state": "QY",
+                "postal_code": "00000",
+                "kind": "single_family",
+            },
+        ).json()["id"]
+        unit_id = client.post("/units", json={"property_id": property_id, "label": "A"}).json()[
+            "id"
+        ]
+        return client.post(
+            "/leases",
+            json={"unit_id": unit_id, "starts_on": "2026-01-01", "rent": "1000.00"},
+        ).json()["id"]
+
+    def test_a_check_through_the_ledger_door_draws_no_fee(
+        self, world: dict[str, str], client: TestClient, conn: psycopg.Connection[Any]
+    ) -> None:
+        # Issue #138: the owner records the tenant's on-time check via
+        # POST /ledger (which allocates nothing); the late-fee sweep used to
+        # take its overdue snapshot BEFORE applying that credit and fined a
+        # tenant whose money had been on account since the due date.
+        lease_id = self._qy_world(world, client, conn)
+        client.post("/sweep/rent-charges?as_of=2026-08-01")
+        posted = client.post(
+            "/ledger",
+            json={
+                "occurred_on": "2026-08-01",
+                "category": "rent",
+                "amount": "1000.00",
+                "lease_id": lease_id,
+                "memo": "tenant check, recorded by hand",
+            },
+        )
+        assert posted.status_code == 201, posted.text
+        client.post("/sweep/late-fees?as_of=2026-08-20")
+        detail = client.get(f"/leases/{lease_id}").json()
+        assert [c["kind"] for c in detail["charges"]] == ["rent"]
+        (rent_charge,) = detail["charges"]
+        assert rent_charge["status"] == "paid"
+        assert Decimal(detail["balance_due"]) == Decimal("0.00")
+
+    def test_credit_covering_one_of_two_months_fines_only_the_unpaid_one(
+        self, world: dict[str, str], client: TestClient, conn: psycopg.Connection[Any]
+    ) -> None:
+        lease_id = self._qy_world(world, client, conn)
+        client.post("/sweep/rent-charges?as_of=2026-08-01")
+        client.post("/sweep/rent-charges?as_of=2026-09-01")
+        client.post(
+            "/ledger",
+            json={
+                "occurred_on": "2026-08-01",
+                "category": "rent",
+                "amount": "1000.00",
+                "lease_id": lease_id,
+            },
+        )
+        client.post("/sweep/late-fees?as_of=2026-09-20")
+        charges = client.get(f"/leases/{lease_id}").json()["charges"]
+        fees = [c for c in charges if c["kind"] == "late_fee"]
+        # August was covered by the credit (oldest first); only September's
+        # genuinely unpaid month draws its flat fee.
+        assert len(fees) == 1
+        assert Decimal(fees[0]["amount"]) == Decimal("20.00")
+        paid_aug = next(c for c in charges if c["period_start"] == "2026-08-01")
+        assert paid_aug["status"] == "paid"
+
+    def test_credit_landing_after_the_charge_is_applied_by_the_next_rent_sweep(
+        self, world: dict[str, str], client: TestClient, conn: psycopg.Connection[Any]
+    ) -> None:
+        # The rowcount gate: a re-swept month created no charge, so credit
+        # that arrived in between was never applied until something else
+        # touched the lease. The apply is now unconditional per sweep.
+        lease_id = self._qy_world(world, client, conn)
+        client.post("/sweep/rent-charges?as_of=2026-08-01")
+        client.post(
+            "/ledger",
+            json={
+                "occurred_on": "2026-08-02",
+                "category": "rent",
+                "amount": "1000.00",
+                "lease_id": lease_id,
+            },
+        )
+        client.post("/sweep/rent-charges?as_of=2026-08-01")  # same month, 0 created
+        detail = client.get(f"/leases/{lease_id}").json()
+        (rent_charge,) = detail["charges"]
+        assert rent_charge["status"] == "paid"
+        assert Decimal(detail["open_credit"]) == Decimal("0.00")
+
+
 class TestRenewals:
     def test_context_carries_labeled_defaults_then_measured_history(
         self, world: dict[str, str], client: TestClient, conn: psycopg.Connection[Any]

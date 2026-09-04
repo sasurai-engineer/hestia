@@ -434,10 +434,13 @@ def sweep_rent_charges(conn: Conn, as_of: dt.date) -> RentSweepResult:
             (lease["id"], period_start, period_end, due_on, amount),
         )
         created += result.rowcount
-        if result.rowcount:
-            # A prepaid tenant's open credit pays the new charge immediately —
-            # before anything can call it overdue.
-            apply_open_credit(conn, lease["id"])
+        # Unconditionally, not only when a charge was just created: credit
+        # that lands AFTER a month's charge exists (a check recorded through
+        # the ledger door) used to strand as open_credit until a receipt or
+        # late-fee sweep touched the lease — and the late-fee sweep fined
+        # first (issue #138). Idempotent, so a re-swept month costs one
+        # no-op query.
+        apply_open_credit(conn, lease["id"])
     return RentSweepResult(charges_created=created, gaps=[vars(gap) for gap in gaps])
 
 
@@ -477,26 +480,37 @@ LEFT JOIN resolved fee_percent
 """
 
 
+_OVERDUE_SNAPSHOT_SQL = """
+SELECT c.id::text AS charge_id, c.lease_id::text, c.period_start, c.due_on,
+       c.amount, coalesce(sum(a.amount), 0) AS allocated
+FROM rent_charges c
+LEFT JOIN rent_receipt_allocations a ON a.charge_id = c.id
+WHERE c.kind = 'rent' AND c.status IN ('due', 'partially_paid')
+  AND c.due_on < %(as_of)s
+  AND NOT EXISTS (SELECT 1 FROM rent_charges lf
+                  WHERE lf.lease_id = c.lease_id AND lf.kind = 'late_fee'
+                    AND lf.period_start = c.period_start)
+GROUP BY c.id
+HAVING coalesce(sum(a.amount), 0) < c.amount
+"""
+
+
 def sweep_late_fees(conn: Conn, as_of: dt.date) -> RentSweepResult:
     """Assess late fees ONLY where the jurisdiction chain provides a cited
     rule (grace days + a fee amount or percent). No rule, no fee — the gap
     says so, and the owner can still assess manually from the lease terms."""
-    overdue = conn.execute(
-        """
-        SELECT c.id::text AS charge_id, c.lease_id::text, c.period_start, c.due_on,
-               c.amount, coalesce(sum(a.amount), 0) AS allocated
-        FROM rent_charges c
-        LEFT JOIN rent_receipt_allocations a ON a.charge_id = c.id
-        WHERE c.kind = 'rent' AND c.status IN ('due', 'partially_paid')
-          AND c.due_on < %(as_of)s
-          AND NOT EXISTS (SELECT 1 FROM rent_charges lf
-                          WHERE lf.lease_id = c.lease_id AND lf.kind = 'late_fee'
-                            AND lf.period_start = c.period_start)
-        GROUP BY c.id
-        HAVING coalesce(sum(a.amount), 0) < c.amount
-        """,
-        {"as_of": as_of},
-    ).fetchall()
+    # First read = candidates only. A tenant whose money is already on
+    # account — a check through the ledger door, a webhook settlement that
+    # landed between sweeps — must never draw a fee, so open credit is
+    # applied for every candidate BEFORE the snapshot that decides fees
+    # (issue #138: the fee INSERT used to run first and the credit second,
+    # fining money the tenant had since the due date).
+    candidates = conn.execute(_OVERDUE_SNAPSHOT_SQL, {"as_of": as_of}).fetchall()
+    if not candidates:
+        return RentSweepResult(charges_created=0, gaps=[])
+    for lease_id in {row["lease_id"] for row in candidates}:
+        apply_open_credit(conn, lease_id)
+    overdue = conn.execute(_OVERDUE_SNAPSHOT_SQL, {"as_of": as_of}).fetchall()
     if not overdue:
         return RentSweepResult(charges_created=0, gaps=[])
     rules = {
