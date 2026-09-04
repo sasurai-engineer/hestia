@@ -686,7 +686,20 @@ class TestPaidMoneyDrawsNoFee:
             },
         )
         assert posted.status_code == 201, posted.text
-        client.post("/sweep/late-fees?as_of=2026-08-20")
+        # The world fixture's lease is overdue too — pay it the same way, so
+        # the sweep's second snapshot is EMPTY and the everyone-is-cured
+        # early return is the path actually exercised.
+        client.post(
+            "/ledger",
+            json={
+                "occurred_on": "2026-08-01",
+                "category": "rent",
+                "amount": "1450.00",
+                "lease_id": world["lease"],
+            },
+        )
+        swept = client.post("/sweep/late-fees?as_of=2026-08-20").json()
+        assert swept == {"charges_created": 0, "gaps": []}
         detail = client.get(f"/leases/{lease_id}").json()
         assert [c["kind"] for c in detail["charges"]] == ["rent"]
         (rent_charge,) = detail["charges"]
