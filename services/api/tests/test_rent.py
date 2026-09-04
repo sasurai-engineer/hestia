@@ -105,6 +105,53 @@ class TestRentSweep:
         assert Decimal(charge["amount"]) == Decimal("1450.00")
         assert Decimal(detail["balance_due"]) == Decimal("1450.00")
 
+    def test_percent_form_escalation_is_refused_with_the_unit_spelled_out(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        # The issue #104 confusion: 3.5 meant as 3.5% is a 350% annual
+        # increase through (1 + value) ** years. The API answers 422 with
+        # the unit in the message, before the schema CHECK ever sees it.
+        unit = client.post(
+            "/units", json={"property_id": world["property"], "label": "U104"}
+        ).json()["id"]
+        refused = client.post(
+            "/leases",
+            json={
+                "unit_id": unit,
+                "starts_on": "2026-01-01",
+                "rent": "1450.00",
+                "escalation": "fixed_percent",
+                "escalation_value": "3.5",
+            },
+        )
+        assert refused.status_code == 422
+        assert "0.035" in refused.text and "350%" in refused.text
+        negative = client.post(
+            "/leases",
+            json={
+                "unit_id": unit,
+                "starts_on": "2026-01-01",
+                "rent": "1450.00",
+                "escalation": "fixed_amount",
+                "escalation_value": "-25.00",
+            },
+        )
+        assert negative.status_code == 422
+        assert "non-negative dollars" in negative.text
+        # The correctly-united forms both pass this validator (the fixtures
+        # in test_escalations_and_cpi_gap create them for real).
+        ok = client.post(
+            "/leases",
+            json={
+                "unit_id": unit,
+                "starts_on": "2026-01-01",
+                "rent": "1450.00",
+                "escalation": "fixed_percent",
+                "escalation_value": "0.035",
+            },
+        )
+        assert ok.status_code == 201
+
     def test_escalations_and_cpi_gap(self, world: dict[str, str], client: TestClient) -> None:
         # A second unit with each escalation shape.
         unit2 = client.post("/units", json={"property_id": world["property"], "label": "B"}).json()[

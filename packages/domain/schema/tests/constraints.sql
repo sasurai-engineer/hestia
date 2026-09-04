@@ -193,8 +193,24 @@ SELECT assert_rejected(
   'escalation_has_a_value', 'an escalation clause with no escalation value');
 SELECT assert_accepted(
   $$INSERT INTO leases (unit_id, starts_on, ends_on, rent, escalation, escalation_value)
+    VALUES ('55555555-5555-5555-5555-555555555555','2026-01-01','2026-12-31',1450,'fixed_percent',0.035)$$,
+  'a well-formed twelve-month lease at 3.5 percent, entered as 0.035');
+-- The fixture above once read 3.5 — through base * (1 + value) ** years that
+-- is a 350 percent annual increase, and this suite CERTIFIED it (issue #104).
+-- The same hazard annual_rate was bounded for; now the confusion is rejected
+-- at the layer that used to bless it.
+SELECT assert_rejected(
+  $$INSERT INTO leases (unit_id, starts_on, ends_on, rent, escalation, escalation_value)
     VALUES ('55555555-5555-5555-5555-555555555555','2026-01-01','2026-12-31',1450,'fixed_percent',3.5)$$,
-  'a well-formed twelve-month lease');
+  'escalation_value_matches_its_kind', 'a percent escalation entered in percent form');
+SELECT assert_rejected(
+  $$INSERT INTO leases (unit_id, starts_on, ends_on, rent, escalation, escalation_value)
+    VALUES ('55555555-5555-5555-5555-555555555555','2026-01-01','2026-12-31',1450,'fixed_amount',-25)$$,
+  'escalation_value_matches_its_kind', 'a negative fixed-amount escalation');
+SELECT assert_accepted(
+  $$INSERT INTO leases (unit_id, starts_on, ends_on, rent, escalation, escalation_value)
+    VALUES ('55555555-5555-5555-5555-555555555555','2026-01-01','2026-12-31',1450,'fixed_amount',75)$$,
+  'a seventy-five dollar annual step, in dollars');
 
 \echo ''
 \echo 'insurance'
