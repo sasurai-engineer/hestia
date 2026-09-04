@@ -101,9 +101,31 @@ def _oh_bor_complaint(year: int) -> WindowDates:
     )
 
 
+def _tx_protest_by_may_15(year: int) -> WindowDates:
+    """Tex. Tax Code s.41.44(a)(1): a protest is timely "not later than
+    May 15 or the 30th day after the date that notice ... was delivered ...
+    as provided by Section 25.19, whichever is later" (May 15 text since
+    HB 2228, 85th Leg., effective 2018). The
+    notice leg is per-parcel and CONDITIONAL (an unchanged value produces no
+    notice at all), so this builder emits the date an owner can rely on
+    WITHOUT a notice in hand: May 15, extended by s.1.06 off a weekend. A
+    later notice-relative deadline is entered from the notice as data, never
+    assumed. No statute names an opening date; January 1 is the s.23.01
+    valuation date the protest concerns — errs early, never late. The
+    s.41.445 informal conference is a right, not a prerequisite. Anchors:
+    2026-05-15 (Friday) stands; 2027-05-15 (Saturday) rolls to Monday
+    May 17."""
+    _check_year(year)
+    return WindowDates(
+        opens_on=dt.date(year, 1, 1),
+        closes_on=roll_forward_from_weekend(dt.date(year, 5, 15)),
+    )
+
+
 APPEAL_WINDOWS: dict[str, Callable[[int], WindowDates]] = {
     "us-ky.open-inspection": _ky_open_inspection,
     "us-oh.bor-complaint": _oh_bor_complaint,
+    "us-tx.protest-by-may-15": _tx_protest_by_may_15,
 }
 
 

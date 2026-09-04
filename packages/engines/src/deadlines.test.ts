@@ -120,6 +120,8 @@ describe('the appeal-window registry', () => {
     });
     const oh = appealWindowBuilder('us-oh.bor-complaint');
     expect(oh?.(2027)).toEqual({ opensOn: '2027-01-01', closesOn: '2027-03-31' });
+    const tx = appealWindowBuilder('us-tx.protest-by-may-15');
+    expect(tx?.(2026)).toEqual({ opensOn: '2026-01-01', closesOn: '2026-05-15' });
     // Tennessee registers nothing on purpose: its deadline is an
     // administrative date a county sets and revises annually, so a builder
     // there could only produce a confident wrong answer.
@@ -174,6 +176,61 @@ describe('the Ohio pack entry — us-oh.bor-complaint (ORC 5715.19)', () => {
 
   it('bounds its year like every builder', () => {
     expect(() => oh(MAX_YEAR + 1)).toThrow(/year/);
+  });
+});
+
+describe('the Texas pack entry — us-tx.protest-by-may-15 (Tex. Tax Code s.41.44)', () => {
+  // Looked up inside each test, not at describe scope — same mutation-
+  // coverage reasoning as the Ohio block above.
+  const tx = (year: number) => {
+    const builder = appealWindowBuilder('us-tx.protest-by-may-15');
+    if (!builder) throw new Error('TX builder must be registered');
+    return builder(year);
+  };
+
+  it('anchors 2026: May 15 is a Friday and stands', () => {
+    expect(tx(2026)).toEqual({ opensOn: '2026-01-01', closesOn: '2026-05-15' });
+    expect(dayOfWeek('2026-05-15')).toBe(5);
+  });
+
+  it('anchors 2027: May 15 is a Saturday and s.1.06 rolls it to Monday May 17', () => {
+    expect(tx(2027)).toEqual({ opensOn: '2027-01-01', closesOn: '2027-05-17' });
+    expect(dayOfWeek('2027-05-15')).toBe(6);
+  });
+
+  it('emits the date an owner can rely on WITHOUT a notice, and no conference gate', () => {
+    // The s.25.19 notice is conditional — an unchanged value produces none —
+    // so the emitted close must never depend on notice arrival, and the
+    // s.41.445 informal conference is a right, not a prerequisite.
+    expect(tx(2026).conferenceBy).toBeUndefined();
+    fc.assert(
+      fc.property(fc.integer({ min: MIN_YEAR, max: MAX_YEAR }), (year) => {
+        const window = tx(year);
+        // Opens at the s.23.01 January 1 valuation date — errs early.
+        expect(window.opensOn).toBe(`${String(year)}-01-01`);
+        // Never closes on a weekend, never earlier than May 15, never more
+        // than two days later (the s.1.06 roll is the only movement).
+        expect(dayOfWeek(window.closesOn)).not.toBe(0);
+        expect(dayOfWeek(window.closesOn)).not.toBe(6);
+        const drift = toEpochDays(window.closesOn) - toEpochDays(`${String(year)}-05-15`);
+        expect(drift).toBeGreaterThanOrEqual(0);
+        expect(drift).toBeLessThanOrEqual(2);
+      }),
+      { numRuns: 50 },
+    );
+  });
+
+  it('rolls nextWindow to the following May only after the close has fully passed', () => {
+    const builder = appealWindowBuilder('us-tx.protest-by-may-15');
+    if (!builder) throw new Error('TX builder must be registered');
+    expect(nextWindow(builder, '2026-05-15').closesOn).toBe('2026-05-15');
+    expect(nextWindow(builder, '2026-05-16').closesOn).toBe('2027-05-17');
+    expect(nextWindow(builder, '2026-09-03').closesOn).toBe('2027-05-17');
+  });
+
+  it('bounds its year like every builder', () => {
+    expect(() => tx(MAX_YEAR + 1)).toThrow(/year/);
+    expect(() => tx(MIN_YEAR - 1)).toThrow(/year/);
   });
 });
 
