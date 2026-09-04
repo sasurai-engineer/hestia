@@ -62,7 +62,7 @@ class LeaseIn(BaseModel):
     resident_ids: list[str] = []
 
     @model_validator(mode="after")
-    def escalation_value_matches_its_kind(self) -> "LeaseIn":
+    def escalation_value_matches_its_kind(self) -> LeaseIn:
         """The unit hazard module 021 rejects at the schema, rejected here
         first as a 422 the caller can read: a percent escalation is a
         DECIMAL FRACTION (0.035 is 3.5%), a fixed amount is non-negative
