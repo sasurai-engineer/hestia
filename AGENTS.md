@@ -37,3 +37,11 @@ The rules, in brief:
    close via commit message (`closes #N`).
 7. **Before every commit**: `git status`; confirm every file in the commit is
    yours; commit with explicit paths — never `git add -A` or `git commit -a`.
+8. **The vision test** (founder-approved, 2026-09-05). Every increment answers
+   two questions before it is called done: is it correct (the gates), and
+   does it move Hestia toward `docs/VISION.md` (the bar, its §6). A no on any
+   bar line is a finding; findings rank rather than veto only at mockup
+   review, where the founder decides. Tickets state problems, not builds —
+   Problem / Acceptance / Hints (non-binding) — and the premise is checked
+   before the branch: a ticket can be accurate and still not worth doing.
+   Correct is the entry fee, not the deliverable.
