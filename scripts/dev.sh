@@ -52,6 +52,8 @@ python3 "$ROOT/scripts/migrate.py" --include-seeds \
   --psql "$ENGINE exec -i $CONTAINER psql -U postgres -d hestia"
 
 export HESTIA_DATABASE_URL="postgresql://postgres:hestia-dev@127.0.0.1:$PORT/hestia"
+# The dev stack bills its month by itself (issue #39).
+export HESTIA_SWEEP_AT="${HESTIA_SWEEP_AT:-06:00}"
 say "starting the API on :$API_PORT"
 (cd "$ROOT/services/api" && exec uv run uvicorn hestia_api.app:app \
   --port "$API_PORT" --reload) &
