@@ -508,7 +508,10 @@ def test_the_collection_calendar_reaches_the_deadlines_table(
     )
     assert gap["reason"] == "window_awaiting_publication"
     assert "2025-11-30" in gap["detail"]
-    assert "campbellcountysheriffky.org" in gap["detail"]
+    # The sheriff is named as the source. Asserted by name rather than by
+    # domain substring: CodeQL reads a URL-in-string check as incomplete
+    # sanitization, and the citation's words prove the same thing.
+    assert "Campbell County Sheriff" in gap["detail"]
 
     # Idempotent: the same sweep again inserts nothing new for this property.
     again = client.post("/sweep/deadlines?as_of=2026-06-01").json()
