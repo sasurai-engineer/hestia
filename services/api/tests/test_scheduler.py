@@ -162,6 +162,38 @@ class TestTick:
         assert "dossier.refresh" in actions
         assert "dossier.refresh.failed" in actions
 
+    def test_a_successful_refresh_counts_and_commits(
+        self,
+        world: dict[str, str],
+        client: TestClient,
+        conn: psycopg.Connection[Any],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        # The success path of the weekly refresh: assemble stubbed to
+        # succeed, the counter advances, the summary row carries it, and no
+        # failure rows appear.
+        from hestia_api import dossier
+
+        seen: list[str] = []
+
+        def ok_assemble(_conn: Any, property_id: str, **_: Any) -> dict[str, Any]:
+            seen.append(property_id)
+            return {"steps": []}
+
+        monkeypatch.setattr(dossier, "assemble", ok_assemble)
+        now = dt.datetime(2026, 9, 6, 6, 0, tzinfo=UTC)  # a Sunday
+        result = scheduler.tick(conn, now=now, dossier_weekday=6, fetch=_refusing_fetch)
+        assert result["dossier.refresh"] == 1
+        assert seen == [world["property"]]
+        failed = conn.execute(
+            """
+            SELECT count(*) AS n FROM audit_log
+            WHERE request_id = %s AND action = 'dossier.refresh.failed'
+            """,
+            (result["request_id"],),
+        ).fetchone()
+        assert failed is not None and failed["n"] == 0
+
     def test_a_second_runner_skips_instead_of_racing(
         self,
         world: dict[str, str],
