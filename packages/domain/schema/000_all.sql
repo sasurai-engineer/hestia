@@ -23,3 +23,4 @@
 \ir 022_lease_dates_bind_their_charges.sql
 \ir 023_a_receipt_pays_out_at_most_once.sql
 \ir 024_tax_collection_domain.sql
+\ir 025_tax_payment_deadline_kinds.sql

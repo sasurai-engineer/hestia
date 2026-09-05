@@ -129,7 +129,11 @@ def test_an_address_becomes_a_dossier(
 
     # The sweep ran inside the same call: the 2027 KY window is on the books.
     assert body["sweep"]["inserted"]["assessment_appeal_window"] == 1
-    assert body["sweep"]["gaps"] == []
+    # The appeal side is fully covered; the one gap is the collection
+    # calendar being honest — Campbell's discount schedule publishes yearly
+    # and the next year's is not out yet (issue #149).
+    assert [g["domain"] for g in body["sweep"]["gaps"]] == ["tax_collection"]
+    assert body["sweep"]["gaps"][0]["reason"] == "window_awaiting_publication"
 
     # And the whole assembly audited itself under this request id.
     audit = conn.execute(

@@ -281,8 +281,16 @@ def test_the_cross_river_portfolio_gets_both_regimes(
     # to 2027; Davidson County's published 2026 date is still ahead.
     body = client.post("/sweep/deadlines?as_of=2026-06-01").json()
     assert body["inserted"]["assessment_appeal_window"] == 3
-    (gap,) = body["coverage_gaps"]
+    appeal_gaps = [g for g in body["coverage_gaps"] if g["domain"] == "assessment_appeal"]
+    (gap,) = appeal_gaps
     assert (gap["state"], gap["reason"]) == ("IN", "no_state_jurisdiction")
+    # The collection calendar rides the same sweep now: at this as_of the
+    # Newport property's county discount sits between published schedules,
+    # which is a named gap, not silence — and not a guess.
+    assert any(
+        g["domain"] == "tax_collection" and g["reason"] == "window_awaiting_publication"
+        for g in body["coverage_gaps"]
+    )
 
     rows = conn.execute(
         """
@@ -435,6 +443,181 @@ def test_a_published_state_with_no_date_ever_loaded_says_so_differently(
     assert gap["reason"] == "window_not_published"
     assert "no appeal window has ever been loaded" in gap["detail"]
     assert "QP Rev. Stat. 9.9" in gap["detail"]
+
+
+def _newport_property(conn: psycopg.Connection[Any]) -> str:
+    """A property anchored at the Newport municipality, whose chain carries
+    the whole collection stack: city calendar keys (seed 912), the county's
+    published discount schedule (seed 910), and the license conflict row
+    (seed 911)."""
+    entity_id = str(uuid.uuid4())
+    conn.execute(
+        "INSERT INTO entities (id, name, kind) VALUES (%s, 'Collection LLC', 'llc')",
+        (entity_id,),
+    )
+    property_id = str(uuid.uuid4())
+    conn.execute(
+        """
+        INSERT INTO properties (id, entity_id, label, street_1, city, state,
+                                postal_code, kind, jurisdiction_id)
+        VALUES (%s, %s, 'monmouth', '998 Monmouth St', 'Newport', 'KY', '41071',
+                'single_family',
+                'a0000000-0000-4000-8000-000000000101')
+        """,
+        (property_id, entity_id),
+    )
+    conn.commit()
+    return property_id
+
+
+def test_the_collection_calendar_reaches_the_deadlines_table(
+    world: dict[str, str], client: TestClient, conn: psycopg.Connection[Any]
+) -> None:
+    # Mid-2026: the city tax and the license both compute to October 31 —
+    # emitted AS-IS on a Saturday, because the KY roll question is open and
+    # staging errs early (seed 910). Campbell's published 2025 discount
+    # window has expired and 2026's does not exist, so the county's free
+    # money is an awaiting-publication gap citing the sheriff, never a
+    # computed guess.
+    property_id = _newport_property(conn)
+    body = client.post("/sweep/deadlines?as_of=2026-06-01").json()
+    assert body["inserted"].get("tax_payment_due", 0) >= 1
+    assert body["inserted"].get("license_renewal", 0) >= 1
+    rows = conn.execute(
+        """
+        SELECT kind::text, due_on, citation, note FROM deadlines
+        WHERE property_id = %s AND kind IN ('tax_payment_due', 'license_renewal')
+        ORDER BY kind
+        """,
+        (property_id,),
+    ).fetchall()
+    by_kind = {r["kind"]: r for r in rows}
+    tax = by_kind["tax_payment_due"]
+    assert tax["due_on"] == dt.date(2026, 10, 31)
+    assert "91A.070" in tax["citation"]
+    assert "October 31" in (tax["note"] or "")
+    lic = by_kind["license_renewal"]
+    assert lic["due_on"] == dt.date(2026, 10, 31)
+    assert "99.09" in lic["citation"]
+    # The conflict row rides as the note: both dates and the rule to choose.
+    assert "October 15" in (lic["note"] or "") and "SOURCES DISAGREE" in (lic["note"] or "")
+    gap = next(
+        g
+        for g in body["coverage_gaps"]
+        if g["domain"] == "tax_collection" and g["property_id"] == property_id
+    )
+    assert gap["reason"] == "window_awaiting_publication"
+    assert "2025-11-30" in gap["detail"]
+    assert "campbellcountysheriffky.org" in gap["detail"]
+
+    # Idempotent: the same sweep again inserts nothing new for this property.
+    again = client.post("/sweep/deadlines?as_of=2026-06-01").json()
+    assert again["inserted"].get("tax_payment_due", 0) == 0
+    assert again["inserted"].get("license_renewal", 0) == 0
+
+
+def test_a_published_discount_window_is_emitted_while_it_is_live(
+    world: dict[str, str], client: TestClient, conn: psycopg.Connection[Any]
+) -> None:
+    # Autumn 2025: the published window is ahead, so it lands on the
+    # calendar with its open attached — and no awaiting gap rides beside it.
+    property_id = _newport_property(conn)
+    body = client.post("/sweep/deadlines?as_of=2025-10-15").json()
+    row = conn.execute(
+        """
+        SELECT due_on, window_opens_on, citation FROM deadlines
+        WHERE property_id = %s AND kind = 'tax_discount_close'
+        """,
+        (property_id,),
+    ).fetchone()
+    assert row is not None
+    assert row["due_on"] == dt.date(2025, 11, 30)
+    assert row["window_opens_on"] == dt.date(2025, 11, 1)
+    assert "Campbell County Sheriff" in row["citation"]
+    assert "CONFIRM ANNUALLY" in row["citation"]
+    assert not [
+        g
+        for g in body["coverage_gaps"]
+        if g["domain"] == "tax_collection" and g["property_id"] == property_id
+    ]
+    # Mid-October: this year's October 31 is still ahead and is the one
+    # emitted — the date itself counts until it has fully passed.
+    tax = conn.execute(
+        "SELECT due_on FROM deadlines WHERE property_id = %s AND kind = 'tax_payment_due'",
+        (property_id,),
+    ).fetchone()
+    assert tax is not None and tax["due_on"] == dt.date(2025, 10, 31)
+
+
+def test_collection_sources_without_dates_and_unknown_keys_are_named_gaps(
+    world: dict[str, str], client: TestClient, conn: psycopg.Connection[Any]
+) -> None:
+    # A synthetic state whose pack names a schedule source but has never
+    # loaded a dated window, plus calendar keys this build does not
+    # register — one named gap each, nothing guessed.
+    entity_id = str(uuid.uuid4())
+    conn.execute(
+        "INSERT INTO entities (id, name, kind) VALUES (%s, 'QC LLC', 'llc')",
+        (entity_id,),
+    )
+    conn.execute(
+        """
+        INSERT INTO jurisdictions (level, name, state, parent_id)
+        SELECT 'state', 'Quocland', 'QC', id FROM jurisdictions WHERE level = 'federal'
+        ON CONFLICT DO NOTHING
+        """
+    )
+    conn.execute(
+        """
+        INSERT INTO jurisdiction_rules
+          (jurisdiction_id, domain, code, value_text, citation, effective_from)
+        SELECT id, 'tax_collection', 'collection.schedule.source',
+               'published_by_collector; QC treasurer', 'QC Treasurer site (fixture)',
+               DATE '2020-01-01'
+        FROM jurisdictions WHERE state = 'QC' AND level = 'state'
+        ON CONFLICT DO NOTHING
+        """
+    )
+    conn.execute(
+        """
+        INSERT INTO jurisdiction_rules
+          (jurisdiction_id, domain, code, value_text, citation, effective_from)
+        SELECT id, 'tax_collection', 'collection.calendar',
+               'us-qc.not-registered', 'QC Stat. 1 (fixture)', DATE '2020-01-01'
+        FROM jurisdictions WHERE state = 'QC' AND level = 'state'
+        ON CONFLICT DO NOTHING
+        """
+    )
+    conn.execute(
+        """
+        INSERT INTO jurisdiction_rules
+          (jurisdiction_id, domain, code, value_text, citation, effective_from)
+        SELECT id, 'registration', 'registration.rental_license.calendar',
+               'us-qc.also-not-registered', 'QC Ord. 2 (fixture)', DATE '2020-01-01'
+        FROM jurisdictions WHERE state = 'QC' AND level = 'state'
+        ON CONFLICT DO NOTHING
+        """
+    )
+    property_id = str(uuid.uuid4())
+    conn.execute(
+        """
+        INSERT INTO properties (id, entity_id, label, street_1, city, state,
+                                postal_code, kind, jurisdiction_id)
+        VALUES (%s, %s, 'qc', '1 Main St', 'Quoc City', 'QC', '00000',
+                'single_family',
+                (SELECT id FROM jurisdictions WHERE state = 'QC' AND level = 'state'))
+        """,
+        (property_id, entity_id),
+    )
+    conn.commit()
+    body = client.post("/sweep/deadlines?as_of=2026-07-01").json()
+    mine = [g for g in body["coverage_gaps"] if g["property_id"] == property_id]
+    reasons = {(g["domain"], g["reason"]) for g in mine}
+    assert ("tax_collection", "window_not_published") in reasons
+    assert ("tax_collection", "calendar_key_unregistered") in reasons
+    assert ("registration", "calendar_key_unregistered") in reasons
+    not_published = next(g for g in mine if g["reason"] == "window_not_published")
+    assert "no discount window has ever been loaded" in not_published["detail"]
 
 
 def test_an_empty_portfolio_sweeps_to_zero_today(clean: None, client: TestClient) -> None:

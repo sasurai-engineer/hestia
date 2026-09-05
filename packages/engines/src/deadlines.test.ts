@@ -2,6 +2,7 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import {
   addDays,
+  annualDateBuilder,
   appealWindowBuilder,
   dayOfWeek,
   exchangeDeadlines,
@@ -13,6 +14,7 @@ import {
   MAX_REMINDER_LEADS,
   MAX_YEAR,
   MIN_YEAR,
+  nextAnnualDate,
   nextWindow,
   nthWeekdayOfMonth,
   reminderSchedule,
@@ -176,6 +178,32 @@ describe('the Ohio pack entry — us-oh.bor-complaint (ORC 5715.19)', () => {
 
   it('bounds its year like every builder', () => {
     expect(() => oh(MAX_YEAR + 1)).toThrow(/year/);
+  });
+});
+
+describe('the annual-date registry — Newport, two authorities on one date', () => {
+  it('resolves both keys to October 31 and keeps their identities apart', () => {
+    const cityTax = annualDateBuilder('us-ky-newport.city-tax-oct31');
+    const license = annualDateBuilder('us-ky-newport.rental-license-oct31');
+    if (!cityTax || !license) throw new Error('both Newport builders must be registered');
+    // One builder per authority (ADR 0003): the keys must not share a function.
+    expect(cityTax).not.toBe(license);
+    // 2026-10-31 is a Saturday and is emitted AS-IS — the KY s.446.030 roll
+    // question is unresolved (seed 910); staging errs early instead.
+    expect(cityTax(2026)).toBe('2026-10-31');
+    expect(license(2026)).toBe('2026-10-31');
+    expect(dayOfWeek('2026-10-31')).toBe(6);
+    expect(annualDateBuilder('us-zz.not-a-date')).toBeUndefined();
+    expect(() => cityTax(MAX_YEAR + 1)).toThrow(/year/);
+    expect(() => license(MAX_YEAR + 1)).toThrow(/year/);
+  });
+
+  it('nextAnnualDate rolls only when the date has fully passed', () => {
+    const cityTax = annualDateBuilder('us-ky-newport.city-tax-oct31');
+    if (!cityTax) throw new Error('builder must be registered');
+    expect(nextAnnualDate(cityTax, '2026-06-01')).toBe('2026-10-31');
+    expect(nextAnnualDate(cityTax, '2026-10-31')).toBe('2026-10-31');
+    expect(nextAnnualDate(cityTax, '2026-11-01')).toBe('2027-10-31');
   });
 });
 

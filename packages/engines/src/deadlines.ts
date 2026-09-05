@@ -212,6 +212,48 @@ export const appealWindowBuilder = (key: string): AppealWindowBuilder | undefine
 };
 
 /**
+ * Annual fixed dates — the collection calendar's computed species. Like the
+ * appeal registry, keys are timeless function identities named by pack rows
+ * (`collection.calendar` and its siblings); a changed date is a NEW key
+ * behind a new effective-dated rule row.
+ *
+ * City of Newport, two authorities sharing one date and NOT one builder
+ * (one builder per authority, per ADR 0003): the city ad valorem tax is
+ * payable on or before October 31 (KRS s.91A.070(2); the city's
+ * Finance/Taxes page; Newport Code s.37.002), and the rental dwelling
+ * license fee is due and payable by October 31 (Newport Code s.99.09; the
+ * city's CN-17 form — the web page's lone October 15 is recorded on the
+ * rule row, seed 911). No weekend roll is applied ON PURPOSE: Kentucky's
+ * s.446.030 asymmetry is unresolved for fixed tax dates (seed 910), so the
+ * legal date is emitted as-is and staging errs early. Anchor: 2026-10-31
+ * is a Saturday and is emitted as October 31 regardless.
+ */
+export type AnnualDateBuilder = (year: number) => string;
+
+export const annualDateBuilder = (key: string): AnnualDateBuilder | undefined => {
+  // Two authorities, one date, two identities — mirroring the Python twin.
+  const newportCityTaxDue = (year: number): string => {
+    assertIntInRange(year, 'year', MIN_YEAR, MAX_YEAR);
+    return `${String(year)}-10-31`;
+  };
+  const newportRentalLicenseDue = (year: number): string => {
+    assertIntInRange(year, 'year', MIN_YEAR, MAX_YEAR);
+    return `${String(year)}-10-31`;
+  };
+  const registry: ReadonlyMap<string, AnnualDateBuilder> = new Map([
+    ['us-ky-newport.city-tax-oct31', newportCityTaxDue],
+    ['us-ky-newport.rental-license-oct31', newportRentalLicenseDue],
+  ]);
+  return registry.get(key);
+};
+
+/** The next occurrence on or after `asOf` — the date itself still counts. */
+export const nextAnnualDate = (builder: AnnualDateBuilder, asOf: string): string => {
+  const current = builder(Number(asOf.slice(0, 4)));
+  return toEpochDays(current) < toEpochDays(asOf) ? builder(Number(asOf.slice(0, 4)) + 1) : current;
+};
+
+/**
  * The next window on or after `asOf`: the close date itself still counts —
  * the window is not behind the owner until it has fully passed.
  */

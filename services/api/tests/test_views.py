@@ -27,7 +27,10 @@ def test_the_portfolio_list_carries_the_summary(assembled: str, client: TestClie
     assert summary["jurisdiction"] == "Newport"
     assert summary["defect_count"] == 4
     assert summary["component_count"] == 11
-    assert summary["next_deadline_on"] == "2027-05-17"  # the KY appeal window
+    # The collection calendar (issue #149) put a NEARER real date on the
+    # books: Newport's city tax, October 31 — the appeal window is now the
+    # second thing coming, exactly as it is in life.
+    assert summary["next_deadline_on"] == "2026-10-31"
 
 
 def test_the_dossier_reads_as_a_document(assembled: str, client: TestClient) -> None:

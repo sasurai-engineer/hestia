@@ -129,6 +129,47 @@ APPEAL_WINDOWS: dict[str, Callable[[int], WindowDates]] = {
 }
 
 
+def _newport_city_tax_due(year: int) -> dt.date:
+    """City of Newport ad valorem taxes: bills mailed by late September,
+    payable on or before October 31 (KRS s.91A.070(2) self-collection by
+    ordinance; the city's Finance/Taxes page; Newport Code s.37.002). No
+    weekend roll is applied ON PURPOSE: Kentucky's s.446.030 asymmetry is
+    unresolved for fixed tax dates (seed 910's collection.weekend_roll), so
+    the legal date is emitted as-is and staging errs early. Anchor:
+    2026-10-31 is a Saturday and is emitted as October 31 regardless."""
+    _check_year(year)
+    return dt.date(year, 10, 31)
+
+
+def _newport_rental_license_due(year: int) -> dt.date:
+    """Newport rental dwelling license: fee due and payable by October 31 of
+    each year for the following license year (Newport Code s.99.09; the
+    city's own CN-17 form, whose $20 penalty attaches only AFTER October
+    31 — the web page's lone October 15 is recorded on the rule row, seed
+    911). Same date as the city tax, but a DIFFERENT authority, so it is a
+    different registry identity — one builder per authority, per ADR 0003."""
+    _check_year(year)
+    return dt.date(year, 10, 31)
+
+
+# Annual fixed dates: like APPEAL_WINDOWS, keys are timeless function
+# identities named by pack rows (`collection.calendar`,
+# `registration.rental_license.calendar`); a changed date is a NEW key
+# behind a new effective-dated rule row.
+ANNUAL_DATES: dict[str, Callable[[int], dt.date]] = {
+    "us-ky-newport.city-tax-oct31": _newport_city_tax_due,
+    "us-ky-newport.rental-license-oct31": _newport_rental_license_due,
+}
+
+
+def next_annual_date(builder: Callable[[int], dt.date], as_of: dt.date) -> dt.date:
+    """The next occurrence on or after as_of — the date itself still counts."""
+    current = builder(as_of.year)
+    if current < as_of:
+        return builder(as_of.year + 1)
+    return current
+
+
 def next_window(builder: Callable[[int], WindowDates], as_of: dt.date) -> WindowDates:
     """The next window on or after `as_of`: the close date itself still
     counts — the window is not behind the owner until it has fully passed."""
