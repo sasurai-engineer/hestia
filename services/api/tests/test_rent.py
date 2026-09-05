@@ -801,6 +801,123 @@ class TestWaiverConvention:
         assert refused.status_code == 404
 
 
+class TestChargeCorrection:
+    def test_an_unpaid_overbilled_charge_corrects_by_supersession(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        # Issue #105: the old row becomes history pointing at its successor;
+        # the period keeps exactly one LIVE charge; the balance follows the
+        # corrected figure; a re-swept month does not duplicate.
+        client.post("/sweep/rent-charges?as_of=2026-08-01")
+        detail = client.get(f"/leases/{world['lease']}").json()
+        (charge,) = detail["charges"]
+        corrected = client.post(
+            f"/rent-charges/{charge['id']}/correct",
+            json={"amount": "1400.00", "reason": "rent was mistyped by fifty dollars"},
+        )
+        assert corrected.status_code == 200, corrected.text
+        body = corrected.json()
+        assert body["superseded_charge_id"] == charge["id"]
+        assert Decimal(body["released"]) == Decimal("0.00")
+        detail = client.get(f"/leases/{world['lease']}").json()
+        by_id = {c["id"]: c for c in detail["charges"]}
+        old = by_id[charge["id"]]
+        new = by_id[body["new_charge_id"]]
+        assert old["status"] == "superseded"
+        assert old["superseded_by"] == new["id"]
+        assert Decimal(old["outstanding"]) == Decimal("0.00")
+        assert new["corrects_charge_id"] == old["id"]
+        assert "mistyped" in new["correction_reason"]
+        assert Decimal(new["amount"]) == Decimal("1400.00")
+        assert new["period_start"] == old["period_start"]
+        assert Decimal(detail["balance_due"]) == Decimal("1400.00")
+        # Idempotency holds against the LIVE index: re-sweeping the month
+        # creates nothing beside the corrected charge.
+        again = client.post("/sweep/rent-charges?as_of=2026-08-01").json()
+        assert again["charges_created"] == 0
+
+    def test_a_paid_charge_corrected_downward_releases_the_excess_as_credit(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        client.post("/sweep/rent-charges?as_of=2026-08-01")
+        client.post(
+            f"/leases/{world['lease']}/receipts",
+            json={"occurred_on": "2026-08-01", "amount": "1450.00"},
+        )
+        detail = client.get(f"/leases/{world['lease']}").json()
+        (charge,) = detail["charges"]
+        assert charge["status"] == "paid"
+        body = client.post(
+            f"/rent-charges/{charge['id']}/correct",
+            json={"amount": "1400.00", "reason": "August was billed fifty high"},
+        ).json()
+        # 1450 released; 1400 re-applies to the successor; 50 stays VISIBLE.
+        assert Decimal(body["released"]) == Decimal("1450.00")
+        detail = client.get(f"/leases/{world['lease']}").json()
+        new = next(c for c in detail["charges"] if c["id"] == body["new_charge_id"])
+        assert new["status"] == "paid"
+        assert Decimal(detail["balance_due"]) == Decimal("0.00")
+        assert Decimal(detail["open_credit"]) == Decimal("50.00")
+
+    def test_a_partially_paid_charge_corrected_upward_shows_the_true_remainder(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        client.post("/sweep/rent-charges?as_of=2026-08-01")
+        client.post(
+            f"/leases/{world['lease']}/receipts",
+            json={"occurred_on": "2026-08-01", "amount": "500.00"},
+        )
+        detail = client.get(f"/leases/{world['lease']}").json()
+        (charge,) = detail["charges"]
+        body = client.post(
+            f"/rent-charges/{charge['id']}/correct",
+            json={"amount": "1500.00", "reason": "utilities rider was omitted"},
+        ).json()
+        detail = client.get(f"/leases/{world['lease']}").json()
+        new = next(c for c in detail["charges"] if c["id"] == body["new_charge_id"])
+        assert new["status"] == "partially_paid"
+        assert Decimal(new["allocated"]) == Decimal("500.00")
+        assert Decimal(detail["balance_due"]) == Decimal("1000.00")
+        assert Decimal(detail["open_credit"]) == Decimal("0.00")
+
+    def test_the_chain_extends_from_the_live_row_and_history_is_refused(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        client.post("/sweep/rent-charges?as_of=2026-08-01")
+        (charge,) = client.get(f"/leases/{world['lease']}").json()["charges"]
+        first = client.post(
+            f"/rent-charges/{charge['id']}/correct",
+            json={"amount": "1400.00", "reason": "first correction"},
+        ).json()
+        # Correcting the SUPERSEDED row again: 404 — correct the live one.
+        refused = client.post(
+            f"/rent-charges/{charge['id']}/correct",
+            json={"amount": "1300.00", "reason": "should not land"},
+        )
+        assert refused.status_code == 404
+        second = client.post(
+            f"/rent-charges/{first['new_charge_id']}/correct",
+            json={"amount": "1300.00", "reason": "second correction, live row"},
+        )
+        assert second.status_code == 200
+        detail = client.get(f"/leases/{world['lease']}").json()
+        assert Decimal(detail["balance_due"]) == Decimal("1300.00")
+        live = [c for c in detail["charges"] if c["status"] not in ("superseded",)]
+        assert len(live) == 1
+
+    def test_a_waived_charge_is_history_and_not_correctable(
+        self, world: dict[str, str], client: TestClient
+    ) -> None:
+        client.post("/sweep/rent-charges?as_of=2026-08-01")
+        (charge,) = client.get(f"/leases/{world['lease']}").json()["charges"]
+        client.post(f"/rent-charges/{charge['id']}/waive", json={"reason": "goodwill"})
+        refused = client.post(
+            f"/rent-charges/{charge['id']}/correct",
+            json={"amount": "1.00", "reason": "should not land"},
+        )
+        assert refused.status_code == 404
+
+
 class TestRenewals:
     def test_context_carries_labeled_defaults_then_measured_history(
         self, world: dict[str, str], client: TestClient, conn: psycopg.Connection[Any]

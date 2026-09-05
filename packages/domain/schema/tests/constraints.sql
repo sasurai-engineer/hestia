@@ -709,6 +709,75 @@ DELETE FROM rent_receipt_allocations
   WHERE charge_id IN (SELECT id FROM rent_charges
                       WHERE lease_id = 'bbbbbbbb-2222-2222-2222-222222222222');
 DELETE FROM rent_charges WHERE id = 'bbbbbbbb-4444-4444-4444-444444444444';
+-- Module 027: correction by supersession. The August rent charge above is
+-- still live; supersede it and prove the law holds in both directions.
+SELECT assert_rejected(
+  $$UPDATE rent_charges SET status = 'superseded'
+    WHERE lease_id = 'bbbbbbbb-2222-2222-2222-222222222222' AND kind = 'rent'$$,
+  'superseded_is_coupled', 'a superseded status with no successor pointer');
+SELECT assert_rejected(
+  $$INSERT INTO rent_charges
+      (lease_id, kind, period_start, due_on, amount, corrects_charge_id)
+    SELECT lease_id, 'late_fee', '2026-09-01', '2026-09-01', 10.00, id
+    FROM rent_charges
+    WHERE lease_id = 'bbbbbbbb-2222-2222-2222-222222222222' AND kind = 'rent'$$,
+  'correction_says_why', 'a correction with no reason');
+-- The real flow, in one transaction: mark the old row first (it leaves the
+-- live index; the deferred FK proves the chain at commit), insert the
+-- successor second — same period, corrected amount, reason carried.
+DO $$
+DECLARE
+  old_id UUID;
+  new_id UUID := 'bbbbbbbb-5555-5555-5555-555555555555';
+BEGIN
+  SELECT id INTO old_id FROM rent_charges
+  WHERE lease_id = 'bbbbbbbb-2222-2222-2222-222222222222' AND kind = 'rent'
+    AND superseded_by IS NULL;
+  UPDATE rent_charges SET status = 'superseded', superseded_by = new_id
+  WHERE id = old_id;
+  INSERT INTO rent_charges
+    (id, lease_id, kind, period_start, due_on, amount, generated_by,
+     corrects_charge_id, correction_reason)
+  VALUES (new_id, 'bbbbbbbb-2222-2222-2222-222222222222', 'rent',
+          '2026-08-01', '2026-08-01', 1400.00, 'correction',
+          old_id, 'fixture: rent was mistyped by fifty dollars');
+  RAISE NOTICE '  ok      a charge superseded and its successor live in one period';
+END $$;
+-- The live index still refuses a SECOND live row for the corrected period...
+SELECT assert_rejected(
+  $$INSERT INTO rent_charges (lease_id, kind, period_start, due_on, amount)
+    VALUES ('bbbbbbbb-2222-2222-2222-222222222222', 'rent', '2026-08-01',
+            '2026-08-05', 1450.00)$$,
+  'one_charge_per_period', 'a second LIVE charge for a corrected period');
+-- ...and the chain cannot fork: a September throwaway, properly coupled,
+-- tries to claim the same successor and loses to one_successor_per_charge
+-- (status set alongside the pointer, so the coupling CHECK stays out of
+-- the way and the UNIQUE is what answers).
+INSERT INTO rent_charges (lease_id, kind, period_start, due_on, amount)
+  VALUES ('bbbbbbbb-2222-2222-2222-222222222222', 'rent', '2026-09-01',
+          '2026-09-01', 1450.00);
+SELECT assert_rejected(
+  $$UPDATE rent_charges
+    SET status = 'superseded',
+        superseded_by = 'bbbbbbbb-5555-5555-5555-555555555555'
+    WHERE lease_id = 'bbbbbbbb-2222-2222-2222-222222222222'
+      AND period_start = '2026-09-01'$$,
+  'one_successor_per_charge', 'two charges claiming one successor');
+-- Cleanup in ONE transaction, RESTORING the pre-correction state (the
+-- module-022 tests below still need the live August charge): the successor
+-- goes first (its corrects FK points at the old row), the old row is
+-- un-superseded — legal only in this sandbox — and the September throwaway
+-- goes with them; the deferred pointer resolves at commit.
+DO $$
+BEGIN
+  DELETE FROM rent_charges WHERE id = 'bbbbbbbb-5555-5555-5555-555555555555';
+  UPDATE rent_charges SET superseded_by = NULL, status = 'due'
+    WHERE lease_id = 'bbbbbbbb-2222-2222-2222-222222222222'
+      AND period_start = '2026-08-01';
+  DELETE FROM rent_charges
+    WHERE lease_id = 'bbbbbbbb-2222-2222-2222-222222222222'
+      AND period_start = '2026-09-01';
+END $$;
 -- Module 022: lease dates bind their charges. The August charge above is
 -- still on the books here, so the lease's dates are load-bearing.
 SELECT assert_rejected(

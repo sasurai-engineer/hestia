@@ -24,3 +24,5 @@
 \ir 023_a_receipt_pays_out_at_most_once.sql
 \ir 024_tax_collection_domain.sql
 \ir 025_tax_payment_deadline_kinds.sql
+\ir 026_charge_supersession_status.sql
+\ir 027_charges_correct_by_supersession.sql

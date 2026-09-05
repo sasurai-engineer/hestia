@@ -118,11 +118,12 @@ class AlreadyReversed(Exception):
 
 def refresh_charge_status(conn: Conn, charge_id: str) -> None:
     """Recompute a charge's status from its allocations — in BOTH directions
-    (a reversal can un-pay a charge), never touching waived/written_off."""
+    (a reversal can un-pay a charge), never touching waived/written_off — or
+    superseded, which is history and must never be resurrected to 'due'."""
     conn.execute(
         """
         UPDATE rent_charges c SET status = CASE
-          WHEN c.status IN ('waived', 'written_off') THEN c.status
+          WHEN c.status IN ('waived', 'written_off', 'superseded') THEN c.status
           WHEN coalesce((SELECT sum(a.amount) FROM rent_receipt_allocations a
                          WHERE a.charge_id = c.id), 0) >= c.amount THEN 'paid'
           WHEN coalesce((SELECT sum(a.amount) FROM rent_receipt_allocations a

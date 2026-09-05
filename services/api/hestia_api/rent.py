@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import calendar as calendar_module
 import datetime as dt
+import uuid
 from dataclasses import dataclass
 from decimal import ROUND_HALF_EVEN, Decimal
 from typing import Any, Literal
@@ -106,6 +107,11 @@ class ChargeOut(BaseModel):
     outstanding: Decimal
     rule_citation: str | None
     waived_reason: str | None
+    # The correction chain (issue #105): who this row corrects and why, and
+    # who corrected it — a superseded charge is history, fully readable.
+    corrects_charge_id: str | None = None
+    correction_reason: str | None = None
+    superseded_by: str | None = None
 
 
 class LeaseDetail(BaseModel):
@@ -203,12 +209,12 @@ SELECT l.id::text, u.property_id::text, p.label AS property_label,
        -- paid-up tenant). Waived/written_off drop out of BOTH sides.
        coalesce((SELECT sum(c.amount) FROM rent_charges c
                  WHERE c.lease_id = l.id
-                   AND c.status NOT IN ('waived', 'written_off')), 0)
+                   AND c.status NOT IN ('waived', 'written_off', 'superseded')), 0)
        - coalesce((SELECT sum(a.amount)
                    FROM rent_receipt_allocations a
                    JOIN rent_charges c ON c.id = a.charge_id
                    WHERE c.lease_id = l.id
-                     AND c.status NOT IN ('waived', 'written_off')), 0)
+                     AND c.status NOT IN ('waived', 'written_off', 'superseded')), 0)
          AS balance_due,
        -- Money received but not yet applied to any charge: a prepayment,
        -- persistent and visible, consumed by the next sweep.
@@ -268,6 +274,8 @@ def lease_detail(conn: Conn, lease_id: str) -> LeaseDetail:
         """
         SELECT c.id::text, c.kind::text, c.period_start, c.due_on, c.amount,
                c.status::text, c.rule_citation, c.waived_reason,
+               c.corrects_charge_id::text, c.correction_reason,
+               c.superseded_by::text,
                coalesce(sum(a.amount), 0) AS allocated
         FROM rent_charges c
         LEFT JOIN rent_receipt_allocations a ON a.charge_id = c.id
@@ -287,7 +295,7 @@ def lease_detail(conn: Conn, lease_id: str) -> LeaseDetail:
                 allocated=charge["allocated"],
                 outstanding=(
                     charge["amount"] - charge["allocated"]
-                    if charge["status"] not in ("waived", "written_off")
+                    if charge["status"] not in ("waived", "written_off", "superseded")
                     else Decimal(0)
                 ),
             )
@@ -362,6 +370,84 @@ def _due_on_in(period_start: dt.date, rent_due_day: int) -> dt.date:
     return period_start.replace(day=min(rent_due_day, last_day))
 
 
+class CorrectionIn(BaseModel):
+    amount: Decimal = Field(gt=0, decimal_places=2, max_digits=18)
+    reason: str = Field(min_length=3)
+
+
+class CorrectionOut(BaseModel):
+    superseded_charge_id: str
+    new_charge_id: str
+    released: Decimal
+    reapplied: list[dict[str, str]]
+
+
+class UncorrectableCharge(Exception):
+    pass
+
+
+def correct_charge(conn: Conn, charge_id: str, body: CorrectionIn) -> CorrectionOut:
+    """Correct a wrong charge by SUPERSESSION, never mutation (issue #105):
+    the old row is marked superseded pointing at its successor — a new row,
+    same lease/kind/period, the corrected amount, carrying who it corrects
+    and why. Its allocations are released back to open credit and re-applied
+    oldest-first, so a paid charge corrected downward leaves the excess
+    visible as credit and one corrected upward shows the true remainder.
+    The ledger never moves — receipts are history; only allocation changes.
+    Order matters and is the schema's law: the old row is marked first (it
+    leaves the live one_charge_per_period index), the successor lands
+    second, and the deferrable pointer proves the chain at commit."""
+    old = conn.execute(
+        """
+        SELECT id::text, lease_id::text, kind::text, period_start, period_end,
+               due_on, rule_citation
+        FROM rent_charges
+        WHERE id = %s AND status IN ('scheduled', 'due', 'partially_paid', 'paid')
+        FOR UPDATE
+        """,
+        (charge_id,),
+    ).fetchone()
+    if old is None:
+        raise UncorrectableCharge(charge_id)
+    released = conn.execute(
+        "DELETE FROM rent_receipt_allocations WHERE charge_id = %s RETURNING amount",
+        (charge_id,),
+    ).fetchall()
+    released_total = sum((r["amount"] for r in released), Decimal(0))
+    new_id = str(uuid.uuid4())
+    conn.execute(
+        "UPDATE rent_charges SET status = 'superseded', superseded_by = %s WHERE id = %s",
+        (new_id, charge_id),
+    )
+    conn.execute(
+        """
+        INSERT INTO rent_charges
+          (id, lease_id, kind, period_start, period_end, due_on, amount,
+           generated_by, rule_citation, corrects_charge_id, correction_reason)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, 'correction', %s, %s, %s)
+        """,
+        (
+            new_id,
+            old["lease_id"],
+            old["kind"],
+            old["period_start"],
+            old["period_end"],
+            old["due_on"],
+            body.amount,
+            old["rule_citation"],
+            charge_id,
+            body.reason,
+        ),
+    )
+    reapplied = apply_open_credit(conn, old["lease_id"])
+    return CorrectionOut(
+        superseded_charge_id=charge_id,
+        new_charge_id=new_id,
+        released=released_total,
+        reapplied=reapplied,
+    )
+
+
 def sweep_rent_charges(conn: Conn, as_of: dt.date) -> RentSweepResult:
     """One rent charge per active lease for as_of's month. Idempotent via the
     one-charge-per-period key; CPI escalations are reported, not guessed."""
@@ -429,7 +515,8 @@ def sweep_rent_charges(conn: Conn, as_of: dt.date) -> RentSweepResult:
             INSERT INTO rent_charges
               (lease_id, kind, period_start, period_end, due_on, amount, generated_by)
             VALUES (%s, 'rent', %s, %s, %s, %s, 'sweep')
-            ON CONFLICT (lease_id, kind, period_start) DO NOTHING
+            ON CONFLICT (lease_id, kind, period_start)
+              WHERE superseded_by IS NULL DO NOTHING
             """,
             (lease["id"], period_start, period_end, due_on, amount),
         )
@@ -548,7 +635,8 @@ def sweep_late_fees(conn: Conn, as_of: dt.date) -> RentSweepResult:
             INSERT INTO rent_charges
               (lease_id, kind, period_start, due_on, amount, generated_by, rule_citation)
             VALUES (%s, 'late_fee', %s, %s, %s, 'sweep', %s)
-            ON CONFLICT (lease_id, kind, period_start) DO NOTHING
+            ON CONFLICT (lease_id, kind, period_start)
+              WHERE superseded_by IS NULL DO NOTHING
             """,
             (
                 charge["lease_id"],
