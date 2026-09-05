@@ -2709,6 +2709,34 @@
         "title": "DefectOut",
         "type": "object"
       },
+      "DeliveryOut": {
+        "properties": {
+          "delivered": {
+            "title": "Delivered",
+            "type": "integer"
+          },
+          "failed": {
+            "title": "Failed",
+            "type": "integer"
+          },
+          "interrupts": {
+            "title": "Interrupts",
+            "type": "integer"
+          },
+          "logged": {
+            "title": "Logged",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "delivered",
+          "logged",
+          "failed",
+          "interrupts"
+        ],
+        "title": "DeliveryOut",
+        "type": "object"
+      },
       "DepositOut": {
         "properties": {
           "deposit_account": {
@@ -4787,6 +4815,72 @@
           }
         },
         "title": "NoticeIn",
+        "type": "object"
+      },
+      "NotificationOut": {
+        "properties": {
+          "attempts": {
+            "title": "Attempts",
+            "type": "integer"
+          },
+          "channel": {
+            "title": "Channel",
+            "type": "string"
+          },
+          "deadline_id": {
+            "title": "Deadline Id",
+            "type": "string"
+          },
+          "delivered_at": {
+            "format": "date-time",
+            "title": "Delivered At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "lead_days": {
+            "title": "Lead Days",
+            "type": "integer"
+          },
+          "recipient": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recipient"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "subject": {
+            "title": "Subject",
+            "type": "string"
+          },
+          "urgency": {
+            "title": "Urgency",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "deadline_id",
+          "lead_days",
+          "urgency",
+          "channel",
+          "recipient",
+          "subject",
+          "status",
+          "attempts",
+          "delivered_at"
+        ],
+        "title": "NotificationOut",
         "type": "object"
       },
       "PaymentIn": {
@@ -10299,6 +10393,110 @@
           }
         },
         "summary": "Reverse Ledger Event"
+      }
+    },
+    "/notifications": {
+      "get": {
+        "operationId": "list_notifications_notifications_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/NotificationOut"
+                  },
+                  "title": "Response List Notifications Notifications Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Notifications"
+      }
+    },
+    "/notifications/deliver": {
+      "post": {
+        "description": "The correspondent channel's manual door (issue #38): the scheduler\ncalls the same function nightly; this exists for tests, catch-ups, and\nthe drill. Idempotent \u2014 one message per (deadline, reminder step).",
+        "operationId": "deliver_notifications_notifications_deliver_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "as_of",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "As Of"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Deliver Notifications"
       }
     },
     "/payments/stripe/webhook": {

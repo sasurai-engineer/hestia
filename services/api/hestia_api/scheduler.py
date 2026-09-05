@@ -29,7 +29,7 @@ from typing import Any
 
 import psycopg
 
-from hestia_api import db, dossier, rent, sweep
+from hestia_api import db, dossier, notify, rent, sweep
 from hestia_api.config import ConfigurationError
 
 Conn = psycopg.Connection[dict[str, Any]]
@@ -116,6 +116,14 @@ def tick(
                 lambda: (lambda r: {"inserted": r.inserted, "gaps": len(r.gaps)})(
                     sweep.run_sweep(conn, as_of)
                 ),
+            ),
+            # The correspondent channel rides the same tick (issue #38): the
+            # sweeps put dates on the books, delivery tells the owner —
+            # idempotent per (deadline, reminder step), so a missed night
+            # sends once, never twice.
+            (
+                "notify.deliver",
+                lambda: notify.deliver(conn, as_of, seam=notify.smtp_sender()).model_dump(),
             ),
         ]
         for action, run in sweeps:
