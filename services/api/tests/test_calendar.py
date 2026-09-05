@@ -126,6 +126,34 @@ def test_next_window_rolls_the_texas_close_only_after_it_passes() -> None:
     assert calendar.next_window(builder, dt.date(2026, 5, 16)).closes_on == dt.date(2027, 5, 17)
 
 
+def test_the_annual_date_registry_resolves_its_keys() -> None:
+    # Two authorities, one date, two identities — a builder serves exactly
+    # one citation (ADR 0003), so the keys must not collapse into one entry.
+    assert "us-ky-newport.city-tax-oct31" in calendar.ANNUAL_DATES
+    assert "us-ky-newport.rental-license-oct31" in calendar.ANNUAL_DATES
+    assert (
+        calendar.ANNUAL_DATES["us-ky-newport.city-tax-oct31"]
+        is not calendar.ANNUAL_DATES["us-ky-newport.rental-license-oct31"]
+    )
+    assert "us-zz.not-a-date" not in calendar.ANNUAL_DATES
+    for key in ("us-ky-newport.city-tax-oct31", "us-ky-newport.rental-license-oct31"):
+        builder = calendar.ANNUAL_DATES[key]
+        # 2026-10-31 is a Saturday and is emitted AS-IS: the s.446.030 roll
+        # question is unresolved (seed 910) and staging errs early instead.
+        assert builder(2026) == dt.date(2026, 10, 31)
+        assert builder(2026).weekday() == 5
+        with pytest.raises(ValueError):
+            builder(2201)
+
+
+def test_next_annual_date_rolls_only_when_the_date_has_passed() -> None:
+    builder = calendar.ANNUAL_DATES["us-ky-newport.city-tax-oct31"]
+    assert calendar.next_annual_date(builder, dt.date(2026, 6, 1)) == dt.date(2026, 10, 31)
+    # The date itself still counts; the day after rolls to next year.
+    assert calendar.next_annual_date(builder, dt.date(2026, 10, 31)) == dt.date(2026, 10, 31)
+    assert calendar.next_annual_date(builder, dt.date(2026, 11, 1)) == dt.date(2027, 10, 31)
+
+
 def test_year_bounds() -> None:
     with pytest.raises(ValueError):
         calendar.first_monday_of_may(1899)

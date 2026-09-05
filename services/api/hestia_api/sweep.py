@@ -299,6 +299,214 @@ def _appeal_windows(conn: Conn, as_of: dt.date) -> tuple[list[dict[str, Any]], l
     return rows, gaps
 
 
+COLLECTION_RESOLUTION_SQL = """
+WITH anchored AS (
+  SELECT p.id AS property_id, p.state,
+         COALESCE(p.jurisdiction_id, s.id) AS start_id
+  FROM properties p
+  LEFT JOIN jurisdictions s ON s.level = 'state' AND s.state = p.state
+  WHERE p.disposed_on IS NULL
+),
+resolved AS (
+  SELECT DISTINCT ON (a.property_id, r.domain, r.code)
+         a.property_id, r.domain::text AS domain, r.code, r.value_text, r.citation
+  FROM anchored a
+  CROSS JOIN LATERAL jurisdiction_chain(a.start_id) c
+  JOIN jurisdiction_rules r ON r.jurisdiction_id = c.jurisdiction_id
+  WHERE ((r.domain = 'tax_collection'
+          AND r.code IN ('collection.calendar', 'collection.due',
+                         'collection.schedule.source'))
+         OR (r.domain = 'registration'
+             AND r.code IN ('registration.rental_license.calendar',
+                            'registration.rental_license.due')))
+    AND r.superseded_by IS NULL
+    AND r.effective_from <= %(as_of)s
+    AND (r.effective_to IS NULL OR r.effective_to > %(as_of)s)
+  ORDER BY a.property_id, r.domain, r.code, c.depth ASC, r.effective_from DESC
+),
+-- A published discount window (Campbell's November), opens/closes paired on
+-- effective_from exactly as the appeal windows are.
+published AS (
+  SELECT DISTINCT ON (a.property_id)
+         a.property_id,
+         opens.value_text::date AS opens_on,
+         closes.value_text::date AS closes_on,
+         closes.citation
+  FROM anchored a
+  CROSS JOIN LATERAL jurisdiction_chain(a.start_id) c
+  JOIN jurisdiction_rules closes
+    ON closes.jurisdiction_id = c.jurisdiction_id
+   AND closes.domain = 'tax_collection'
+   AND closes.code = 'collection.discount.closes_on'
+   AND closes.superseded_by IS NULL
+  LEFT JOIN jurisdiction_rules opens
+    ON opens.jurisdiction_id = closes.jurisdiction_id
+   AND opens.code = 'collection.discount.opens_on'
+   AND opens.superseded_by IS NULL
+   AND opens.effective_from = closes.effective_from
+  WHERE closes.value_text::date >= %(as_of)s
+  ORDER BY a.property_id, c.depth ASC, closes.value_text::date ASC
+),
+-- History, deliberately unfiltered by effective window: the most recent
+-- discount close that has already passed, so an expired published schedule
+-- is told apart from one nobody ever entered.
+expired AS (
+  SELECT DISTINCT ON (a.property_id)
+         a.property_id,
+         closes.value_text::date AS closes_on,
+         closes.citation
+  FROM anchored a
+  CROSS JOIN LATERAL jurisdiction_chain(a.start_id) c
+  JOIN jurisdiction_rules closes
+    ON closes.jurisdiction_id = c.jurisdiction_id
+   AND closes.domain = 'tax_collection'
+   AND closes.code = 'collection.discount.closes_on'
+   AND closes.superseded_by IS NULL
+  WHERE closes.value_text::date < %(as_of)s
+  ORDER BY a.property_id, closes.value_text::date DESC, c.depth ASC
+)
+SELECT a.property_id, a.state, a.start_id,
+       pay.value_text AS pay_key, pay.citation AS pay_citation,
+       due.value_text AS due_text,
+       src.value_text AS schedule_source, src.citation AS source_citation,
+       lic.value_text AS license_key, lic.citation AS license_citation,
+       licdue.value_text AS license_due_text,
+       pub.opens_on AS published_opens_on, pub.closes_on AS published_closes_on,
+       pub.citation AS published_citation,
+       exp.closes_on AS last_closes_on, exp.citation AS last_citation
+FROM anchored a
+LEFT JOIN resolved pay
+  ON pay.property_id = a.property_id AND pay.code = 'collection.calendar'
+LEFT JOIN resolved due
+  ON due.property_id = a.property_id AND due.code = 'collection.due'
+LEFT JOIN resolved src
+  ON src.property_id = a.property_id AND src.code = 'collection.schedule.source'
+LEFT JOIN resolved lic
+  ON lic.property_id = a.property_id
+ AND lic.code = 'registration.rental_license.calendar'
+LEFT JOIN resolved licdue
+  ON licdue.property_id = a.property_id
+ AND licdue.code = 'registration.rental_license.due'
+LEFT JOIN published pub ON pub.property_id = a.property_id
+LEFT JOIN expired exp ON exp.property_id = a.property_id
+"""
+
+
+def _collection_dates(conn: Conn, as_of: dt.date) -> tuple[list[dict[str, Any]], list[CoverageGap]]:
+    """Payment law becomes calendar rows: the due date where a pack names an
+    annual-date key, the discount close where one is published, the rental
+    license where its key is named — each citing the rule row it came from.
+
+    Absence discipline mirrors the appeal windows: a discount stated as
+    'none' emits nothing and no gap (absence is an answer); a published
+    discount schedule whose window expired reports awaiting-publication,
+    citing the county's own last row; a schedule source with no dated row
+    ever loaded reports not-published. A chain with no collection rules at
+    all stays silent — most states have not banked payment law yet, and a
+    per-property gap for every one of them would be noise, not coverage."""
+    rows: list[dict[str, Any]] = []
+    gaps: list[CoverageGap] = []
+    for record in conn.execute(COLLECTION_RESOLUTION_SQL, {"as_of": as_of}).fetchall():
+        if record["start_id"] is None:
+            # The appeal collector already reports the missing pack once per
+            # property; repeating it per domain would double-count silence.
+            continue
+        if record["pay_key"] is not None:
+            builder = calendar.ANNUAL_DATES.get(record["pay_key"])
+            if builder is None:
+                gaps.append(
+                    CoverageGap(
+                        property_id=str(record["property_id"]),
+                        state=record["state"],
+                        domain="tax_collection",
+                        reason="calendar_key_unregistered",
+                        detail=f"rule names calendar {record['pay_key']!r},"
+                        " which this build does not register",
+                    )
+                )
+            else:
+                rows.append(
+                    _row(
+                        "tax_payment_due",
+                        calendar.next_annual_date(builder, as_of),
+                        record["pay_citation"],
+                        property_id=record["property_id"],
+                        note=record["due_text"],
+                    )
+                )
+        if record["published_closes_on"] is not None:
+            rows.append(
+                _row(
+                    "tax_discount_close",
+                    record["published_closes_on"],
+                    record["published_citation"],
+                    window_opens_on=record["published_opens_on"],
+                    property_id=record["property_id"],
+                )
+            )
+        elif record["schedule_source"] is not None:
+            if record["last_closes_on"] is not None:
+                gaps.append(
+                    CoverageGap(
+                        property_id=str(record["property_id"]),
+                        state=record["state"],
+                        domain="tax_collection",
+                        reason="window_awaiting_publication",
+                        detail=(
+                            f"the last known discount window closed "
+                            f"{record['last_closes_on'].isoformat()} "
+                            f"({record['last_citation']}); the next schedule is "
+                            "published by the collector named in "
+                            f"{record['source_citation']} and must be entered "
+                            "when it publishes"
+                        ),
+                    )
+                )
+            else:
+                gaps.append(
+                    CoverageGap(
+                        property_id=str(record["property_id"]),
+                        state=record["state"],
+                        domain="tax_collection",
+                        reason="window_not_published",
+                        detail=(
+                            f"{record['source_citation']}: no discount window has "
+                            "ever been loaded — find the current schedule and "
+                            "enter it"
+                        ),
+                    )
+                )
+        # A pack that states its discount as 'none' (Newport's city tax)
+        # simply has no published window and no schedule source at its level;
+        # nothing is emitted and no gap is raised — the absence is the pack's
+        # answer, not a hole in it. Cross-level notes are deliberately not
+        # attached: a county window must never wear the city's prose.
+        if record["license_key"] is not None:
+            builder = calendar.ANNUAL_DATES.get(record["license_key"])
+            if builder is None:
+                gaps.append(
+                    CoverageGap(
+                        property_id=str(record["property_id"]),
+                        state=record["state"],
+                        domain="registration",
+                        reason="calendar_key_unregistered",
+                        detail=f"rule names calendar {record['license_key']!r},"
+                        " which this build does not register",
+                    )
+                )
+            else:
+                rows.append(
+                    _row(
+                        "license_renewal",
+                        calendar.next_annual_date(builder, as_of),
+                        record["license_citation"],
+                        property_id=record["property_id"],
+                        note=record["license_due_text"],
+                    )
+                )
+    return rows, gaps
+
+
 def _lease_expirations(conn: Conn, as_of: dt.date) -> list[dict[str, Any]]:
     rows = conn.execute(
         """
@@ -635,7 +843,13 @@ GENERATORS = (
 def run_sweep(conn: Conn, as_of: dt.date) -> SweepResult:
     inserted: dict[str, int] = {}
     appeal_rows, gaps = _appeal_windows(conn, as_of)
-    rows = appeal_rows + [row for generator in GENERATORS for row in generator(conn, as_of)]
+    collection_rows, collection_gaps = _collection_dates(conn, as_of)
+    gaps = gaps + collection_gaps
+    rows = (
+        appeal_rows
+        + collection_rows
+        + [row for generator in GENERATORS for row in generator(conn, as_of)]
+    )
     gaps = gaps + _deposit_gaps(conn, as_of)
     for row in rows:
         result = conn.execute(INSERT, row)
