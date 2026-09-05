@@ -22,3 +22,4 @@
 \ir 021_escalation_value_gets_a_unit.sql
 \ir 022_lease_dates_bind_their_charges.sql
 \ir 023_a_receipt_pays_out_at_most_once.sql
+\ir 024_tax_collection_domain.sql
