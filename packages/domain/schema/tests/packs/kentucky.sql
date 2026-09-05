@@ -298,3 +298,47 @@ BEGIN
   END IF;
   RAISE NOTICE '  ok      the weekend roll is recorded as unresolved, stage-early stated';
 END $$;
+
+
+-- ---------------------------------------------------------------------------
+-- Newport rental licensing (seed/911, issue #146): the first source-vs-source
+-- conflict carried as data — both claims present, the rule for choosing
+-- stated, and the two-part fee kept as a structure, never one number.
+-- ---------------------------------------------------------------------------
+DO $$
+DECLARE
+  due_row RECORD;
+  fee_text TEXT;
+BEGIN
+  SELECT r.value_text, r.citation INTO due_row
+  FROM jurisdiction_rules r JOIN jurisdictions j ON j.id = r.jurisdiction_id
+  WHERE j.name = 'Newport' AND r.code = 'registration.rental_license.due'
+    AND r.superseded_by IS NULL;
+  IF due_row.value_text IS NULL
+     OR due_row.value_text NOT LIKE '%OCTOBER 31%'
+     OR due_row.value_text NOT LIKE '%October 15%'
+     OR due_row.value_text NOT LIKE '%Rule for choosing%' THEN
+    RAISE EXCEPTION 'the license-due conflict row is missing a side or its rule: %',
+      due_row.value_text;
+  END IF;
+  IF due_row.citation NOT LIKE '%99.09%' OR due_row.citation NOT LIKE '%CN-17%' THEN
+    RAISE EXCEPTION 'the license-due row does not cite both operative sources: %',
+      due_row.citation;
+  END IF;
+  SELECT r.value_text INTO fee_text
+  FROM jurisdiction_rules r JOIN jurisdictions j ON j.id = r.jurisdiction_id
+  WHERE j.name = 'Newport' AND r.code = 'registration.rental_license.fee'
+    AND r.superseded_by IS NULL;
+  IF fee_text IS NULL OR fee_text NOT LIKE '%$50%' OR fee_text NOT LIKE '%$75%' THEN
+    RAISE EXCEPTION 'the two-part fee lost a part: %', fee_text;
+  END IF;
+  -- A two-part fee must never collapse into one number somebody multiplies.
+  IF EXISTS (
+    SELECT 1 FROM jurisdiction_rules r JOIN jurisdictions j ON j.id = r.jurisdiction_id
+    WHERE j.name = 'Newport' AND r.code = 'registration.rental_license.fee'
+      AND r.value_numeric IS NOT NULL
+  ) THEN
+    RAISE EXCEPTION 'the license fee carries a bare numeric; the structure is two-part';
+  END IF;
+  RAISE NOTICE '  ok      the license conflict carries both dates, its rule, and a fee that stays two-part';
+END $$;
