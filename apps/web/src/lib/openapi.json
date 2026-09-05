@@ -1132,6 +1132,28 @@
             "title": "Amount",
             "type": "string"
           },
+          "correction_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correction Reason"
+          },
+          "corrects_charge_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Corrects Charge Id"
+          },
           "due_on": {
             "format": "date",
             "title": "Due On",
@@ -1169,6 +1191,17 @@
           "status": {
             "title": "Status",
             "type": "string"
+          },
+          "superseded_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Superseded By"
           },
           "waived_reason": {
             "anyOf": [
@@ -1471,6 +1504,69 @@
           "derived_from"
         ],
         "title": "ComponentOut",
+        "type": "object"
+      },
+      "CorrectionIn": {
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,16}|(?=[\\d.]{1,19}0*$)\\d{0,16}\\.\\d{0,2}0*$)",
+                "type": "string"
+              }
+            ],
+            "title": "Amount"
+          },
+          "reason": {
+            "minLength": 3,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "reason"
+        ],
+        "title": "CorrectionIn",
+        "type": "object"
+      },
+      "CorrectionOut": {
+        "properties": {
+          "new_charge_id": {
+            "title": "New Charge Id",
+            "type": "string"
+          },
+          "reapplied": {
+            "items": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "title": "Reapplied",
+            "type": "array"
+          },
+          "released": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Released",
+            "type": "string"
+          },
+          "superseded_charge_id": {
+            "title": "Superseded Charge Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "superseded_charge_id",
+          "new_charge_id",
+          "released",
+          "reapplied"
+        ],
+        "title": "CorrectionOut",
         "type": "object"
       },
       "CostIn": {
@@ -10816,6 +10912,67 @@
           }
         },
         "summary": "Readyz"
+      }
+    },
+    "/rent-charges/{charge_id}/correct": {
+      "post": {
+        "description": "Correct a wrong charge by supersession (issue #105): the old row\nbecomes history pointing at its successor; paid money is released to\nopen credit and re-applied. Superseded, waived, and written-off charges\nare not correctable \u2014 correct the LIVE row to extend a chain.",
+        "operationId": "correct_charge_rent_charges__charge_id__correct_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "charge_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Charge Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-actor",
+            "required": false,
+            "schema": {
+              "default": "system",
+              "title": "X-Actor",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CorrectionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CorrectionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Correct Charge"
       }
     },
     "/rent-charges/{charge_id}/waive": {

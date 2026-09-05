@@ -828,6 +828,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/rent-charges/{charge_id}/correct": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Correct Charge
+         * @description Correct a wrong charge by supersession (issue #105): the old row
+         *     becomes history pointing at its successor; paid money is released to
+         *     open credit and re-applied. Superseded, waived, and written-off charges
+         *     are not correctable — correct the LIVE row to extend a chain.
+         */
+        post: operations["correct_charge_rent_charges__charge_id__correct_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/rent-charges/{charge_id}/waive": {
         parameters: {
             query?: never;
@@ -1558,6 +1581,10 @@ export interface components {
             allocated: string;
             /** Amount */
             amount: string;
+            /** Correction Reason */
+            correction_reason?: string | null;
+            /** Corrects Charge Id */
+            corrects_charge_id?: string | null;
             /**
              * Due On
              * Format: date
@@ -1578,6 +1605,8 @@ export interface components {
             rule_citation: string | null;
             /** Status */
             status: string;
+            /** Superseded By */
+            superseded_by?: string | null;
             /** Waived Reason */
             waived_reason: string | null;
         };
@@ -1652,6 +1681,26 @@ export interface components {
             provenance_kind: string;
             /** System */
             system: string;
+        };
+        /** CorrectionIn */
+        CorrectionIn: {
+            /** Amount */
+            amount: number | string;
+            /** Reason */
+            reason: string;
+        };
+        /** CorrectionOut */
+        CorrectionOut: {
+            /** New Charge Id */
+            new_charge_id: string;
+            /** Reapplied */
+            reapplied: {
+                [key: string]: string;
+            }[];
+            /** Released */
+            released: string;
+            /** Superseded Charge Id */
+            superseded_charge_id: string;
         };
         /**
          * CostIn
@@ -5468,6 +5517,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Readiness"];
+                };
+            };
+        };
+    };
+    correct_charge_rent_charges__charge_id__correct_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-actor"?: string;
+            };
+            path: {
+                charge_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CorrectionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CorrectionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

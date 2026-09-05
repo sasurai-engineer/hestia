@@ -770,6 +770,39 @@ def waive_charge(
     )
 
 
+@app.post("/rent-charges/{charge_id}/correct", response_model=rent.CorrectionOut)
+def correct_charge(
+    charge_id: uuid.UUID,
+    body: rent.CorrectionIn,
+    conn: Conn,
+    request: Request,
+    actor: Actor = "system",
+) -> rent.CorrectionOut:
+    """Correct a wrong charge by supersession (issue #105): the old row
+    becomes history pointing at its successor; paid money is released to
+    open credit and re-applied. Superseded, waived, and written-off charges
+    are not correctable — correct the LIVE row to extend a chain."""
+    try:
+        result = rent.correct_charge(conn, str(charge_id), body)
+    except rent.UncorrectableCharge as error:
+        raise HTTPException(status_code=404, detail="no correctable charge found") from error
+    _audit(
+        conn,
+        request,
+        actor,
+        "rent.correct",
+        "rent_charges",
+        str(charge_id),
+        {
+            "reason": body.reason,
+            "new_amount": str(body.amount),
+            "new_charge_id": result.new_charge_id,
+            "released": str(result.released),
+        },
+    )
+    return result
+
+
 @app.get("/leases/{lease_id}/renewal-context", response_model=rent.RenewalContextOut)
 def renewal_context(lease_id: uuid.UUID, conn: Conn) -> rent.RenewalContextOut:
     try:
