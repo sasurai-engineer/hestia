@@ -158,3 +158,143 @@ BEGIN
   END IF;
   RAISE NOTICE '  ok      Kentucky taxes income at 3.5 percent, stored as a rate';
 END $$;
+
+-- ---------------------------------------------------------------------------
+-- The collection calendar (seed/910, issue #145): the November free-money
+-- moment gets its law, the repealed section stays dead, and the sheriffs'
+-- "21%" is pinned as the composite it is.
+-- ---------------------------------------------------------------------------
+DO $$
+DECLARE
+  discount RECORD;
+  second RECORD;
+  alt TEXT;
+  campbell_kind TEXT;
+  campbell_opens DATE;
+  campbell_closes DATE;
+  newport_due TEXT;
+  newport_discount TEXT;
+  roll TEXT;
+BEGIN
+  SELECT r.value_numeric, r.value_text, r.citation INTO discount
+  FROM jurisdiction_rules r JOIN jurisdictions j ON j.id = r.jurisdiction_id
+  WHERE j.name = 'Kentucky' AND j.level = 'state'
+    AND r.code = 'collection.discount' AND r.superseded_by IS NULL;
+  IF discount.value_numeric IS DISTINCT FROM 0.02::NUMERIC
+     OR discount.value_text NOT LIKE '%November 1 INCLUSIVE%' THEN
+    RAISE EXCEPTION 'the 2%% discount row is missing its rate or its boundary: %',
+      discount.value_text;
+  END IF;
+  -- The repeal warning travels with the calendar, or someone "corrects" the
+  -- pack back to a statute that died in 2010.
+  IF NOT EXISTS (
+    SELECT 1 FROM jurisdiction_rules r JOIN jurisdictions j ON j.id = r.jurisdiction_id
+    WHERE j.name = 'Kentucky' AND j.level = 'state' AND r.code = 'collection.due'
+      AND r.citation LIKE '%134.020%REPEALED%'
+  ) THEN
+    RAISE EXCEPTION 'the KRS 134.020 repeal warning is missing from collection.due';
+  END IF;
+  RAISE NOTICE '  ok      two percent through November 1 inclusive, and 134.020 stays dead';
+
+  -- The second penalty is TEN percent. A 0.21 anywhere in the domain means
+  -- somebody seeded the sheriffs' composite as a statutory rate.
+  SELECT r.value_numeric, r.value_text INTO second
+  FROM jurisdiction_rules r JOIN jurisdictions j ON j.id = r.jurisdiction_id
+  WHERE j.name = 'Kentucky' AND j.level = 'state'
+    AND r.code = 'collection.phase.penalty_second' AND r.superseded_by IS NULL;
+  IF second.value_numeric IS DISTINCT FROM 0.10::NUMERIC
+     OR second.value_text NOT LIKE '%COMPOSITE%' AND second.value_text NOT LIKE '%never a statutory 21%' THEN
+    RAISE EXCEPTION 'the second penalty is %, expected 0.10 with the 21-composite warning',
+      second.value_numeric;
+  END IF;
+  IF EXISTS (
+    SELECT 1 FROM jurisdiction_rules r JOIN jurisdictions j ON j.id = r.jurisdiction_id
+    WHERE j.state = 'KY' AND r.domain = 'tax_collection'
+      AND r.value_numeric = 0.21::NUMERIC
+  ) THEN
+    RAISE EXCEPTION 'a Kentucky collection row carries 0.21 — the sheriffs'' '
+      'composite (10%% penalty + 10%% fee + 1%%) seeded as a statutory rate';
+  END IF;
+  RAISE NOTICE '  ok      the second penalty is ten percent, and no row carries the 21 composite';
+
+  -- The alternative schedule names ITS elector: the department, never the
+  -- county or the taxpayer.
+  SELECT r.value_text INTO alt
+  FROM jurisdiction_rules r JOIN jurisdictions j ON j.id = r.jurisdiction_id
+  WHERE j.name = 'Kentucky' AND j.level = 'state'
+    AND r.code = 'collection.alternative_schedule' AND r.superseded_by IS NULL;
+  IF alt IS NULL OR alt NOT LIKE '%THE DEPARTMENT%' THEN
+    RAISE EXCEPTION 'the alternative schedule does not name its elector: %', alt;
+  END IF;
+  RAISE NOTICE '  ok      the alternative schedule is the department''s, phases anchored to mailing';
+
+  -- Campbell runs the alternative schedule, its 2025 window is bounded by
+  -- its year, and the 2026 absence has a named source.
+  SELECT r.value_text INTO campbell_kind
+  FROM jurisdiction_rules r JOIN jurisdictions j ON j.id = r.jurisdiction_id
+  WHERE j.name = 'Campbell County' AND r.code = 'collection.schedule_kind'
+    AND r.superseded_by IS NULL;
+  IF campbell_kind IS NULL OR campbell_kind NOT LIKE 'alternative;%' THEN
+    RAISE EXCEPTION 'Campbell County does not state its schedule kind: %', campbell_kind;
+  END IF;
+  SELECT opens.value_text::date, closes.value_text::date
+    INTO campbell_opens, campbell_closes
+  FROM jurisdiction_rules opens
+  JOIN jurisdictions j ON j.id = opens.jurisdiction_id
+  JOIN jurisdiction_rules closes ON closes.jurisdiction_id = opens.jurisdiction_id
+   AND closes.code = 'collection.discount.closes_on'
+   AND closes.effective_from = opens.effective_from
+  WHERE j.name = 'Campbell County' AND opens.code = 'collection.discount.opens_on'
+    AND opens.superseded_by IS NULL AND closes.superseded_by IS NULL;
+  IF campbell_opens IS DISTINCT FROM DATE '2025-11-01'
+     OR campbell_closes IS DISTINCT FROM DATE '2025-11-30' THEN
+    RAISE EXCEPTION 'the Campbell 2025 discount window is % .. %, expected Nov 1-30',
+      campbell_opens, campbell_closes;
+  END IF;
+  IF EXISTS (
+    SELECT 1 FROM jurisdiction_rules r JOIN jurisdictions j ON j.id = r.jurisdiction_id
+    WHERE j.name = 'Campbell County'
+      AND r.code IN ('collection.discount.opens_on', 'collection.discount.closes_on')
+      AND (r.effective_to IS NULL
+           OR r.value_text::date < r.effective_from
+           OR r.value_text::date >= r.effective_to)
+  ) THEN
+    RAISE EXCEPTION 'a published Campbell discount window is unbounded or outside its year';
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM jurisdiction_rules r JOIN jurisdictions j ON j.id = r.jurisdiction_id
+    WHERE j.name = 'Campbell County' AND r.code = 'collection.schedule.source'
+      AND r.value_text LIKE 'published_by_sheriff;%'
+  ) THEN
+    RAISE EXCEPTION 'the Campbell schedule has no named source for next year''s dates';
+  END IF;
+  RAISE NOTICE '  ok      Campbell 2025: November, bounded by its year, next year''s source named';
+
+  -- Newport collects its own tax on its own calendar, and says NO discount
+  -- out loud rather than by omission.
+  SELECT r.value_text INTO newport_due
+  FROM jurisdiction_rules r JOIN jurisdictions j ON j.id = r.jurisdiction_id
+  WHERE j.name = 'Newport' AND r.code = 'collection.due' AND r.superseded_by IS NULL;
+  IF newport_due IS NULL OR newport_due NOT LIKE '%October 31%' THEN
+    RAISE EXCEPTION 'the Newport city due date is missing: %', newport_due;
+  END IF;
+  SELECT r.value_text INTO newport_discount
+  FROM jurisdiction_rules r JOIN jurisdictions j ON j.id = r.jurisdiction_id
+  WHERE j.name = 'Newport' AND r.code = 'collection.discount' AND r.superseded_by IS NULL;
+  IF newport_discount IS NULL OR newport_discount NOT LIKE 'none;%' THEN
+    RAISE EXCEPTION 'Newport does not state that it offers no discount: %', newport_discount;
+  END IF;
+  RAISE NOTICE '  ok      Newport: October 31, its own collector, and a stated no on the discount';
+
+  -- The weekend question stays visibly unresolved — a roll nobody proved
+  -- must never be relied on, and the row says so.
+  SELECT r.value_text INTO roll
+  FROM jurisdiction_rules r JOIN jurisdictions j ON j.id = r.jurisdiction_id
+  WHERE j.name = 'Kentucky' AND j.level = 'state'
+    AND r.code = 'collection.weekend_roll' AND r.superseded_by IS NULL;
+  IF roll IS NULL OR roll NOT LIKE 'UNRESOLVED;%'
+     OR roll NOT LIKE '%SUNDAY ONLY%' THEN
+    RAISE EXCEPTION 'the weekend-roll row does not state its unresolved asymmetry: %', roll;
+  END IF;
+  RAISE NOTICE '  ok      the weekend roll is recorded as unresolved, stage-early stated';
+END $$;
