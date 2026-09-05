@@ -224,6 +224,9 @@ class TestLoop:
         # The first wait targeted 06:00 from 05:00 — an hour.
         assert waits[0] == pytest.approx(3600.0)
 
+    def test_the_production_clock_reads_utc(self) -> None:
+        assert scheduler._utc_now().tzinfo == dt.UTC
+
     def test_a_pre_set_stop_never_ticks(self) -> None:
         stop = threading.Event()
         stop.set()
@@ -232,7 +235,6 @@ class TestLoop:
             scheduler.Schedule(at=dt.time(6, 0), dossier_weekday=6),
             lambda: (_ for _ in ()).throw(AssertionError("must not connect")),  # type: ignore[arg-type,return-value]
             _refusing_fetch,
-            waiter=lambda _: True,
         )
 
     def test_the_connection_factory_opens_real_sessions(self, database_url: str) -> None:
