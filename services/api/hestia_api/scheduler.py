@@ -156,6 +156,12 @@ def tick(
         conn.commit()
 
 
+def _utc_now() -> dt.datetime:
+    """The production clock — a named function so its coverage never
+    depends on a daemon thread winning a scheduling race in CI."""
+    return dt.datetime.now(dt.UTC)
+
+
 def run_loop(
     stop: threading.Event,
     schedule: Schedule,
@@ -169,7 +175,7 @@ def run_loop(
     ``waiter`` and ``clock`` are injectable so the loop itself is testable;
     in production they are the stop event's wait and the UTC clock."""
     wait = waiter if waiter is not None else stop.wait
-    read_clock = clock if clock is not None else lambda: dt.datetime.now(dt.UTC)
+    read_clock = clock if clock is not None else _utc_now
     while not stop.is_set():
         now = read_clock()
         target = next_run(now, schedule.at)
