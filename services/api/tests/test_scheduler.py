@@ -96,6 +96,7 @@ class TestTick:
         assert result["rent.sweep"] == "ok"
         assert result["latefee.sweep"] == "ok"
         assert result["sweep.deadlines"] == "ok"
+        assert result["notify.deliver"] == "ok"
         assert "dossier.refresh" not in result
         charges = conn.execute(
             "SELECT count(*) AS n FROM rent_charges WHERE lease_id = %s",
@@ -113,6 +114,7 @@ class TestTick:
             "rent.sweep",
             "latefee.sweep",
             "sweep.deadlines",
+            "notify.deliver",
         ]
 
     def test_a_broken_sweep_is_audited_and_the_rest_still_run(

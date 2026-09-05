@@ -610,6 +610,45 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Notifications */
+        get: operations["list_notifications_notifications_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notifications/deliver": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Deliver Notifications
+         * @description The correspondent channel's manual door (issue #38): the scheduler
+         *     calls the same function nightly; this exists for tests, catch-ups, and
+         *     the drill. Idempotent — one message per (deadline, reminder step).
+         */
+        post: operations["deliver_notifications_notifications_deliver_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/payments/stripe/webhook": {
         parameters: {
             query?: never;
@@ -2050,6 +2089,17 @@ export interface components {
             /** Triggers Disclosure */
             triggers_disclosure: boolean;
         };
+        /** DeliveryOut */
+        DeliveryOut: {
+            /** Delivered */
+            delivered: number;
+            /** Failed */
+            failed: number;
+            /** Interrupts */
+            interrupts: number;
+            /** Logged */
+            logged: number;
+        };
         /** DepositOut */
         DepositOut: {
             /** Deposit Account */
@@ -2694,6 +2744,32 @@ export interface components {
         NoticeIn: {
             /** Sent On */
             sent_on?: string | null;
+        };
+        /** NotificationOut */
+        NotificationOut: {
+            /** Attempts */
+            attempts: number;
+            /** Channel */
+            channel: string;
+            /** Deadline Id */
+            deadline_id: string;
+            /**
+             * Delivered At
+             * Format: date-time
+             */
+            delivered_at: string;
+            /** Id */
+            id: string;
+            /** Lead Days */
+            lead_days: number;
+            /** Recipient */
+            recipient: string | null;
+            /** Status */
+            status: string;
+            /** Subject */
+            subject: string;
+            /** Urgency */
+            urgency: string;
         };
         /** PaymentIn */
         PaymentIn: {
@@ -5084,6 +5160,70 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReversalOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_notifications_notifications_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    deliver_notifications_notifications_deliver_post: {
+        parameters: {
+            query?: {
+                as_of?: string | null;
+            };
+            header?: {
+                "x-actor"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryOut"];
                 };
             };
             /** @description Validation Error */

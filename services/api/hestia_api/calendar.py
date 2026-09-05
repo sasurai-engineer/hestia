@@ -204,6 +204,24 @@ def next_ky_inspection_window(as_of: dt.date) -> InspectionWindow:
     )
 
 
+MAX_REMINDER_LEADS = 12
+
+
+def reminder_schedule(due_on: dt.date, lead_days: list[int]) -> list[dt.date]:
+    """Reminder dates for a deadline, deduplicated and ascending — the
+    Python twin of reminderSchedule in packages/engines/src/deadlines.ts,
+    pinned to the same behavior by the same anchors: leads sort
+    descending-by-lead (so dates ascend), duplicates collapse, and 1 to
+    MAX_REMINDER_LEADS entries of 0..365 days are the only legal shape."""
+    if not 1 <= len(lead_days) <= MAX_REMINDER_LEADS:
+        raise ValueError(f"lead_days must hold 1 to {MAX_REMINDER_LEADS} entries")
+    for lead in lead_days:
+        if not 0 <= lead <= 365:
+            raise ValueError(f"lead must be in [0, 365], received {lead}")
+    unique = sorted(set(lead_days), reverse=True)
+    return [due_on - dt.timedelta(days=lead) for lead in unique]
+
+
 def roll_forward_from_weekend(day: dt.date) -> dt.date:
     if day.weekday() == 5:  # Saturday
         return day + dt.timedelta(days=2)

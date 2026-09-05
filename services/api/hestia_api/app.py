@@ -50,6 +50,7 @@ from hestia_api import (
     jurisdiction,
     ledger,
     maintenance,
+    notify,
     payments,
     rent,
     reports,
@@ -853,6 +854,35 @@ def correct_charge(
         },
     )
     return result
+
+
+@app.post("/notifications/deliver", response_model=notify.DeliveryOut)
+def deliver_notifications(
+    conn: Conn,
+    request: Request,
+    as_of: dt.date | None = None,
+    actor: Actor = "system",
+) -> notify.DeliveryOut:
+    """The correspondent channel's manual door (issue #38): the scheduler
+    calls the same function nightly; this exists for tests, catch-ups, and
+    the drill. Idempotent — one message per (deadline, reminder step)."""
+    effective = as_of or dt.date.today()
+    result = notify.deliver(conn, effective, seam=notify.smtp_sender())
+    db.record_audit(
+        conn,
+        actor=actor,
+        action="notify.deliver",
+        request_id=request.state.request_id,
+        after_value={"as_of": str(effective), **result.model_dump()},
+    )
+    return result
+
+
+@app.get("/notifications", response_model=list[notify.NotificationOut])
+def list_notifications(
+    conn: Conn, limit: int = Query(default=50, ge=1, le=500)
+) -> list[notify.NotificationOut]:
+    return notify.recent(conn, limit)
 
 
 @app.get("/leases/{lease_id}/renewal-context", response_model=rent.RenewalContextOut)
