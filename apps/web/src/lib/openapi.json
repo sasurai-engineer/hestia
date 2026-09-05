@@ -3296,6 +3296,17 @@
             "title": "Street 1",
             "type": "string"
           },
+          "time_zone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time Zone"
+          },
           "year_built": {
             "anyOf": [
               {
@@ -3319,6 +3330,7 @@
           "county",
           "kind",
           "year_built",
+          "time_zone",
           "latitude",
           "longitude",
           "jurisdiction_chain",
@@ -5212,6 +5224,17 @@
             "title": "Street 1",
             "type": "string"
           },
+          "time_zone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time Zone"
+          },
           "year_built": {
             "anyOf": [
               {
@@ -5316,6 +5339,17 @@
             "minLength": 1,
             "title": "Street 1",
             "type": "string"
+          },
+          "time_zone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time Zone"
           },
           "year_built": {
             "anyOf": [

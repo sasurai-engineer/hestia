@@ -13,6 +13,7 @@ import datetime as dt
 import os
 import threading
 import uuid
+import zoneinfo
 from collections.abc import AsyncIterator, Callable, Iterator
 from contextlib import asynccontextmanager
 from decimal import Decimal
@@ -32,7 +33,7 @@ from fastapi import (
     UploadFile,
 )
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from hestia_api import (
     appeal,
@@ -202,6 +203,22 @@ class PropertyIn(BaseModel):
     # Disambiguates municipalities whose names collide within a state
     # (Ohio's twenty Washington Townships); optional everywhere else.
     county: str | None = Field(default=None, min_length=1)
+    # IANA zone — the property's own answer to what 02:00 means where it
+    # stands (issue #58). None is an honest gap consumers name; nothing
+    # guesses from the state, because KY and TN both straddle zone lines.
+    time_zone: str | None = None
+
+    @field_validator("time_zone")
+    @classmethod
+    def time_zone_is_a_real_iana_zone(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        if value not in zoneinfo.available_timezones():
+            raise ValueError(
+                f"{value!r} is not an IANA time zone; use a name like "
+                "America/Chicago or America/New_York"
+            )
+        return value
 
 
 class PropertyOut(PropertyIn):
@@ -253,8 +270,8 @@ def create_property(
             """
             INSERT INTO properties
               (entity_id, label, street_1, city, state, postal_code, county,
-               kind, year_built, jurisdiction_id)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
+               kind, year_built, time_zone, jurisdiction_id)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
             """,
             (
                 str(body.entity_id),
@@ -266,6 +283,7 @@ def create_property(
                 body.county,
                 body.kind,
                 body.year_built,
+                body.time_zone,
                 resolved.jurisdiction_id,
             ),
         ).fetchone()
@@ -300,7 +318,7 @@ def get_property(property_id: uuid.UUID, conn: Conn) -> PropertyOut:
     row = conn.execute(
         """
         SELECT id, entity_id, label, street_1, city, state, postal_code, county,
-               kind, year_built, jurisdiction_id
+               kind, year_built, time_zone, jurisdiction_id
         FROM properties WHERE id = %s
         """,
         (str(property_id),),
