@@ -10,8 +10,11 @@ contract the web client will be generated from.
 from __future__ import annotations
 
 import datetime as dt
+import os
+import threading
 import uuid
-from collections.abc import Callable, Iterator
+from collections.abc import AsyncIterator, Callable, Iterator
+from contextlib import asynccontextmanager
 from decimal import Decimal
 from typing import Annotated, Any, Literal
 
@@ -49,15 +52,46 @@ from hestia_api import (
     payments,
     rent,
     reports,
+    scheduler,
     screening,
     sweep,
     views,
 )
 
+
+@asynccontextmanager
+async def _lifespan(_: FastAPI) -> AsyncIterator[None]:
+    """Start the sweep scheduler iff configured (issue #39). Absent config
+    means no thread — tests and ad-hoc stacks stay deterministic."""
+    schedule = scheduler.schedule_from_env(os.environ.get)  # type: ignore[arg-type]
+    if schedule is None:
+        yield
+        return
+    stop = threading.Event()
+    thread = threading.Thread(
+        target=scheduler.run_loop,
+        args=(
+            stop,
+            schedule,
+            scheduler.connection_factory(config.database_url()),
+            dossier.live_fetch,
+        ),
+        name="hestia-sweep-scheduler",
+        daemon=True,
+    )
+    thread.start()
+    try:
+        yield
+    finally:
+        stop.set()
+        thread.join(timeout=5)
+
+
 app = FastAPI(
     title="Hestia API",
     version="0.1.0",
     description="The owner's operating platform for real property.",
+    lifespan=_lifespan,
 )
 app.add_middleware(
     CORSMiddleware,
