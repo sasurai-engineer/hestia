@@ -96,6 +96,7 @@ class DossierView(BaseModel):
     county: str | None
     kind: str
     year_built: int | None
+    time_zone: str | None
     latitude: float | None
     longitude: float | None
     jurisdiction_chain: list[ChainLink]
@@ -134,7 +135,7 @@ def dossier_view(conn: Conn, property_id: str) -> DossierView | None:
     prop = conn.execute(
         """
         SELECT p.id::text, p.entity_id::text, p.label, p.street_1, p.city, p.state,
-               p.postal_code, p.county, p.kind::text, p.year_built,
+               p.postal_code, p.county, p.kind::text, p.year_built, p.time_zone,
                p.latitude::float, p.longitude::float, p.jurisdiction_id
         FROM properties p WHERE p.id = %s
         """,

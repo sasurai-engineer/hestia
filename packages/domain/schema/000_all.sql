@@ -26,3 +26,4 @@
 \ir 025_tax_payment_deadline_kinds.sql
 \ir 026_charge_supersession_status.sql
 \ir 027_charges_correct_by_supersession.sql
+\ir 028_property_time_zone.sql

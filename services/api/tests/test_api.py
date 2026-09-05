@@ -122,8 +122,31 @@ class TestEntitiesAndProperties:
         prop = created.json()
         fetched = client.get(f"/properties/{prop['id']}").json()
         assert fetched == prop
+        # The zone was not answered: an honest NULL, never a guess from KY —
+        # which straddles a zone line and could not answer anyway (#58).
+        assert fetched["time_zone"] is None
         missing = client.get(f"/properties/{uuid.uuid4()}")
         assert missing.status_code == 404
+
+    def test_the_time_zone_is_a_validated_iana_fact(self, client: TestClient) -> None:
+        entity_id = client.post("/entities", json={"name": "TZ", "kind": "llc"}).json()["id"]
+        base = {
+            "entity_id": entity_id,
+            "label": "zoned",
+            "street_1": "1 Zone St",
+            "city": "Newport",
+            "state": "KY",
+            "postal_code": "41071",
+            "kind": "single_family",
+        }
+        refused = client.post("/properties", json={**base, "time_zone": "Central Time"})
+        assert refused.status_code == 422
+        assert "IANA" in refused.text and "America/Chicago" in refused.text
+        created = client.post("/properties", json={**base, "time_zone": "America/New_York"})
+        assert created.status_code == 201
+        prop = created.json()
+        assert prop["time_zone"] == "America/New_York"
+        assert client.get(f"/properties/{prop['id']}").json()["time_zone"] == "America/New_York"
 
     def test_jurisdiction_resolves_from_the_loaded_packs(
         self, client: TestClient, conn: psycopg.Connection[Any]

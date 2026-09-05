@@ -2226,6 +2226,8 @@ export interface components {
             state: string;
             /** Street 1 */
             street_1: string;
+            /** Time Zone */
+            time_zone: string | null;
             /** Year Built */
             year_built: number | null;
         };
@@ -2844,6 +2846,8 @@ export interface components {
             state: string;
             /** Street 1 */
             street_1: string;
+            /** Time Zone */
+            time_zone?: string | null;
             /** Year Built */
             year_built?: number | null;
         };
@@ -2878,6 +2882,8 @@ export interface components {
             state: string;
             /** Street 1 */
             street_1: string;
+            /** Time Zone */
+            time_zone?: string | null;
             /** Year Built */
             year_built?: number | null;
         };
