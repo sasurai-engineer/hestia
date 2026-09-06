@@ -387,26 +387,25 @@ register in ARCHITECTURE.md.
 
 ---
 
-## 9. Open questions for the founder
+## 9. The founder's forks
 
-Three genuine forks; everything else in this document is decided.
+Two are decided; one remains open.
 
-1. **Mockup convergence.** Two design tracks exist — this document and the
-   sibling agent's mockups. Do both now converge through the bar (§6) at one
-   review, with tests ranking rather than vetoing — or is the mockup set a
-   competing vision to be settled first? One process must be named before either
-   track cuts more mockups.
-2. **The public actuarial run.** The outcomes warranty can only be underwritten by
-   the covenant ledger on your own four properties — real addresses, real
-   dollars, real receipts. Public from the start, or private-with-receipts until
-   v2? It is your family's data, so it is your call alone.
-3. **The first money servo.** January 31 is the one moment where "autopilot" could
-   be earned inside v1 — Hestia moving your own ~$12–20K to the county,
-   end-to-end, zero owner action, with the two of you as the only users. Build
-   that single payment rail this winter, or does v1 stay a pure flight director,
-   certified mail its only actuator, the money always in your hand? The answer
-   sets the servo roadmap's first entry and whether the January Check mockup
-   shows a button or a proof.
+1. **Mockup convergence — OPEN.** Two design tracks exist — this document's
+   artifact and its three mocked surfaces, and the sibling agent's mockup
+   set. The default, absent other instruction: both meet §6's bar at one
+   review, tests ranking rather than vetoing, whenever the founder reads
+   them. Awaiting that read.
+2. **The actuarial run — DECIDED (2026-09-06): private with receipts until
+   v2.** The covenant ledger counts from day one with full receipts and
+   stays inside the app; publishing later loses no history. Consequence:
+   Act I instruments the ledger for the record, not for display.
+3. **The first money servo — DECIDED (2026-09-06): v1 is a pure flight
+   director.** The January Check shows "everything is prepared; you move
+   the money" — a button, not a proof. Certified-mail delivery of notices
+   becomes the first servo, in Act III, closing the covenant's one admitted
+   seam with a receipt. The word the vision reserves stays unspoken until
+   that or a later servo runs end-to-end with zero owner action.
 
 ---
 
