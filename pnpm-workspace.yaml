@@ -26,6 +26,10 @@ overrides:
   sharp: ">=0.35.0"
   tmp: ">=0.2.6" # GHSA-ph9p-34f9-6g65, GHSA-52f5-9888-hmc6 (via @lhci/cli>inquirer)
   uuid: ">=11.1.1" # GHSA-w5hq-g745-h8pq (via @lhci/cli); v4() API unchanged in v11
+  # Scoped to v4, not a bare floor: @lhci/cli still consumes js-yaml v3 (its
+  # own advisory-free line), and a bare floor would force a breaking major on
+  # it. GHSA-2883-xcg3-v3hh (via openapi-typescript>@redocly/openapi-core).
+  "js-yaml@^4.0.0": ">=4.3.2 <5"
 
 # Advisories with no patched release, accepted with eyes open — each entry
 # names its reasoning and must fall out when a patch ships (Renovate will
@@ -37,3 +41,6 @@ auditConfig:
     # executed here: CHROME_PATH points at Playwright's browser, so nothing is
     # ever downloaded or unzipped by that fetcher.
     - GHSA-jmr9-qjv8-65gv
+    # The same extract-zip symlink traversal under its reissued 2026 id; the
+    # reasoning above applies unchanged.
+    - GHSA-7pqw-9j4j-h8q3

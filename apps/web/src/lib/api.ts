@@ -96,6 +96,9 @@ const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
   const response = await fetch(`${apiBase()}${path}`, {
     ...init,
     headers: { 'content-type': 'application/json', ...init?.headers },
+    // The API refuses every call without a session (#40); the cookie only
+    // travels cross-origin when each fetch asks for it.
+    credentials: 'include',
   });
   if (!response.ok) {
     let detail = `HTTP ${String(response.status)}`;
@@ -203,6 +206,7 @@ export const api = {
     const response = await fetch(`${apiBase()}/documents`, {
       method: 'POST',
       body: form, // multipart: the browser sets the boundary header itself
+      credentials: 'include',
     });
     if (!response.ok) {
       let detail = `HTTP ${String(response.status)}`;
@@ -222,6 +226,7 @@ export const api = {
     const response = await fetch(`${apiBase()}/bank/accounts/${accountId}/imports`, {
       method: 'POST',
       body: form, // multipart: the browser sets the boundary header itself
+      credentials: 'include',
     });
     if (!response.ok) {
       let detail = `HTTP ${String(response.status)}`;

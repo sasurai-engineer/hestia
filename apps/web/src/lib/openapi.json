@@ -3949,6 +3949,60 @@
         "title": "InterestOut",
         "type": "object"
       },
+      "InviteIn": {
+        "properties": {
+          "resident_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resident Id"
+          },
+          "role": {
+            "pattern": "^(owner|resident)$",
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role"
+        ],
+        "title": "InviteIn",
+        "type": "object"
+      },
+      "InviteOut": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "role",
+          "expires_at"
+        ],
+        "title": "InviteOut",
+        "type": "object"
+      },
       "LeaseDetail": {
         "properties": {
           "balance_due": {
@@ -4597,6 +4651,25 @@
         "title": "LedgerRegister",
         "type": "object"
       },
+      "LoginVerifyIn": {
+        "properties": {
+          "challenge_id": {
+            "title": "Challenge Id",
+            "type": "string"
+          },
+          "credential": {
+            "additionalProperties": true,
+            "title": "Credential",
+            "type": "object"
+          }
+        },
+        "required": [
+          "challenge_id",
+          "credential"
+        ],
+        "title": "LoginVerifyIn",
+        "type": "object"
+      },
       "MarketOpinionOut": {
         "properties": {
           "age_days": {
@@ -5221,6 +5294,46 @@
         "title": "PolicyOut",
         "type": "object"
       },
+      "Principal": {
+        "properties": {
+          "handle": {
+            "title": "Handle",
+            "type": "string"
+          },
+          "resident_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resident Id"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          },
+          "user_seq": {
+            "title": "User Seq",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "user_id",
+          "user_seq",
+          "handle",
+          "role",
+          "resident_id"
+        ],
+        "title": "Principal",
+        "type": "object"
+      },
       "PropertyCoverage": {
         "properties": {
           "domains": {
@@ -5806,6 +5919,63 @@
           "unallocated"
         ],
         "title": "ReceiptOut",
+        "type": "object"
+      },
+      "RegisterOptionsIn": {
+        "properties": {
+          "handle": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Handle",
+            "type": "string"
+          },
+          "invite_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invite Code"
+          }
+        },
+        "required": [
+          "handle"
+        ],
+        "title": "RegisterOptionsIn",
+        "type": "object"
+      },
+      "RegisterVerifyIn": {
+        "properties": {
+          "challenge_id": {
+            "title": "Challenge Id",
+            "type": "string"
+          },
+          "credential": {
+            "additionalProperties": true,
+            "title": "Credential",
+            "type": "object"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          }
+        },
+        "required": [
+          "challenge_id",
+          "credential"
+        ],
+        "title": "RegisterVerifyIn",
         "type": "object"
       },
       "RenewalContextOut": {
@@ -8254,18 +8424,6 @@
     "/assessments": {
       "post": {
         "operationId": "create_assessment_assessments_post",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
-              "type": "string"
-            }
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -8301,6 +8459,261 @@
         "summary": "Create Assessment"
       }
     },
+    "/auth/credentials/{credential_id}/revoke": {
+      "post": {
+        "operationId": "auth_revoke_credential_auth_credentials__credential_id__revoke_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "credential_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Credential Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Auth Revoke Credential"
+      }
+    },
+    "/auth/invites": {
+      "post": {
+        "operationId": "auth_create_invite_auth_invites_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Auth Create Invite"
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "operationId": "auth_login_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginVerifyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Auth Login Auth Login Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Auth Login"
+      }
+    },
+    "/auth/login/options": {
+      "post": {
+        "operationId": "auth_login_options_auth_login_options_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Auth Login Options Auth Login Options Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Auth Login Options"
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "operationId": "auth_logout_auth_logout_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Auth Logout Auth Logout Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Auth Logout"
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "operationId": "auth_me_auth_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Principal"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Auth Me"
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "operationId": "auth_register_auth_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterVerifyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Auth Register Auth Register Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Auth Register"
+      }
+    },
+    "/auth/register/options": {
+      "post": {
+        "operationId": "auth_register_options_auth_register_options_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterOptionsIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Auth Register Options Auth Register Options Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Auth Register Options"
+      }
+    },
     "/bank/accounts": {
       "get": {
         "operationId": "list_bank_accounts_bank_accounts_get",
@@ -8324,18 +8737,6 @@
       },
       "post": {
         "operationId": "create_bank_account_bank_accounts_post",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
-              "type": "string"
-            }
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -8382,16 +8783,6 @@
             "schema": {
               "format": "uuid",
               "title": "Account Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
               "type": "string"
             }
           }
@@ -8511,16 +8902,6 @@
               "title": "Txn Id",
               "type": "string"
             }
-          },
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
-              "type": "string"
-            }
           }
         ],
         "requestBody": {
@@ -8575,16 +8956,6 @@
               "title": "Txn Id",
               "type": "string"
             }
-          },
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
-              "type": "string"
-            }
           }
         ],
         "responses": {
@@ -8616,16 +8987,6 @@
             "schema": {
               "format": "uuid",
               "title": "Txn Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
               "type": "string"
             }
           }
@@ -8830,18 +9191,6 @@
       },
       "post": {
         "operationId": "create_debt_debts_post",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
-              "type": "string"
-            }
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -8930,16 +9279,6 @@
               "title": "Debt Id",
               "type": "string"
             }
-          },
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
-              "type": "string"
-            }
           }
         ],
         "requestBody": {
@@ -8988,16 +9327,6 @@
             "schema": {
               "format": "uuid",
               "title": "Debt Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
               "type": "string"
             }
           }
@@ -9204,18 +9533,6 @@
       },
       "post": {
         "operationId": "upload_document_documents_post",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
-              "type": "string"
-            }
-          }
-        ],
         "requestBody": {
           "content": {
             "multipart/form-data": {
@@ -9304,16 +9621,6 @@
               "title": "Document Id",
               "type": "string"
             }
-          },
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
-              "type": "string"
-            }
           }
         ],
         "requestBody": {
@@ -9362,16 +9669,6 @@
             "schema": {
               "format": "uuid",
               "title": "Document Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
               "type": "string"
             }
           }
@@ -9462,16 +9759,6 @@
               "title": "Document Id",
               "type": "string"
             }
-          },
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
-              "type": "string"
-            }
           }
         ],
         "responses": {
@@ -9510,16 +9797,6 @@
             "schema": {
               "format": "uuid",
               "title": "Document Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
               "type": "string"
             }
           }
@@ -9582,18 +9859,6 @@
       },
       "post": {
         "operationId": "create_entity_entities_post",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
-              "type": "string"
-            }
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -9722,18 +9987,6 @@
       },
       "post": {
         "operationId": "create_lease_leases_post",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
-              "type": "string"
-            }
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -9824,16 +10077,6 @@
             "schema": {
               "format": "uuid",
               "title": "Lease Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
               "type": "string"
             }
           }
@@ -9943,16 +10186,6 @@
               "title": "Lease Id",
               "type": "string"
             }
-          },
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
-              "type": "string"
-            }
           }
         ],
         "requestBody": {
@@ -10001,16 +10234,6 @@
             "schema": {
               "format": "uuid",
               "title": "Lease Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
               "type": "string"
             }
           }
@@ -10101,16 +10324,6 @@
             "schema": {
               "format": "uuid",
               "title": "Lease Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
               "type": "string"
             }
           }
@@ -10288,18 +10501,6 @@
       },
       "post": {
         "operationId": "append_ledger_event_ledger_post",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
-              "type": "string"
-            }
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -10346,16 +10547,6 @@
             "schema": {
               "format": "uuid",
               "title": "Event Uuid",
-              "type": "string"
-            }
-          },
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
               "type": "string"
             }
           }
@@ -10462,16 +10653,6 @@
               ],
               "title": "As Of"
             }
-          },
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
-              "type": "string"
-            }
           }
         ],
         "responses": {
@@ -10524,18 +10705,6 @@
     "/policies": {
       "post": {
         "operationId": "create_policy_policies_post",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
-              "type": "string"
-            }
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -10598,18 +10767,6 @@
       },
       "post": {
         "operationId": "create_property_properties_post",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
-              "type": "string"
-            }
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -10879,16 +11036,6 @@
                 }
               ],
               "title": "As Of"
-            }
-          },
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
-              "type": "string"
             }
           }
         ],
@@ -11160,16 +11307,6 @@
               "title": "Charge Id",
               "type": "string"
             }
-          },
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
-              "type": "string"
-            }
           }
         ],
         "requestBody": {
@@ -11219,16 +11356,6 @@
             "schema": {
               "format": "uuid",
               "title": "Charge Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
               "type": "string"
             }
           }
@@ -11286,18 +11413,6 @@
     "/reports/signoff": {
       "post": {
         "operationId": "signoff_report_reports_signoff_post",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
-              "type": "string"
-            }
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -11340,18 +11455,6 @@
     "/residents": {
       "post": {
         "operationId": "create_resident_residents_post",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
-              "type": "string"
-            }
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -11470,18 +11573,6 @@
       },
       "post": {
         "operationId": "open_screening_screening_post",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
-              "type": "string"
-            }
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -11570,16 +11661,6 @@
               "title": "Screening Id",
               "type": "string"
             }
-          },
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
-              "type": "string"
-            }
           }
         ],
         "requestBody": {
@@ -11628,16 +11709,6 @@
             "schema": {
               "format": "uuid",
               "title": "Screening Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
               "type": "string"
             }
           }
@@ -11697,16 +11768,6 @@
               ],
               "title": "As Of"
             }
-          },
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
-              "type": "string"
-            }
           }
         ],
         "responses": {
@@ -11753,16 +11814,6 @@
                 }
               ],
               "title": "As Of"
-            }
-          },
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
-              "type": "string"
             }
           }
         ],
@@ -11811,16 +11862,6 @@
               ],
               "title": "As Of"
             }
-          },
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
-              "type": "string"
-            }
           }
         ],
         "responses": {
@@ -11851,18 +11892,6 @@
     "/units": {
       "post": {
         "operationId": "create_unit_units_post",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
-              "type": "string"
-            }
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -11905,18 +11934,6 @@
     "/valuations": {
       "post": {
         "operationId": "create_valuation_valuations_post",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
-              "type": "string"
-            }
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -12035,18 +12052,6 @@
       },
       "post": {
         "operationId": "create_vendor_vendors_post",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
-              "type": "string"
-            }
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -12150,16 +12155,6 @@
             "schema": {
               "format": "uuid",
               "title": "Vendor Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
               "type": "string"
             }
           }
@@ -12285,18 +12280,6 @@
       },
       "post": {
         "operationId": "create_work_order_work_orders_post",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
-              "type": "string"
-            }
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -12385,16 +12368,6 @@
               "title": "Work Order Id",
               "type": "string"
             }
-          },
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
-              "type": "string"
-            }
           }
         ],
         "requestBody": {
@@ -12445,16 +12418,6 @@
               "title": "Work Order Id",
               "type": "string"
             }
-          },
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
-              "type": "string"
-            }
           }
         ],
         "requestBody": {
@@ -12503,16 +12466,6 @@
             "schema": {
               "format": "uuid",
               "title": "Work Order Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "header",
-            "name": "x-actor",
-            "required": false,
-            "schema": {
-              "default": "system",
-              "title": "X-Actor",
               "type": "string"
             }
           }

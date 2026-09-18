@@ -240,7 +240,7 @@ class TestEntitiesAndProperties:
         response = client.post(
             "/entities",
             json={"name": "Audited LLC", "kind": "llc"},
-            headers={"x-request-id": request_id, "x-actor": "tai"},
+            headers={"x-request-id": request_id},  # actor comes from the session now
         )
         assert response.status_code == 201
         row = conn.execute(
@@ -249,7 +249,9 @@ class TestEntitiesAndProperties:
             (request_id,),
         ).fetchone()
         assert row is not None
-        assert row["actor"] == "tai"
+        # The actor convention after #40: derived from the session, never a
+        # header the client typed — and user_id proves who.
+        assert row["actor"] == "user:tai"
         assert row["action"] == "entity.create"
         assert str(row["record_id"]) == response.json()["id"]
         assert row["after_value"]["name"] == "Audited LLC"

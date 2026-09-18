@@ -28,3 +28,4 @@
 \ir 027_charges_correct_by_supersession.sql
 \ir 028_property_time_zone.sql
 \ir 029_notification_delivery.sql
+\ir 030_identity.sql

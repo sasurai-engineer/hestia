@@ -108,7 +108,11 @@ SECRET_PATTERNS: tuple[tuple[str, re.Pattern[str], bool], ...] = (
             (?:password|passwd|pwd|secret|api[_-]?key|apikey|credential
                |private[_-]?key|access[_-]?key|token|auth)
             \s*[:=]\s*
-            (?:['"][^'"\s${}<>]{8,}['"]|[^'"\s${}<>,;)\]]{8,})
+            (?:['"][^'"\s${}<>]{8,}['"]
+               # Atomic via lookahead-capture: the WHOLE unquoted run must not
+               # end at an opening paren — request.cookies.get( is a call, not
+               # a literal, and backtracking must not shorten it into one.
+               |(?=([^'"\s${}<>,;()\]]{8,}))\1(?!\())
             """
         ),
         True,
@@ -133,6 +137,22 @@ def _is_placeholder(value_text: str) -> bool:
     if found is None:
         return False
     return len(found.group(0)) * 2 >= len(stripped)
+
+
+def _is_code_expression(value_text: str) -> bool:
+    """Whether a matched value is source code rather than a literal.
+
+    A pure dotted identifier path (body.credential) is a Python/JS
+    expression forwarding a value, and an identifier ending at an opening
+    bracket (dict[str) is a type annotation — neither can BE a committed
+    secret, whatever the name beside it says. A bare single identifier is
+    NOT excused: `password=hunter2secret` must still match, and so must
+    base64-looking values, which are identifier-shaped but never dotted.
+    """
+    stripped = value_text.strip()
+    if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)+", stripped):
+        return True
+    return re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*\[[\w\s,.\[\]]*", stripped) is not None
 
 
 ALLOWED_VALUE_HINTS = re.compile(
@@ -329,7 +349,7 @@ def check_secrets(files: list[Path], root: Path) -> list[Finding]:
                     value_text = (
                         match.group(0)[min(positions) + 1 :] if positions else match.group(0)
                     )
-                    if _is_placeholder(value_text):
+                    if _is_placeholder(value_text) or _is_code_expression(value_text):
                         continue
                 # The rule and the location, never the value. Echoing the match
                 # would republish a leaked key into a public CI log.
