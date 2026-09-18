@@ -15,7 +15,7 @@
     "lighthouse": "CHROME_PATH=\"$(node -e \"process.stdout.write(require('@playwright/test').chromium.executablePath())\")\" lhci autorun"
   },
   "dependencies": {
-    "next": "^15.4.0",
+    "next": "^15.5.24",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "@hestia/design": "workspace:*",

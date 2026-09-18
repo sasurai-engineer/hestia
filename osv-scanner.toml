@@ -8,3 +8,7 @@
 [[IgnoredVulns]]
 id = "GHSA-jmr9-qjv8-65gv"
 reason = "extract-zip <=2.0.1 symlink traversal; no patched release exists. Dev-only path (@lhci/cli > lighthouse > puppeteer's browser fetcher) that never executes here: CHROME_PATH points at Playwright's browser, so the fetcher downloads and unzips nothing."
+
+[[IgnoredVulns]]
+id = "GHSA-7pqw-9j4j-h8q3"
+reason = "The same extract-zip symlink traversal under its reissued 2026 id; the reasoning above applies unchanged."

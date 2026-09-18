@@ -220,10 +220,42 @@ def clean(conn: psycopg.Connection[Any]) -> None:
 
 
 @pytest.fixture
-def client() -> Iterator[TestClient]:
+def signed_in_session(conn: psycopg.Connection[Any]) -> str:
+    """An owner and a live session, seeded by SQL (issue #40): every suite
+    keeps its body — the ceremony itself is tested in test_auth.py, and
+    everything else simply arrives authenticated, the way production will.
+    The token is per-test; the 'tai' owner row persists for the module (the
+    clean fixture never touches identity tables)."""
+    import hashlib
+    import secrets
+
+    from hestia_api import auth as auth_module
+
+    user = conn.execute("SELECT id::text FROM users WHERE handle = 'tai'").fetchone()
+    if user is None:
+        user = conn.execute(
+            "INSERT INTO users (handle, role) VALUES ('tai', 'owner') RETURNING id::text"
+        ).fetchone()
+    assert user is not None
+    token = secrets.token_urlsafe(32)
+    conn.execute(
+        """
+        INSERT INTO sessions (user_id, token_sha256, expires_at)
+        VALUES (%s, %s, now() + interval '1 day')
+        """,
+        (user["id"], hashlib.sha256(token.encode()).digest()),
+    )
+    conn.commit()
+    assert auth_module.SESSION_COOKIE == "hestia_session"
+    return token
+
+
+@pytest.fixture
+def client(signed_in_session: str) -> Iterator[TestClient]:
     from hestia_api.app import app
 
     with TestClient(app) as test_client:
+        test_client.cookies.set("hestia_session", signed_in_session)
         yield test_client
 
 
@@ -247,9 +279,10 @@ def newport_property(clean: None, client: TestClient) -> str:
 
 
 @pytest.fixture
-def flaky_client() -> Iterator[TestClient]:
+def flaky_client(signed_in_session: str) -> Iterator[TestClient]:
     """A client that surfaces server errors as 500s instead of raising."""
     from hestia_api.app import app
 
     with TestClient(app, raise_server_exceptions=False) as test_client:
+        test_client.cookies.set("hestia_session", signed_in_session)
         yield test_client

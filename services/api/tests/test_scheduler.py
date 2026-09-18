@@ -290,5 +290,7 @@ class TestLifespan:
         with TestClient(app_module.app) as running:
             names = [t.name for t in threading.enumerate()]
             assert "hestia-sweep-scheduler" in names
-            assert running.get("/deadlines").status_code == 200
+            assert (
+                running.get("/healthz").status_code == 200
+            )  # open route; the rest now needs a session
         assert "hestia-sweep-scheduler" not in [t.name for t in threading.enumerate()]

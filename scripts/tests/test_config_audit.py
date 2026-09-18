@@ -64,6 +64,27 @@ class SecretDetectionTest(unittest.TestCase):
         self.write("conf.yaml", "password: hunter2supersecret\n")
         self.assertIn("secret", rules(audit(self.tmp)))
 
+    def test_source_code_shapes_are_not_credentials(self) -> None:
+        # Reading a cookie, forwarding a kwarg, annotating a type: the name
+        # says token or credential, the value is an expression (issue #40
+        # made every one of these shapes appear in earnest).
+        self.write(
+            "auth.py",
+            "token = request.cookies.get(SESSION_COOKIE)\n"
+            "credential=body.credential,\n"
+            "credential: dict[str, Any]\n",
+        )
+        self.assertNotIn("secret", rules(audit(self.tmp)))
+
+    def test_an_identifier_shaped_value_still_matches(self) -> None:
+        # Real secrets are identifier-shaped (base64 is letters and digits);
+        # the code-expression exclusion must not reach them. Low-entropy
+        # stand-ins on purpose: the OTHER secret scanner reads this file too.
+        self.write("conf.py", 'password = "hunter2supersecret"\n')
+        self.assertIn("secret", rules(audit(self.tmp)))
+        self.write("run.sh", "export AUTH_TOKEN=aaaabbbb11112222\n")
+        self.assertIn("secret", rules(audit(self.tmp)))
+
     def test_never_echoes_the_matched_value(self) -> None:
         # The CI job writes findings to a log that is public for a
         # source-available repository, and GitHub cannot mask a value it was

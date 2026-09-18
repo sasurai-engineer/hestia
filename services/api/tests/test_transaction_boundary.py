@@ -79,11 +79,24 @@ def timeline(monkeypatch: pytest.MonkeyPatch) -> _Timeline:
     return recorded
 
 
-def _call(timeline: _Timeline, method: str, path: str, body: dict[str, Any] | None) -> int:
+def _call(
+    timeline: _Timeline,
+    method: str,
+    path: str,
+    body: dict[str, Any] | None,
+    session: str | None = None,
+) -> int:
     """One request, driven through the raw ASGI interface."""
     from hestia_api.app import app
 
     raw = json.dumps(body).encode() if body is not None else b""
+    headers = [
+        (b"host", b"testserver"),
+        (b"content-type", b"application/json"),
+        (b"content-length", str(len(raw)).encode()),
+    ]
+    if session is not None:
+        headers.append((b"cookie", f"hestia_session={session}".encode()))
     scope = {
         "type": "http",
         "asgi": {"version": "3.0"},
@@ -94,11 +107,7 @@ def _call(timeline: _Timeline, method: str, path: str, body: dict[str, Any] | No
         "query_string": b"",
         "root_path": "",
         "scheme": "http",
-        "headers": [
-            (b"host", b"testserver"),
-            (b"content-type", b"application/json"),
-            (b"content-length", str(len(raw)).encode()),
-        ],
+        "headers": headers,
         "client": ("127.0.0.1", 1),
         "server": ("testserver", 80),
     }
@@ -117,14 +126,16 @@ def _call(timeline: _Timeline, method: str, path: str, body: dict[str, Any] | No
 
 
 def test_the_transaction_commits_before_the_response_is_sent(
-    clean: None, timeline: _Timeline
+    clean: None, timeline: _Timeline, signed_in_session: str
 ) -> None:
     """The defect in #83, as a property rather than a symptom.
 
     A 201 that arrives before its own commit is a receipt for a row nobody
     else can see yet. Whoever reads next — the same form, another tab, the
     sweep — is entitled to find what the response just described."""
-    status = _call(timeline, "POST", "/entities", {"name": "Boundary", "kind": "llc"})
+    status = _call(
+        timeline, "POST", "/entities", {"name": "Boundary", "kind": "llc"}, signed_in_session
+    )
     assert status == 201
     assert "commit" in timeline, "the request never committed at all"
     assert timeline.index("commit") < timeline.index("response.start"), (
@@ -134,11 +145,11 @@ def test_the_transaction_commits_before_the_response_is_sent(
 
 
 def test_a_refused_mutation_rolls_back_before_the_response_is_sent(
-    clean: None, timeline: _Timeline
+    clean: None, timeline: _Timeline, signed_in_session: str
 ) -> None:
     """The same promise on the failing path: by the time the client is told
     no, there must be nothing left half-written behind the answer."""
-    status = _call(timeline, "POST", "/entities", {"name": "", "kind": "llc"})
+    status = _call(timeline, "POST", "/entities", {"name": "", "kind": "llc"}, signed_in_session)
     assert status == 422
     settled = [event for event in timeline.events if event in {"commit", "rollback"}]
     if settled:
@@ -148,12 +159,14 @@ def test_a_refused_mutation_rolls_back_before_the_response_is_sent(
 
 
 def test_the_row_is_readable_by_another_connection_once_the_response_exists(
-    clean: None, timeline: _Timeline, database_url: str
+    clean: None, timeline: _Timeline, signed_in_session: str, database_url: str
 ) -> None:
     """The consequence, stated in the terms a caller cares about: a separate
     connection — a different request, in production — sees the row the moment
     the response describing it exists."""
-    status = _call(timeline, "POST", "/entities", {"name": "Readable", "kind": "llc"})
+    status = _call(
+        timeline, "POST", "/entities", {"name": "Readable", "kind": "llc"}, signed_in_session
+    )
     assert status == 201
     with psycopg.connect(database_url, row_factory=psycopg.rows.dict_row) as other:
         found = other.execute(

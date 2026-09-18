@@ -180,7 +180,7 @@ jobs:
           deny-licenses: GPL-2.0, GPL-3.0, AGPL-3.0, LGPL-3.0, SSPL-1.0
           # Unpatchable advisories accepted with reasoning — the canonical
           # entry with the why lives in osv-scanner.toml at the repo root.
-          allow-ghsas: GHSA-jmr9-qjv8-65gv
+          allow-ghsas: GHSA-jmr9-qjv8-65gv, GHSA-7pqw-9j4j-h8q3
 
   sbom:
     name: SBOM (CycloneDX)

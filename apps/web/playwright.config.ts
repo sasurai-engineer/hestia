@@ -7,6 +7,9 @@ import { defineConfig } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './e2e',
+  // Seeds an owner + session into the real database and hands every walk
+  // the cookie (#40): the walks test what lies behind the door.
+  globalSetup: './e2e/global-setup.ts',
   timeout: 30_000,
   retries: process.env.CI ? 1 : 0,
   // One worker, always: both spec files write to the same real database, and
@@ -21,6 +24,7 @@ export default defineConfig({
   expect: { timeout: process.env.CI ? 10_000 : 5_000 },
   use: {
     baseURL: process.env.HESTIA_WEB_URL ?? 'http://localhost:3000',
+    storageState: './e2e/.auth/storage-state.json',
     trace: 'retain-on-failure',
   },
   webServer: process.env.CI

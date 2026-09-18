@@ -21,6 +21,142 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/credentials/{credential_id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Auth Revoke Credential */
+        post: operations["auth_revoke_credential_auth_credentials__credential_id__revoke_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/invites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Auth Create Invite */
+        post: operations["auth_create_invite_auth_invites_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Auth Login */
+        post: operations["auth_login_auth_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/login/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Auth Login Options */
+        post: operations["auth_login_options_auth_login_options_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Auth Logout */
+        post: operations["auth_logout_auth_logout_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Auth Me */
+        get: operations["auth_me_auth_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Auth Register */
+        post: operations["auth_register_auth_register_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/register/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Auth Register Options */
+        post: operations["auth_register_options_auth_register_options_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/bank/accounts": {
         parameters: {
             query?: never;
@@ -2474,6 +2610,27 @@ export interface components {
             /** Rate */
             rate: string;
         };
+        /** InviteIn */
+        InviteIn: {
+            /** Resident Id */
+            resident_id?: string | null;
+            /** Role */
+            role: string;
+        };
+        /** InviteOut */
+        InviteOut: {
+            /** Code */
+            code: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Id */
+            id: string;
+            /** Role */
+            role: string;
+        };
         /** LeaseDetail */
         LeaseDetail: {
             /** Balance Due */
@@ -2665,6 +2822,15 @@ export interface components {
             total_in: string;
             /** Total Out */
             total_out: string;
+        };
+        /** LoginVerifyIn */
+        LoginVerifyIn: {
+            /** Challenge Id */
+            challenge_id: string;
+            /** Credential */
+            credential: {
+                [key: string]: unknown;
+            };
         };
         /** MarketOpinionOut */
         MarketOpinionOut: {
@@ -2884,6 +3050,19 @@ export interface components {
             /** Loss Of Rents Months */
             loss_of_rents_months: number | null;
         };
+        /** Principal */
+        Principal: {
+            /** Handle */
+            handle: string;
+            /** Resident Id */
+            resident_id: string | null;
+            /** Role */
+            role: string;
+            /** User Id */
+            user_id: string;
+            /** User Seq */
+            user_seq: number;
+        };
         /** PropertyCoverage */
         PropertyCoverage: {
             /** Domains */
@@ -3089,6 +3268,24 @@ export interface components {
             event_uuid: string;
             /** Unallocated */
             unallocated: string;
+        };
+        /** RegisterOptionsIn */
+        RegisterOptionsIn: {
+            /** Handle */
+            handle: string;
+            /** Invite Code */
+            invite_code?: string | null;
+        };
+        /** RegisterVerifyIn */
+        RegisterVerifyIn: {
+            /** Challenge Id */
+            challenge_id: string;
+            /** Credential */
+            credential: {
+                [key: string]: unknown;
+            };
+            /** Label */
+            label?: string | null;
         };
         /** RenewalContextOut */
         RenewalContextOut: {
@@ -3825,9 +4022,7 @@ export interface operations {
     create_assessment_assessments_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -3844,6 +4039,237 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AssessmentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    auth_revoke_credential_auth_credentials__credential_id__revoke_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                credential_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    auth_create_invite_auth_invites_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InviteIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InviteOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    auth_login_auth_login_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginVerifyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    auth_login_options_auth_login_options_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    auth_logout_auth_logout_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+        };
+    };
+    auth_me_auth_me_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Principal"];
+                };
+            };
+        };
+    };
+    auth_register_auth_register_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterVerifyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    auth_register_options_auth_register_options_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterOptionsIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Validation Error */
@@ -3880,9 +4306,7 @@ export interface operations {
     create_bank_account_bank_accounts_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -3915,9 +4339,7 @@ export interface operations {
     import_bank_statement_bank_accounts__account_id__imports_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path: {
                 account_id: string;
             };
@@ -3985,9 +4407,7 @@ export interface operations {
     accept_bank_transaction_bank_transactions__txn_id__accept_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path: {
                 txn_id: string;
             };
@@ -4022,9 +4442,7 @@ export interface operations {
     exclude_bank_transaction_bank_transactions__txn_id__exclude_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path: {
                 txn_id: string;
             };
@@ -4053,9 +4471,7 @@ export interface operations {
     match_bank_transaction_bank_transactions__txn_id__match_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path: {
                 txn_id: string;
             };
@@ -4183,9 +4599,7 @@ export interface operations {
     create_debt_debts_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -4249,9 +4663,7 @@ export interface operations {
     record_debt_payment_debts__debt_id__payments_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path: {
                 debt_id: string;
             };
@@ -4286,9 +4698,7 @@ export interface operations {
     pay_off_debt_debts__debt_id__payoff_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path: {
                 debt_id: string;
             };
@@ -4418,9 +4828,7 @@ export interface operations {
     upload_document_documents_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -4484,9 +4892,7 @@ export interface operations {
     apply_document_documents__document_id__apply_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path: {
                 document_id: string;
             };
@@ -4521,9 +4927,7 @@ export interface operations {
     apply_assessment_notice_documents__document_id__apply_assessment_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path: {
                 document_id: string;
             };
@@ -4589,9 +4993,7 @@ export interface operations {
     re_extract_document_documents__document_id__extract_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path: {
                 document_id: string;
             };
@@ -4622,9 +5024,7 @@ export interface operations {
     review_document_field_documents__document_id__review_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path: {
                 document_id: string;
             };
@@ -4679,9 +5079,7 @@ export interface operations {
     create_entity_entities_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -4787,9 +5185,7 @@ export interface operations {
     create_lease_leases_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -4855,9 +5251,7 @@ export interface operations {
     collect_rent_leases__lease_id__collect_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path: {
                 lease_id: string;
             };
@@ -4925,9 +5319,7 @@ export interface operations {
     return_deposit_leases__lease_id__deposit_return_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path: {
                 lease_id: string;
             };
@@ -4962,9 +5354,7 @@ export interface operations {
     record_receipt_leases__lease_id__receipts_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path: {
                 lease_id: string;
             };
@@ -5030,9 +5420,7 @@ export interface operations {
     record_renewal_leases__lease_id__renewals_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path: {
                 lease_id: string;
             };
@@ -5104,9 +5492,7 @@ export interface operations {
     append_ledger_event_ledger_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -5139,9 +5525,7 @@ export interface operations {
     reverse_ledger_event_ledger__event_uuid__reverse_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path: {
                 event_uuid: string;
             };
@@ -5209,9 +5593,7 @@ export interface operations {
             query?: {
                 as_of?: string | null;
             };
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -5262,9 +5644,7 @@ export interface operations {
     create_policy_policies_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -5319,9 +5699,7 @@ export interface operations {
     create_property_properties_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -5485,9 +5863,7 @@ export interface operations {
             query?: {
                 as_of?: string | null;
             };
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path: {
                 property_id: string;
             };
@@ -5670,9 +6046,7 @@ export interface operations {
     correct_charge_rent_charges__charge_id__correct_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path: {
                 charge_id: string;
             };
@@ -5707,9 +6081,7 @@ export interface operations {
     waive_charge_rent_charges__charge_id__waive_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path: {
                 charge_id: string;
             };
@@ -5762,9 +6134,7 @@ export interface operations {
     signoff_report_reports_signoff_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -5799,9 +6169,7 @@ export interface operations {
     create_resident_residents_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -5869,9 +6237,7 @@ export interface operations {
     open_screening_screening_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -5935,9 +6301,7 @@ export interface operations {
     record_adverse_action_screening__screening_id__adverse_action_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path: {
                 screening_id: string;
             };
@@ -5972,9 +6336,7 @@ export interface operations {
     decide_screening_screening__screening_id__decision_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path: {
                 screening_id: string;
             };
@@ -6011,9 +6373,7 @@ export interface operations {
             query?: {
                 as_of?: string | null;
             };
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -6044,9 +6404,7 @@ export interface operations {
             query?: {
                 as_of?: string | null;
             };
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -6077,9 +6435,7 @@ export interface operations {
             query?: {
                 as_of?: string | null;
             };
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -6108,9 +6464,7 @@ export interface operations {
     create_unit_units_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -6145,9 +6499,7 @@ export interface operations {
     create_valuation_valuations_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -6215,9 +6567,7 @@ export interface operations {
     create_vendor_vendors_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -6283,9 +6633,7 @@ export interface operations {
     renew_vendor_credentials_vendors__vendor_id__credentials_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path: {
                 vendor_id: string;
             };
@@ -6353,9 +6701,7 @@ export interface operations {
     create_work_order_work_orders_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -6419,9 +6765,7 @@ export interface operations {
     complete_work_order_work_orders__work_order_id__complete_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path: {
                 work_order_id: string;
             };
@@ -6456,9 +6800,7 @@ export interface operations {
     add_work_order_cost_work_orders__work_order_id__costs_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path: {
                 work_order_id: string;
             };
@@ -6493,9 +6835,7 @@ export interface operations {
     transition_work_order_work_orders__work_order_id__transitions_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-actor"?: string;
-            };
+            header?: never;
             path: {
                 work_order_id: string;
             };

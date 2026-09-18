@@ -278,7 +278,7 @@ class TestReview:
         after = review(client, doc_id, "settlement.sale_price", "accept")
         sale = next(f for f in after["fields"] if f["field_path"] == "settlement.sale_price")
         assert sale["accepted_value"] == "187500.00"
-        assert sale["reviewed_by"] == "system"
+        assert sale["reviewed_by"] == "user:tai"  # ratification carries the signer (#40)
         after = review(
             client, doc_id, "settlement.capitalizable_closing_costs", "correct", "$1,900.00"
         )

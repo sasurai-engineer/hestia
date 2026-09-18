@@ -60,11 +60,13 @@ def record_audit(
     table_name: str | None = None,
     record_id: str | None = None,
     after_value: dict[str, Any] | None = None,
+    user_id: str | None = None,
 ) -> None:
     conn.execute(
         """
-        INSERT INTO audit_log (actor, action, table_name, record_id, after_value, request_id)
-        VALUES (%s, %s, %s, %s, %s, %s)
+        INSERT INTO audit_log
+          (actor, action, table_name, record_id, after_value, request_id, user_id)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
         """,
         (
             actor,
@@ -73,5 +75,6 @@ def record_audit(
             record_id,
             json.dumps(after_value, default=str) if after_value is not None else None,
             request_id,
+            user_id,
         ),
     )

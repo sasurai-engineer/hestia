@@ -25,7 +25,6 @@ from fastapi import (
     FastAPI,
     File,
     Form,
-    Header,
     HTTPException,
     Query,
     Request,
@@ -38,6 +37,7 @@ from pydantic import BaseModel, Field, field_validator
 from hestia_api import (
     appeal,
     assessments,
+    auth,
     bank_import,
     config,
     coverage,
@@ -89,17 +89,102 @@ async def _lifespan(_: FastAPI) -> AsyncIterator[None]:
         thread.join(timeout=5)
 
 
+def get_conn() -> Iterator[psycopg.Connection[dict[str, Any]]]:
+    yield from db.connection_for(config.database_url())
+
+
+# scope="function" is load-bearing, not decoration. It puts the connection on
+# the exit stack FastAPI unwinds BEFORE sending the response, rather than the
+# default one it unwinds after — so the commit finishes while the caller is
+# still waiting, and the answer it gets describes state that already exists.
+# Issue #83; see db.connection_for and tests/test_transaction_boundary.py.
+Conn = Annotated[psycopg.Connection[dict[str, Any]], Depends(get_conn, scope="function")]
+
+
+# Paths that answer without a session: health, the auth ceremonies
+# themselves, the HMAC-authenticated webhook, and the contract docs.
+OPEN_PATHS = ("/healthz", "/readyz", "/openapi.json", "/docs", "/redoc")
+OPEN_PREFIXES = ("/auth/",)
+WEBHOOK_PATH = "/payments/stripe/webhook"
+
+
+def _auth_gate(request: Request, conn: Conn) -> None:
+    """Every call is refused without a session (issue #40) — no dev-mode
+    disable flag, because a configuration in which the product is insecure
+    is a configuration, and it would double the branch count besides. The
+    webhook authenticates by HMAC; health and the ceremonies stay open."""
+    path = request.url.path
+    if path in OPEN_PATHS or path == WEBHOOK_PATH or path.startswith(OPEN_PREFIXES):
+        return
+    token = request.cookies.get(auth.SESSION_COOKIE)
+    if token is None:
+        raise HTTPException(status_code=401, detail="sign in to continue")
+    try:
+        principal = auth.session_principal(conn, token)
+    except auth.NotAuthenticated as error:
+        raise HTTPException(
+            status_code=401, detail="that session has ended; sign in again"
+        ) from error
+    request.state.principal = principal
+    request.state.user_id = principal.user_id
+
+
+def _actor_from_session(request: Request) -> str:
+    # Only gated endpoints audit by Actor, and the gate has already run on
+    # every one of them: a principal is present or the call was refused at
+    # the door. (The open webhook names its own actor.)
+    return f"user:{request.state.principal.handle}"
+
+
+Actor = Annotated[str, Depends(_actor_from_session)]
+
+
+def _principal(request: Request, conn: psycopg.Connection[dict[str, Any]]) -> auth.Principal:
+    """Resolve the caller on an /auth/ management endpoint. The whole
+    prefix is open (the ceremonies must be reachable signed-out), so the
+    gate has not resolved the cookie — this does."""
+    token = request.cookies.get(auth.SESSION_COOKIE)
+    if token is None:
+        raise HTTPException(status_code=401, detail="sign in to continue")
+    try:
+        principal = auth.session_principal(conn, token)
+    except auth.NotAuthenticated as error:
+        raise HTTPException(
+            status_code=401, detail="that session has ended; sign in again"
+        ) from error
+    request.state.principal = principal
+    request.state.user_id = principal.user_id
+    return principal
+
+
 app = FastAPI(
     title="Hestia API",
     version="0.1.0",
     description="The owner's operating platform for real property.",
     lifespan=_lifespan,
+    dependencies=[Depends(_auth_gate)],
 )
+
+
+@app.middleware("http")
+async def _origin_guard(request: Request, call_next):  # type: ignore[no-untyped-def]
+    """CSRF belt for cookie sessions (issue #40): a browser attack site
+    cannot avoid sending its Origin, so a present-and-foreign Origin on a
+    mutating request is refused. Non-browser clients send none and pass;
+    the webhook authenticates by HMAC and is exempt."""
+    if request.method in ("POST", "PUT", "PATCH", "DELETE") and request.url.path != WEBHOOK_PATH:
+        origin = request.headers.get("origin")
+        if origin is not None and origin != config.web_origin():
+            return Response(status_code=403, content="cross-origin request refused")
+    return await call_next(request)
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[config.web_origin()],
     allow_methods=["GET", "POST"],
-    allow_headers=["content-type", "x-request-id", "x-actor"],
+    allow_headers=["content-type", "x-request-id"],
+    allow_credentials=True,
     expose_headers=["x-request-id"],
 )
 
@@ -115,19 +200,6 @@ async def correlate(request: Request, call_next):  # type: ignore[no-untyped-def
     response: Response = await call_next(request)
     response.headers["x-request-id"] = request.state.request_id
     return response
-
-
-def get_conn() -> Iterator[psycopg.Connection[dict[str, Any]]]:
-    yield from db.connection_for(config.database_url())
-
-
-# scope="function" is load-bearing, not decoration. It puts the connection on
-# the exit stack FastAPI unwinds BEFORE sending the response, rather than the
-# default one it unwinds after — so the commit finishes while the caller is
-# still waiting, and the answer it gets describes state that already exists.
-# Issue #83; see db.connection_for and tests/test_transaction_boundary.py.
-Conn = Annotated[psycopg.Connection[dict[str, Any]], Depends(get_conn, scope="function")]
-Actor = Annotated[str, Header(alias="x-actor")]
 
 
 # ---------------------------------------------------------------------------
@@ -229,10 +301,128 @@ class PropertyOut(PropertyIn):
     jurisdiction_id: uuid.UUID | None
 
 
+def _set_session_cookie(response: Response, token: str) -> None:
+    response.set_cookie(
+        auth.SESSION_COOKIE,
+        token,
+        httponly=True,
+        samesite="strict",
+        max_age=int(auth.SESSION_TTL.total_seconds()),
+        path="/",
+    )
+
+
+@app.post("/auth/register/options")
+def auth_register_options(body: auth.RegisterOptionsIn, conn: Conn) -> dict[str, Any]:
+    try:
+        return auth.register_options(conn, body)
+    except auth.AuthError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+
+
+@app.post("/auth/register")
+def auth_register(
+    body: auth.RegisterVerifyIn, conn: Conn, request: Request, response: Response
+) -> dict[str, str]:
+    try:
+        token = auth.register_verify(conn, body)
+    except auth.AuthError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    principal = auth.session_principal(conn, token)
+    _set_session_cookie(response, token)
+    db.record_audit(
+        conn,
+        actor=f"user:{principal.handle}",
+        action="auth.register",
+        request_id=request.state.request_id,
+        user_id=principal.user_id,
+    )
+    return {"handle": principal.handle, "role": principal.role}
+
+
+@app.post("/auth/login/options")
+def auth_login_options(conn: Conn) -> dict[str, Any]:
+    return auth.login_options(conn)
+
+
+@app.post("/auth/login")
+def auth_login(
+    body: auth.LoginVerifyIn, conn: Conn, request: Request, response: Response
+) -> dict[str, str]:
+    try:
+        token = auth.login_verify(conn, body)
+    except auth.AuthError as error:
+        raise HTTPException(status_code=401, detail=str(error)) from error
+    principal = auth.session_principal(conn, token)
+    _set_session_cookie(response, token)
+    db.record_audit(
+        conn,
+        actor=f"user:{principal.handle}",
+        action="auth.login",
+        request_id=request.state.request_id,
+        user_id=principal.user_id,
+    )
+    return {"handle": principal.handle, "role": principal.role}
+
+
+@app.post("/auth/logout")
+def auth_logout(conn: Conn, request: Request, response: Response) -> dict[str, str]:
+    token = request.cookies.get(auth.SESSION_COOKIE)
+    if token is not None:
+        auth.revoke_session(conn, token)
+    response.delete_cookie(auth.SESSION_COOKIE, path="/")
+    return {"status": "signed out"}
+
+
+@app.get("/auth/me")
+def auth_me(conn: Conn, request: Request) -> auth.Principal:
+    token = request.cookies.get(auth.SESSION_COOKIE)
+    if token is None:
+        raise HTTPException(status_code=401, detail="sign in to continue")
+    try:
+        return auth.session_principal(conn, token)
+    except auth.NotAuthenticated as error:
+        raise HTTPException(
+            status_code=401, detail="that session has ended; sign in again"
+        ) from error
+
+
+@app.post("/auth/invites", response_model=auth.InviteOut)
+def auth_create_invite(body: auth.InviteIn, conn: Conn, request: Request) -> auth.InviteOut:
+    principal = _principal(request, conn)
+    if principal.role != "owner":
+        raise HTTPException(status_code=403, detail="only an owner may invite")
+    invite = auth.create_invite(conn, principal, body)
+    db.record_audit(
+        conn,
+        actor=f"user:{principal.handle}",
+        action="auth.invite",
+        request_id=request.state.request_id,
+        user_id=principal.user_id,
+        after_value={"role": body.role, "invite_id": invite.id},
+    )
+    return invite
+
+
+@app.post("/auth/credentials/{credential_id}/revoke", status_code=204)
+def auth_revoke_credential(credential_id: uuid.UUID, conn: Conn, request: Request) -> None:
+    principal = _principal(request, conn)
+    try:
+        auth.revoke_credential(conn, principal, str(credential_id))
+    except auth.AuthError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    db.record_audit(
+        conn,
+        actor=f"user:{principal.handle}",
+        action="auth.credential.revoke",
+        request_id=request.state.request_id,
+        user_id=principal.user_id,
+        after_value={"credential_id": str(credential_id)},
+    )
+
+
 @app.post("/entities", response_model=EntityOut, status_code=201)
-def create_entity(
-    body: EntityIn, conn: Conn, request: Request, actor: Actor = "system"
-) -> EntityOut:
+def create_entity(body: EntityIn, conn: Conn, request: Request, actor: Actor) -> EntityOut:
     row = conn.execute(
         """
         INSERT INTO entities (name, kind, formation_state)
@@ -249,6 +439,7 @@ def create_entity(
         table_name="entities",
         record_id=str(entity.id),
         after_value=entity.model_dump(mode="json"),
+        user_id=getattr(request.state, "user_id", None),
     )
     return entity
 
@@ -262,9 +453,7 @@ def list_entities(conn: Conn) -> list[EntityOut]:
 
 
 @app.post("/properties", response_model=PropertyOut, status_code=201)
-def create_property(
-    body: PropertyIn, conn: Conn, request: Request, actor: Actor = "system"
-) -> PropertyOut:
+def create_property(body: PropertyIn, conn: Conn, request: Request, actor: Actor) -> PropertyOut:
     resolved = jurisdiction.resolve(conn, state=body.state, city=body.city, county=body.county)
     try:
         row = conn.execute(
@@ -310,6 +499,7 @@ def create_property(
         table_name="properties",
         record_id=str(prop.id),
         after_value=prop.model_dump(mode="json"),
+        user_id=getattr(request.state, "user_id", None),
     )
     return prop
 
@@ -336,7 +526,7 @@ def get_property(property_id: uuid.UUID, conn: Conn) -> PropertyOut:
 
 @app.post("/ledger", response_model=ledger.LedgerEventOut, status_code=201)
 def append_ledger_event(
-    body: ledger.LedgerEntryIn, conn: Conn, request: Request, actor: Actor = "system"
+    body: ledger.LedgerEntryIn, conn: Conn, request: Request, actor: Actor
 ) -> ledger.LedgerEventOut:
     try:
         event = ledger.append_event(conn, body)
@@ -355,6 +545,7 @@ def append_ledger_event(
         table_name="ledger_events",
         record_id=event.event_uuid,
         after_value=event.model_dump(mode="json"),
+        user_id=getattr(request.state, "user_id", None),
     )
     return event
 
@@ -365,7 +556,7 @@ def reverse_ledger_event(
     body: ledger.ReversalIn,
     conn: Conn,
     request: Request,
-    actor: Actor = "system",
+    actor: Actor,
 ) -> ledger.ReversalOut:
     try:
         result = ledger.reverse_event(conn, str(event_uuid), body)
@@ -383,6 +574,7 @@ def reverse_ledger_event(
         table_name="ledger_events",
         record_id=result.reversal.event_uuid,
         after_value=result.model_dump(mode="json"),
+        user_id=getattr(request.state, "user_id", None),
     )
     return result
 
@@ -413,7 +605,7 @@ def ledger_register(
 
 @app.post("/bank/accounts", response_model=bank_import.BankAccountOut, status_code=201)
 def create_bank_account(
-    body: bank_import.BankAccountIn, conn: Conn, request: Request, actor: Actor = "system"
+    body: bank_import.BankAccountIn, conn: Conn, request: Request, actor: Actor
 ) -> bank_import.BankAccountOut:
     try:
         account = bank_import.create_account(conn, body)
@@ -431,6 +623,7 @@ def create_bank_account(
         table_name="bank_accounts",
         record_id=account.id,
         after_value=account.model_dump(mode="json"),
+        user_id=getattr(request.state, "user_id", None),
     )
     return account
 
@@ -450,7 +643,7 @@ async def import_bank_statement(
     conn: Conn,
     request: Request,
     file: Annotated[UploadFile, File()],
-    actor: Actor = "system",
+    actor: Actor,
 ) -> bank_import.ImportSummary:
     content = await file.read()
     try:
@@ -477,6 +670,7 @@ async def import_bank_statement(
         table_name="bank_import_batches",
         record_id=summary.batch_id,
         after_value=summary.model_dump(mode="json"),
+        user_id=getattr(request.state, "user_id", None),
     )
     return summary
 
@@ -516,7 +710,7 @@ def accept_bank_transaction(
     body: bank_import.AcceptIn,
     conn: Conn,
     request: Request,
-    actor: Actor = "system",
+    actor: Actor,
 ) -> list[ledger.LedgerEventOut]:
     try:
         events = bank_import.accept(conn, str(txn_id), body)
@@ -534,14 +728,13 @@ def accept_bank_transaction(
         table_name="bank_transactions",
         record_id=str(txn_id),
         after_value={"events": [event.event_uuid for event in events]},
+        user_id=getattr(request.state, "user_id", None),
     )
     return events
 
 
 @app.post("/bank/transactions/{txn_id}/exclude", status_code=204)
-def exclude_bank_transaction(
-    txn_id: uuid.UUID, conn: Conn, request: Request, actor: Actor = "system"
-) -> None:
+def exclude_bank_transaction(txn_id: uuid.UUID, conn: Conn, request: Request, actor: Actor) -> None:
     try:
         bank_import.exclude(conn, str(txn_id))
     except (bank_import.UnknownTransaction, bank_import.NotPending) as error:
@@ -553,6 +746,7 @@ def exclude_bank_transaction(
         request_id=request.state.request_id,
         table_name="bank_transactions",
         record_id=str(txn_id),
+        user_id=getattr(request.state, "user_id", None),
     )
 
 
@@ -566,7 +760,7 @@ def match_bank_transaction(
     body: MatchIn,
     conn: Conn,
     request: Request,
-    actor: Actor = "system",
+    actor: Actor,
 ) -> None:
     try:
         bank_import.match_existing(conn, str(txn_id), str(body.event_uuid))
@@ -584,6 +778,7 @@ def match_bank_transaction(
         table_name="bank_transactions",
         record_id=str(txn_id),
         after_value={"event_uuid": str(body.event_uuid)},
+        user_id=getattr(request.state, "user_id", None),
     )
 
 
@@ -636,13 +831,12 @@ def _audit(
         table_name=table,
         record_id=record_id,
         after_value=after,
+        user_id=getattr(request.state, "user_id", None),
     )
 
 
 @app.post("/units", status_code=201)
-def create_unit(
-    body: rent.UnitIn, conn: Conn, request: Request, actor: Actor = "system"
-) -> dict[str, str]:
+def create_unit(body: rent.UnitIn, conn: Conn, request: Request, actor: Actor) -> dict[str, str]:
     try:
         unit_id = rent.create_unit(conn, body)
     except psycopg.errors.ForeignKeyViolation as error:
@@ -657,7 +851,7 @@ def create_unit(
 
 @app.post("/residents", status_code=201)
 def create_resident(
-    body: rent.ResidentIn, conn: Conn, request: Request, actor: Actor = "system"
+    body: rent.ResidentIn, conn: Conn, request: Request, actor: Actor
 ) -> dict[str, str]:
     resident_id = rent.create_resident(conn, body)
     _audit(
@@ -673,9 +867,7 @@ def create_resident(
 
 
 @app.post("/leases", status_code=201)
-def create_lease(
-    body: rent.LeaseIn, conn: Conn, request: Request, actor: Actor = "system"
-) -> dict[str, str]:
+def create_lease(body: rent.LeaseIn, conn: Conn, request: Request, actor: Actor) -> dict[str, str]:
     try:
         lease_id = rent.create_lease(conn, body)
     except psycopg.errors.ForeignKeyViolation as error:
@@ -713,8 +905,8 @@ def lease_detail(lease_id: uuid.UUID, conn: Conn) -> rent.LeaseDetail:
 def sweep_rent_charges(
     conn: Conn,
     request: Request,
+    actor: Actor,
     as_of: Annotated[dt.date | None, Query()] = None,
-    actor: Actor = "system",
 ) -> rent.RentSweepResult:
     effective = as_of if as_of is not None else dt.date.today()
     result = rent.sweep_rent_charges(conn, effective)
@@ -725,6 +917,7 @@ def sweep_rent_charges(
         request_id=request.state.request_id,
         table_name="rent_charges",
         after_value={"as_of": str(effective), **result.model_dump(mode="json")},
+        user_id=getattr(request.state, "user_id", None),
     )
     return result
 
@@ -733,8 +926,8 @@ def sweep_rent_charges(
 def sweep_late_fees(
     conn: Conn,
     request: Request,
+    actor: Actor,
     as_of: Annotated[dt.date | None, Query()] = None,
-    actor: Actor = "system",
 ) -> rent.RentSweepResult:
     effective = as_of if as_of is not None else dt.date.today()
     result = rent.sweep_late_fees(conn, effective)
@@ -745,6 +938,7 @@ def sweep_late_fees(
         request_id=request.state.request_id,
         table_name="rent_charges",
         after_value={"as_of": str(effective), **result.model_dump(mode="json")},
+        user_id=getattr(request.state, "user_id", None),
     )
     return result
 
@@ -755,7 +949,7 @@ def record_receipt(
     body: rent.ReceiptIn,
     conn: Conn,
     request: Request,
-    actor: Actor = "system",
+    actor: Actor,
 ) -> rent.ReceiptOut:
     try:
         receipt = rent.record_receipt(conn, str(lease_id), body)
@@ -783,7 +977,7 @@ def waive_charge(
     body: WaiveIn,
     conn: Conn,
     request: Request,
-    actor: Actor = "system",
+    actor: Actor,
 ) -> None:
     """Waive forgives the UNPAID remainder; paid allocations stay.
 
@@ -829,7 +1023,7 @@ def correct_charge(
     body: rent.CorrectionIn,
     conn: Conn,
     request: Request,
-    actor: Actor = "system",
+    actor: Actor,
 ) -> rent.CorrectionOut:
     """Correct a wrong charge by supersession (issue #105): the old row
     becomes history pointing at its successor; paid money is released to
@@ -860,8 +1054,8 @@ def correct_charge(
 def deliver_notifications(
     conn: Conn,
     request: Request,
+    actor: Actor,
     as_of: dt.date | None = None,
-    actor: Actor = "system",
 ) -> notify.DeliveryOut:
     """The correspondent channel's manual door (issue #38): the scheduler
     calls the same function nightly; this exists for tests, catch-ups, and
@@ -874,6 +1068,7 @@ def deliver_notifications(
         action="notify.deliver",
         request_id=request.state.request_id,
         after_value={"as_of": str(effective), **result.model_dump()},
+        user_id=getattr(request.state, "user_id", None),
     )
     return result
 
@@ -899,7 +1094,7 @@ def record_renewal(
     body: rent.RenewalOfferIn,
     conn: Conn,
     request: Request,
-    actor: Actor = "system",
+    actor: Actor,
 ) -> dict[str, str]:
     try:
         renewal_id = rent.record_renewal_offer(conn, str(lease_id), body)
@@ -932,7 +1127,7 @@ def collect_rent(
     body: CollectIn,
     conn: Conn,
     request: Request,
-    actor: Actor = "system",
+    actor: Actor,
 ) -> payments.CollectOut:
     secret_key = config.stripe_secret_key()
     if secret_key is None:
@@ -995,6 +1190,7 @@ async def stripe_webhook(request: Request, conn: Conn) -> dict[str, str]:
         action="payment.webhook",
         request_id=request.state.request_id,
         after_value={"type": event.get("type"), "outcome": outcome},
+        user_id=getattr(request.state, "user_id", None),
     )
     return {"outcome": outcome}
 
@@ -1124,9 +1320,7 @@ class SignoffIn(BaseModel):
 
 
 @app.post("/reports/signoff", status_code=201)
-def signoff_report(
-    body: SignoffIn, conn: Conn, request: Request, actor: Actor = "system"
-) -> dict[str, str]:
+def signoff_report(body: SignoffIn, conn: Conn, request: Request, actor: Actor) -> dict[str, str]:
     _require_property(conn, body.property_id)
     # Certify the NUMBERS as they stand right now: a later back-dated
     # correction makes the sign-off visibly stale instead of silently
@@ -1165,6 +1359,7 @@ def signoff_report(
         table_name="report_signoffs",
         record_id=row["id"],  # type: ignore[index]
         after_value=body.model_dump(mode="json"),
+        user_id=getattr(request.state, "user_id", None),
     )
     return {"id": row["id"]}  # type: ignore[index]
 
@@ -1187,7 +1382,7 @@ class ValuationIn(BaseModel):
 
 @app.post("/valuations", status_code=201)
 def create_valuation(
-    body: ValuationIn, conn: Conn, request: Request, actor: Actor = "system"
+    body: ValuationIn, conn: Conn, request: Request, actor: Actor
 ) -> dict[str, str]:
     _require_property(conn, body.property_id)
     provenance = conn.execute(
@@ -1218,6 +1413,7 @@ def create_valuation(
         table_name="valuations",
         record_id=row["id"],  # type: ignore[index]
         after_value=body.model_dump(mode="json"),
+        user_id=getattr(request.state, "user_id", None),
     )
     return {"id": row["id"]}  # type: ignore[index]
 
@@ -1253,9 +1449,7 @@ class PolicyIn(BaseModel):
 
 
 @app.post("/policies", status_code=201)
-def create_policy(
-    body: PolicyIn, conn: Conn, request: Request, actor: Actor = "system"
-) -> dict[str, str]:
+def create_policy(body: PolicyIn, conn: Conn, request: Request, actor: Actor) -> dict[str, str]:
     _require_property(conn, body.property_id)
     row = conn.execute(
         """
@@ -1297,6 +1491,7 @@ def create_policy(
         table_name="policies",
         record_id=row["id"],  # type: ignore[index]
         after_value=body.model_dump(mode="json"),
+        user_id=getattr(request.state, "user_id", None),
     )
     return {"id": row["id"]}  # type: ignore[index]
 
@@ -1324,8 +1519,8 @@ def assemble_dossier(
     property_id: uuid.UUID,
     conn: Conn,
     request: Request,
+    actor: Actor,
     as_of: Annotated[dt.date | None, Query()] = None,
-    actor: Actor = "system",
 ) -> DossierOut:
     effective = as_of if as_of is not None else dt.date.today()
     try:
@@ -1340,6 +1535,7 @@ def assemble_dossier(
         table_name="properties",
         record_id=str(property_id),
         after_value={"steps": result["steps"], "sweep": result["sweep"]["inserted"]},
+        user_id=getattr(request.state, "user_id", None),
     )
     return DossierOut(**result)
 
@@ -1392,8 +1588,8 @@ class SweepOut(BaseModel):
 def sweep_deadlines(
     conn: Conn,
     request: Request,
+    actor: Actor,
     as_of: Annotated[dt.date | None, Query()] = None,
-    actor: Actor = "system",
 ) -> SweepOut:
     effective = as_of if as_of is not None else dt.date.today()
     result = sweep.run_sweep(conn, effective)
@@ -1408,6 +1604,7 @@ def sweep_deadlines(
             "inserted": result.inserted,
             "gap_count": len(gaps),
         },
+        user_id=getattr(request.state, "user_id", None),
     )
     return SweepOut(
         as_of=effective, inserted=result.inserted, total=result.total, coverage_gaps=gaps
@@ -1443,11 +1640,11 @@ DOCUMENT_KINDS = Literal[
 async def upload_document(
     conn: Conn,
     request: Request,
+    actor: Actor,
     file: Annotated[UploadFile, File()],
     kind: Annotated[DOCUMENT_KINDS, Form()],
     property_id: Annotated[uuid.UUID, Form()],
     document_date: Annotated[dt.date | None, Form()] = None,
-    actor: Actor = "system",
 ) -> documents.DocumentDetail:
     # BEFORE the read: `await file.read()` allocates whatever the uploader
     # sent, so a cap checked afterwards protects nothing. The domain-level
@@ -1487,6 +1684,7 @@ async def upload_document(
         table_name="source_documents",
         record_id=detail.id,
         after_value={"kind": detail.kind, "status": detail.status},
+        user_id=getattr(request.state, "user_id", None),
     )
     return detail
 
@@ -1533,7 +1731,7 @@ def review_document_field(
     body: documents.ReviewIn,
     conn: Conn,
     request: Request,
-    actor: Actor = "system",
+    actor: Actor,
 ) -> documents.DocumentDetail:
     try:
         detail = documents.review_field(conn, str(document_id), body, actor)
@@ -1556,13 +1754,14 @@ def review_document_field(
         request_id=request.state.request_id,
         table_name="extracted_fields",
         after_value={"document_id": str(document_id), "field_path": body.field_path},
+        user_id=getattr(request.state, "user_id", None),
     )
     return detail
 
 
 @app.post("/documents/{document_id}/extract", response_model=documents.DocumentDetail)
 def re_extract_document(
-    document_id: uuid.UUID, conn: Conn, request: Request, actor: Actor = "system"
+    document_id: uuid.UUID, conn: Conn, request: Request, actor: Actor
 ) -> documents.DocumentDetail:
     try:
         detail = documents.re_extract(conn, str(document_id))
@@ -1582,6 +1781,7 @@ def re_extract_document(
         table_name="source_documents",
         record_id=detail.id,
         after_value={"status": detail.status},
+        user_id=getattr(request.state, "user_id", None),
     )
     return detail
 
@@ -1596,7 +1796,7 @@ def apply_document(
     body: documents.ApplyIn,
     conn: Conn,
     request: Request,
-    actor: Actor = "system",
+    actor: Actor,
 ) -> documents.ApplyResult:
     try:
         result = documents.apply_document(conn, str(document_id), body, actor)
@@ -1625,6 +1825,7 @@ def apply_document(
         table_name="source_documents",
         record_id=str(document_id),
         after_value=result.model_dump(mode="json"),
+        user_id=getattr(request.state, "user_id", None),
     )
     return result
 
@@ -1637,7 +1838,7 @@ def apply_document(
 
 @app.post("/vendors", response_model=maintenance.VendorOut, status_code=201)
 def create_vendor(
-    body: maintenance.VendorIn, conn: Conn, request: Request, actor: Actor = "system"
+    body: maintenance.VendorIn, conn: Conn, request: Request, actor: Actor
 ) -> maintenance.VendorOut:
     try:
         vendor = maintenance.create_vendor(conn, body)
@@ -1655,6 +1856,7 @@ def create_vendor(
         table_name="vendors",
         record_id=vendor.id,
         after_value=vendor.model_dump(mode="json"),
+        user_id=getattr(request.state, "user_id", None),
     )
     return vendor
 
@@ -1690,7 +1892,7 @@ def renew_vendor_credentials(
     body: maintenance.CredentialsIn,
     conn: Conn,
     request: Request,
-    actor: Actor = "system",
+    actor: Actor,
 ) -> maintenance.VendorOut:
     try:
         vendor = maintenance.renew_credentials(conn, str(vendor_id), body, as_of=dt.date.today())
@@ -1708,13 +1910,14 @@ def renew_vendor_credentials(
         table_name="vendors",
         record_id=str(vendor_id),
         after_value={"coverage_state": vendor.coverage_state},
+        user_id=getattr(request.state, "user_id", None),
     )
     return vendor
 
 
 @app.post("/work-orders", response_model=maintenance.WorkOrderOut, status_code=201)
 def create_work_order(
-    body: maintenance.WorkOrderIn, conn: Conn, request: Request, actor: Actor = "system"
+    body: maintenance.WorkOrderIn, conn: Conn, request: Request, actor: Actor
 ) -> maintenance.WorkOrderOut:
     try:
         work_order = maintenance.create_work_order(conn, body)
@@ -1734,6 +1937,7 @@ def create_work_order(
         table_name="work_orders",
         record_id=work_order.id,
         after_value={"summary": work_order.summary, "priority": work_order.priority},
+        user_id=getattr(request.state, "user_id", None),
     )
     return work_order
 
@@ -1767,7 +1971,7 @@ def transition_work_order(
     body: maintenance.TransitionIn,
     conn: Conn,
     request: Request,
-    actor: Actor = "system",
+    actor: Actor,
 ) -> maintenance.WorkOrderOut:
     try:
         work_order = maintenance.transition(conn, str(work_order_id), body)
@@ -1795,6 +1999,7 @@ def transition_work_order(
         table_name="work_orders",
         record_id=str(work_order_id),
         after_value={"status": work_order.status},
+        user_id=getattr(request.state, "user_id", None),
     )
     return work_order
 
@@ -1809,7 +2014,7 @@ def complete_work_order(
     body: maintenance.CompletionIn,
     conn: Conn,
     request: Request,
-    actor: Actor = "system",
+    actor: Actor,
 ) -> maintenance.CompletionOut:
     try:
         result = maintenance.complete(conn, str(work_order_id), body, actor)
@@ -1853,6 +2058,7 @@ def complete_work_order(
         table_name="work_orders",
         record_id=str(work_order_id),
         after_value=result.model_dump(mode="json", exclude={"work_order"}),
+        user_id=getattr(request.state, "user_id", None),
     )
     return result
 
@@ -1867,7 +2073,7 @@ def add_work_order_cost(
     body: maintenance.CostLinkIn,
     conn: Conn,
     request: Request,
-    actor: Actor = "system",
+    actor: Actor,
 ) -> maintenance.WorkOrderOut:
     try:
         work_order = maintenance.add_cost(conn, str(work_order_id), body, actor)
@@ -1893,6 +2099,7 @@ def add_work_order_cost(
         table_name="work_order_ledger_events",
         record_id=str(work_order_id),
         after_value={"net_cost": str(work_order.net_cost)},
+        user_id=getattr(request.state, "user_id", None),
     )
     return work_order
 
@@ -1904,7 +2111,7 @@ def add_work_order_cost(
 
 @app.post("/screening", response_model=screening.ScreeningOut, status_code=201)
 def open_screening(
-    body: screening.ScreeningIn, conn: Conn, request: Request, actor: Actor = "system"
+    body: screening.ScreeningIn, conn: Conn, request: Request, actor: Actor
 ) -> screening.ScreeningOut:
     try:
         result = screening.create(conn, body)
@@ -1924,6 +2131,7 @@ def open_screening(
         table_name="screening_requests",
         record_id=result.id,
         after_value={"provider": result.provider},
+        user_id=getattr(request.state, "user_id", None),
     )
     return result
 
@@ -1957,7 +2165,7 @@ def decide_screening(
     body: screening.DecisionIn,
     conn: Conn,
     request: Request,
-    actor: Actor = "system",
+    actor: Actor,
 ) -> screening.ScreeningOut:
     try:
         result = screening.decide(conn, str(screening_id), body)
@@ -1984,6 +2192,7 @@ def decide_screening(
             "decision": result.decision,
             "adverse_action_required": result.adverse_action_required,
         },
+        user_id=getattr(request.state, "user_id", None),
     )
     return result
 
@@ -1994,7 +2203,7 @@ def record_adverse_action(
     body: screening.NoticeIn,
     conn: Conn,
     request: Request,
-    actor: Actor = "system",
+    actor: Actor,
 ) -> screening.ScreeningOut:
     try:
         result = screening.record_notice(conn, str(screening_id), body)
@@ -2024,6 +2233,7 @@ def record_adverse_action(
         table_name="screening_requests",
         record_id=str(screening_id),
         after_value={"sent_on": str(result.adverse_action_sent_on)},
+        user_id=getattr(request.state, "user_id", None),
     )
     return result
 
@@ -2034,9 +2244,7 @@ def record_adverse_action(
 
 
 @app.post("/debts", response_model=debt.DebtOut, status_code=201)
-def create_debt(
-    body: debt.DebtIn, conn: Conn, request: Request, actor: Actor = "system"
-) -> debt.DebtOut:
+def create_debt(body: debt.DebtIn, conn: Conn, request: Request, actor: Actor) -> debt.DebtOut:
     try:
         note = debt.create(conn, body)
     except debt.UnknownProperty as error:
@@ -2061,6 +2269,7 @@ def create_debt(
         table_name="debt_instruments",
         record_id=note.id,
         after_value={"lender": note.lender, "principal": str(note.original_principal)},
+        user_id=getattr(request.state, "user_id", None),
     )
     return note
 
@@ -2110,7 +2319,7 @@ def record_debt_payment(
     body: debt.PaymentIn,
     conn: Conn,
     request: Request,
-    actor: Actor = "system",
+    actor: Actor,
 ) -> debt.PaymentOut:
     try:
         payment = debt.record_payment(conn, str(debt_id), body)
@@ -2139,6 +2348,7 @@ def record_debt_payment(
         table_name="debt_payments",
         record_id=str(debt_id),
         after_value=payment.model_dump(mode="json"),
+        user_id=getattr(request.state, "user_id", None),
     )
     return payment
 
@@ -2149,7 +2359,7 @@ def pay_off_debt(
     body: debt.PayoffIn,
     conn: Conn,
     request: Request,
-    actor: Actor = "system",
+    actor: Actor,
 ) -> debt.DebtOut:
     try:
         note = debt.pay_off(conn, str(debt_id), body.paid_off_on)
@@ -2167,6 +2377,7 @@ def pay_off_debt(
         table_name="debt_instruments",
         record_id=str(debt_id),
         after_value={"paid_off_on": str(note.paid_off_on)},
+        user_id=getattr(request.state, "user_id", None),
     )
     return note
 
@@ -2203,7 +2414,7 @@ def return_deposit(
     body: deposit.ReturnIn,
     conn: Conn,
     request: Request,
-    actor: Actor = "system",
+    actor: Actor,
 ) -> deposit.ReturnOut:
     try:
         result = deposit.return_deposit(conn, str(lease_id), body)
@@ -2228,6 +2439,7 @@ def return_deposit(
         table_name="leases",
         record_id=str(lease_id),
         after_value=result.model_dump(mode="json"),
+        user_id=getattr(request.state, "user_id", None),
     )
     return result
 
@@ -2276,7 +2488,7 @@ def _record_assessment(
 
 @app.post("/assessments", response_model=assessments.AssessmentOut, status_code=201)
 def create_assessment(
-    body: assessments.AssessmentIn, conn: Conn, request: Request, actor: Actor = "system"
+    body: assessments.AssessmentIn, conn: Conn, request: Request, actor: Actor
 ) -> assessments.AssessmentOut:
     result = _record_assessment(lambda: assessments.record(conn, body, actor))
     # The created ROW, not the request body: the body may omit the
@@ -2303,7 +2515,7 @@ def apply_assessment_notice(
     body: assessments.NoticeApplyIn,
     conn: Conn,
     request: Request,
-    actor: Actor = "system",
+    actor: Actor,
 ) -> assessments.AssessmentOut:
     result = _record_assessment(
         lambda: assessments.apply_notice(conn, str(document_id), body, actor)
